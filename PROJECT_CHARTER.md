@@ -117,7 +117,22 @@ Todos los documentos del proyecto deben comenzar con el siguiente encabezado:
 
 ---
 
-## Referencias
+## Estructura del repositorio
+
+```
+OpenFinanceKit/
+│
+├── docs/
+├── product/
+│      OpenFinanceKit.xlsx
+├── qa/
+├── backlog/
+├── diagrams/
+├── scripts/
+└── .github/
+```
+
+> **Nota:** La carpeta `automation/` no existe en esta fase. Será creada en una fase posterior cuando se implemente **OFK Automation** (Sprint 7 en adelante), para alojar flujos de n8n, pipelines de datos y procesos automatizados del ecosistema.
 
 - [README.md](./README.md) — Descripción general del proyecto
 - [docs/decisions/DECISIONS.md](./docs/decisions/DECISIONS.md) — Decisiones arquitectónicas

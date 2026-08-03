@@ -143,9 +143,11 @@ Construir un Sistema de Gestión Financiera integral e inteligente (OpenFinanceK
 
 ### Sprint 7 — Automatización e Inteligencia
 
-**Duración**: 2 semanas  
-**Fase**: Automatización  
+**Duración**: 2 semanas
+**Fase**: Automatización
 **Estado**: ⬜ Planificado
+
+> **Nota:** En este sprint se creará la carpeta `automation/` en el repositorio. No existe antes porque no hay contenido que versionar hasta esta fase.
 
 **Entregables**:
 - Categorización automática de transacciones con IA
