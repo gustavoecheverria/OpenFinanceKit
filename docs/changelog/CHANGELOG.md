@@ -1,6 +1,6 @@
 # Changelog
 
-Todos los cambios notables de FinanceOS se documentan aquí.
+Todos los cambios notables de OpenFinanceKit se documentan aquí.
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/)
 y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
@@ -33,5 +33,5 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 - Backlog inicial con 4 épicas y 7 historias de usuario
 - Labels organizados por tipo, épica y prioridad
 
-[Unreleased]: https://github.com/gustavoecheverria/financeos/compare/v0.1.0...HEAD
-[v0.1.0]: https://github.com/gustavoecheverria/financeos/releases/tag/v0.1.0
+[Unreleased]: https://github.com/gustavoecheverria/OpenFinanceKit/compare/v0.1.0...HEAD
+[v0.1.0]: https://github.com/gustavoecheverria/OpenFinanceKit/releases/tag/v0.1.0

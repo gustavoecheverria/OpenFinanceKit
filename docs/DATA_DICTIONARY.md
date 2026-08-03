@@ -1,4 +1,4 @@
-# Diccionario de Datos — FinanceOS
+# Diccionario de Datos — OpenFinanceKit
 
 ## Entidades
 

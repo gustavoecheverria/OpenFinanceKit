@@ -1,6 +1,6 @@
 # Registro de Decisiones Arquitectónicas (ADR)
 
-Este documento registra las decisiones arquitectónicas significativas tomadas en el proyecto FinanceOS. Utilizamos el formato ADR (Architectural Decision Record) para documentar el contexto, la decisión tomada y sus consecuencias de manera estructurada.
+Este documento registra las decisiones arquitectónicas significativas tomadas en el proyecto OpenFinanceKit. Utilizamos el formato ADR (Architectural Decision Record) para documentar el contexto, la decisión tomada y sus consecuencias de manera estructurada.
 
 ## ¿Por qué documentar decisiones?
 
@@ -60,7 +60,7 @@ La decisión tomada, expresada de forma clara y directa.
 
 #### Contexto
 
-Al iniciar el proyecto FinanceOS, necesitábamos definir la estrategia del primer sprint. Las opciones incluían comenzar directamente con código de aplicación, configurar infraestructura técnica, o establecer primero la estructura del proyecto y su documentación base.
+Al iniciar el proyecto OpenFinanceKit, necesitábamos definir la estrategia del primer sprint. Las opciones incluían comenzar directamente con código de aplicación, configurar infraestructura técnica, o establecer primero la estructura del proyecto y su documentación base.
 
 El equipo es pequeño y el proyecto tiene un alcance ambicioso (gestión financiera con IA). Sin una base documental sólida, existe el riesgo de tomar decisiones técnicas prematuras o inconsistentes a medida que el proyecto crezca.
 

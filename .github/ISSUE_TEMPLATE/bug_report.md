@@ -1,6 +1,6 @@
 ---
 name: Reporte de Bug
-description: Reportar un error o comportamiento inesperado en FinanceOS
+description: Reportar un error o comportamiento inesperado en OpenFinanceKit
 labels: ["bug"]
 assignees: []
 ---
@@ -34,7 +34,7 @@ assignees: []
 
 - **Sistema Operativo:** [e.g., Windows 11, macOS 14, Ubuntu 22.04]
 - **Navegador:** [e.g., Chrome 120, Firefox 121, Safari 17]
-- **Versión de FinanceOS:** [e.g., 0.1.0]
+- **Versión de OpenFinanceKit:** [e.g., 0.1.0]
 - **Dispositivo:** [e.g., Desktop, Móvil]
 
 ## Contexto adicional

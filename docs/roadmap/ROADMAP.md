@@ -1,8 +1,8 @@
-# Roadmap - FinanceOS
+# Roadmap - OpenFinanceKit
 
 ## Visión
 
-Construir un Sistema de Gestión Financiera integral e inteligente (FinanceOS) que permita a individuos y pequeñas empresas gestionar sus finanzas de forma centralizada, automatizada y con asistencia de inteligencia artificial. El objetivo a largo plazo es ofrecer una plataforma que integre control de ingresos y gastos, presupuestos, reportes financieros, y recomendaciones inteligentes basadas en el comportamiento del usuario.
+Construir un Sistema de Gestión Financiera integral e inteligente (OpenFinanceKit) que permita a individuos y pequeñas empresas gestionar sus finanzas de forma centralizada, automatizada y con asistencia de inteligencia artificial. El objetivo a largo plazo es ofrecer una plataforma que integre control de ingresos y gastos, presupuestos, reportes financieros, y recomendaciones inteligentes basadas en el comportamiento del usuario.
 
 ### Objetivos Estratégicos
 
@@ -23,7 +23,7 @@ Construir un Sistema de Gestión Financiera integral e inteligente (FinanceOS) q
 **Estado**: 🟢 En progreso
 
 **Entregables**:
-- Estructura de directorios del proyecto (`financeos/`)
+- Estructura de directorios del proyecto (`openfinancekit/`)
 - Documentación base: README, CHANGELOG, ARCHITECTURE, BUSINESS_RULES, DATA_DICTIONARY, DECISIONS, ROADMAP
 - Directorios reservados: `product/`, `qa/`, `backlog/`, `diagrams/`
 - Configuración de GitHub: templates de issues, template de PR, directorio de workflows

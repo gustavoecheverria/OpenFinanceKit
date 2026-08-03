@@ -1,8 +1,8 @@
-# Arquitectura del Sistema — FinanceOS
+# Arquitectura del Sistema — OpenFinanceKit
 
 ## Visión General
 
-FinanceOS es un Sistema de Gestión Financiera diseñado para ser modular, escalable y extensible. Su objetivo principal es proporcionar una plataforma integral que permita a las organizaciones gestionar sus operaciones financieras de forma centralizada, incluyendo contabilidad, facturación, presupuestos, reportes y conciliaciones bancarias.
+OpenFinanceKit es un Sistema de Gestión Financiera diseñado para ser modular, escalable y extensible. Su objetivo principal es proporcionar una plataforma integral que permita a las organizaciones gestionar sus operaciones financieras de forma centralizada, incluyendo contabilidad, facturación, presupuestos, reportes y conciliaciones bancarias.
 
 El sistema está concebido como una arquitectura por capas con separación clara de responsabilidades, lo que permite evolucionar cada componente de forma independiente. La arquitectura prioriza:
 

@@ -1,4 +1,4 @@
-# Guía de Contribución — FinanceOS
+# Guía de Contribución — OpenFinanceKit
 
 ## Flujo de trabajo
 

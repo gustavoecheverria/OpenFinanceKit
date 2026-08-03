@@ -1,6 +1,6 @@
 ---
 name: Solicitud de Funcionalidad
-description: Proponer una nueva funcionalidad o mejora para FinanceOS
+description: Proponer una nueva funcionalidad o mejora para OpenFinanceKit
 labels: ["enhancement"]
 assignees: []
 ---

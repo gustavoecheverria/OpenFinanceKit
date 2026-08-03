@@ -1,10 +1,10 @@
-# Reglas de Negocio — FinanceOS
+# Reglas de Negocio — OpenFinanceKit
 
 ## Dominio
 
 ### Definición del Dominio
 
-FinanceOS opera dentro del dominio de **gestión financiera empresarial**, abarcando las áreas de contabilidad, facturación, presupuestos, tesorería y reportes financieros. El sistema gestiona el ciclo completo de vida de las transacciones financieras, desde su registro hasta su conciliación y reporte.
+OpenFinanceKit opera dentro del dominio de **gestión financiera empresarial**, abarcando las áreas de contabilidad, facturación, presupuestos, tesorería y reportes financieros. El sistema gestiona el ciclo completo de vida de las transacciones financieras, desde su registro hasta su conciliación y reporte.
 
 ### Alcance del Dominio
 

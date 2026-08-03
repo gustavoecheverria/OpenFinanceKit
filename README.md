@@ -1,4 +1,4 @@
-# FinanceOS
+# OpenFinanceKit
 
 > Sistema modular de gestión financiera diseñado para evolucionar desde una hoja de cálculo hacia una plataforma profesional con automatización, reportes e inteligencia artificial.
 
@@ -9,9 +9,9 @@
 
 ---
 
-## ¿Qué es FinanceOS?
+## ¿Qué es OpenFinanceKit?
 
-**FinanceOS** es un sistema de gestión financiera modular y escalable diseñado para centralizar y automatizar operaciones financieras. La visión es construir una plataforma que integre control de ingresos y gastos, presupuestos, reportes financieros, y recomendaciones inteligentes basadas en el comportamiento del usuario.
+**OpenFinanceKit** es un sistema de gestión financiera modular y escalable diseñado para centralizar y automatizar operaciones financieras. La visión es construir una plataforma que integre control de ingresos y gastos, presupuestos, reportes financieros, y recomendaciones inteligentes basadas en el comportamiento del usuario.
 
 El proyecto nace como un producto documentado en Markdown y Excel, con evolución progresiva hacia automatización en Python y una plataforma completa con asistencia de IA.
 
@@ -28,7 +28,7 @@ El proyecto nace como un producto documentado en Markdown y Excel, con evolució
 ## Estructura del Proyecto
 
 ```
-financeos/
+openfinancekit/
 ├── docs/                          # Documentación técnica
 │   ├── architecture/              # Arquitectura del sistema
 │   ├── decisions/                 # Registro de decisiones (ADR)
