@@ -1,0 +1,29 @@
+# CODEOWNERS — OpenFinanceKit
+#
+# Define quién debe revisar y aprobar cambios en cada área del proyecto.
+# Formato: patrón  @usuario_o_equipo
+#
+# Documentación: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Propietario global — aprueba cualquier cambio no cubierto por reglas específicas
+*                               @gustavoecheverria
+
+# Gobernanza y raíz del proyecto
+LICENSE                         @gustavoecheverria
+CODE_OF_CONDUCT.md              @gustavoecheverria
+SECURITY.md                     @gustavoecheverria
+CONTRIBUTING.md                 @gustavoecheverria
+
+# Documentación técnica
+/docs/                          @gustavoecheverria
+/docs/architecture/             @gustavoecheverria
+/docs/decisions/                @gustavoecheverria
+
+# Producto (Excel y plantillas)
+/product/                       @gustavoecheverria
+
+# Automatización y scripts
+/automation/                    @gustavoecheverria
+
+# Configuración de GitHub (templates, workflows)
+/.github/                       @gustavoecheverria
