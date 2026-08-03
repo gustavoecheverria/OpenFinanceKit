@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.env
+.venv/
+venv/
+*.egg-info/
+
+# Excel temporales
+~$*.xlsx
+~$*.xls
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Reportes generados (no versionar, solo plantillas)
+automation/reports/*.pdf
+automation/reports/*.xlsx
+
+# Secrets
+*.env
+secrets/
