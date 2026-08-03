@@ -1,4 +1,19 @@
-# Diccionario de Datos — OpenFinanceKit
+# OpenFinanceKit
+
+**Documento:** Diccionario de Datos
+
+**Versión:** 0.1.0
+
+**Estado:** Draft
+
+**Sprint:** Sprint 1
+
+**Autor:** Gustavo Echeverría
+
+**Última actualización:** 2026-08-03
+
+---
+
 
 ## Entidades
 
@@ -298,4 +313,4 @@ erDiagram
 | PKs | Siempre `id` | `id` |
 | FKs | nombre_entidad_id | `periodo_id` |
 | Timestamps | created_at, updated_at | — |
-| Booleanos | adjetivo o participio | `activo`, `activa` |
+| Booleanos | adjetivo o participio | `activo`, `activa` |

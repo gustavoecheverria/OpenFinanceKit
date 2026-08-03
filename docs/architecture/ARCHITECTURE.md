@@ -1,4 +1,19 @@
-# Arquitectura del Sistema — OpenFinanceKit
+# OpenFinanceKit
+
+**Documento:** Arquitectura del Sistema
+
+**Versión:** 0.1.0
+
+**Estado:** Draft
+
+**Sprint:** Sprint 1
+
+**Autor:** Gustavo Echeverría
+
+**Última actualización:** 2026-08-03
+
+---
+
 
 ## Visión General
 

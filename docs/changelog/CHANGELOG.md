@@ -1,4 +1,19 @@
-# Changelog
+# OpenFinanceKit
+
+**Documento:** Changelog
+
+**Versión:** 0.1.0
+
+**Estado:** Draft
+
+**Sprint:** Sprint 1
+
+**Autor:** Gustavo Echeverría
+
+**Última actualización:** 2026-08-03
+
+---
+
 
 Todos los cambios notables de OpenFinanceKit se documentan aquí.
 

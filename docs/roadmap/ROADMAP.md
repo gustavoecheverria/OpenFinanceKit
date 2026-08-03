@@ -1,4 +1,19 @@
-# Roadmap - OpenFinanceKit
+# OpenFinanceKit
+
+**Documento:** Roadmap
+
+**Versión:** 0.1.0
+
+**Estado:** Draft
+
+**Sprint:** Sprint 1
+
+**Autor:** Gustavo Echeverría
+
+**Última actualización:** 2026-08-03
+
+---
+
 
 ## Visión
 
@@ -178,4 +193,4 @@ Sprint 1 ──→ Sprint 2 ──→ Sprint 3 ──→ Sprint 4
 | Figma Free | Sprint 4+ | Diseño de interfaces |
 | draw.io | Sprint 1+ | Diagramas de arquitectura y flujos |
 | Notion | Sprint 5+ | Documentación de QA |
-| n8n | Sprint 7 | Automatización de flujos |
+| n8n | Sprint 7 | Automatización de flujos |

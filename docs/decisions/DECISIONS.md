@@ -1,4 +1,19 @@
-# Registro de Decisiones Arquitectónicas (ADR)
+# OpenFinanceKit
+
+**Documento:** Decisiones Arquitectónicas (ADR)
+
+**Versión:** 0.1.0
+
+**Estado:** Draft
+
+**Sprint:** Sprint 1
+
+**Autor:** Gustavo Echeverría
+
+**Última actualización:** 2026-08-03
+
+---
+
 
 Este documento registra las decisiones arquitectónicas significativas tomadas en el proyecto OpenFinanceKit. Utilizamos el formato ADR (Architectural Decision Record) para documentar el contexto, la decisión tomada y sus consecuencias de manera estructurada.
 
@@ -142,4 +157,4 @@ Definimos una asignación fija de herramienta por tipo de información. Cada tip
 |-------------|------|---------|-------------------|
 | Todo en Notion | Una sola herramienta | No versiona código, no soporta PR ni revisión formal | Rompe el flujo de trabajo de ingeniería |
 | Todo en GitHub | Máxima consistencia | Wiki de GitHub es inferior a Notion para notas colaborativas | Experiencia de trabajo colaborativo pobre |
-| Notion + GitHub sin reglas | Flexibilidad total | Información duplicada, versiones incorrectas, confusión | Genera exactamente el problema que queremos evitar |
+| Notion + GitHub sin reglas | Flexibilidad total | Información duplicada, versiones incorrectas, confusión | Genera exactamente el problema que queremos evitar |

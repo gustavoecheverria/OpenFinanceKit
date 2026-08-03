@@ -1,4 +1,19 @@
-# Reglas de Negocio — OpenFinanceKit
+# OpenFinanceKit
+
+**Documento:** Reglas de Negocio
+
+**Versión:** 0.1.0
+
+**Estado:** Draft
+
+**Sprint:** Sprint 1
+
+**Autor:** Gustavo Echeverría
+
+**Última actualización:** 2026-08-03
+
+---
+
 
 ## Dominio
 
@@ -236,4 +251,4 @@ OpenFinanceKit opera dentro del dominio de **gestión financiera empresarial**, 
 
 - Las reglas de negocio se revisan al inicio de cada sprint para reflejar cambios regulatorios.
 - Los montos umbrales y porcentajes son configurables por organización.
-- El sistema debe mantener un log de auditoría de todas las operaciones financieras.
+- El sistema debe mantener un log de auditoría de todas las operaciones financieras.
