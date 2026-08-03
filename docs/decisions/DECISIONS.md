@@ -94,3 +94,52 @@ Decidimos dedicar el Sprint 1 exclusivamente a la estructura del proyecto y docu
 | Iniciar con código directamente | Progreso visible rápido | Documentación se posterga indefinidamente, decisiones ad-hoc | Alto riesgo de deuda técnica y falta de alineación |
 | Sprint mixto (código + docs) | Balance entre documentación y funcionalidad | Ninguna de las dos se hace a profundidad | Calidad insuficiente en ambas áreas |
 | Solo infraestructura técnica | CI/CD listo desde el inicio | Sin contexto de negocio documentado | Prematuro sin definir arquitectura y reglas |
+
+---
+
+### ADR-002: Mapa de herramientas y fuente única de verdad
+
+**Estado:** Aceptada
+
+**Fecha:** 2026-08-03
+
+#### Contexto
+
+El proyecto usa múltiples herramientas (GitHub, Notion, n8n). Sin una regla clara sobre qué vive en cada una, la información se dispersa y aparecen dudas sobre cuál es la versión correcta de un documento o decisión.
+
+#### Decisión
+
+Definimos una asignación fija de herramienta por tipo de información. Cada tipo de contenido tiene **una sola fuente de verdad**:
+
+| Tipo de información | Herramienta oficial |
+|---------------------|-------------------|
+| Código y archivos Excel | GitHub |
+| Documentación técnica | GitHub (`docs/`) |
+| Diagramas técnicos | Mermaid en Markdown (GitHub) |
+| Gestión del trabajo | GitHub Projects |
+| Historias de usuario y bugs | GitHub Issues |
+| Releases y versionado | GitHub Releases |
+| Investigación e ideas | Notion |
+| Notas de reuniones | Notion |
+| Automatizaciones de flujo | n8n (Fase 3) |
+
+#### Consecuencias
+
+- **Positivas**:
+  - Siempre hay claridad sobre dónde buscar cada tipo de información
+  - Se evita duplicación y versiones desincronizadas
+  - Incorporación de nuevos colaboradores más sencilla
+  - GitHub como repositorio central auditado y versionado
+- **Negativas**:
+  - Requiere disciplina para respetar la asignación
+  - Notion no reemplaza a GitHub para documentación técnica
+- **Neutrales**:
+  - Diagramas en Mermaid en lugar de Draw.io externo (viven en Git, se renderizan en GitHub)
+
+#### Alternativas Consideradas
+
+| Alternativa | Pros | Contras | Razón de descarte |
+|-------------|------|---------|-------------------|
+| Todo en Notion | Una sola herramienta | No versiona código, no soporta PR ni revisión formal | Rompe el flujo de trabajo de ingeniería |
+| Todo en GitHub | Máxima consistencia | Wiki de GitHub es inferior a Notion para notas colaborativas | Experiencia de trabajo colaborativo pobre |
+| Notion + GitHub sin reglas | Flexibilidad total | Información duplicada, versiones incorrectas, confusión | Genera exactamente el problema que queremos evitar |

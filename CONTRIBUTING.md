@@ -55,6 +55,24 @@ Ejemplos:
 
 Seguimos [Semantic Versioning](https://semver.org/lang/es/) desde `v0.1.0`.
 
+## Mapa de herramientas
+
+Cada tipo de información tiene una sola fuente de verdad. Antes de crear contenido, verifica dónde debe vivir:
+
+| Tipo de información | Herramienta oficial |
+|---------------------|-------------------|
+| Código y archivos Excel | GitHub |
+| Documentación técnica | GitHub (`docs/`) |
+| Diagramas técnicos | Mermaid en Markdown (GitHub) |
+| Gestión del trabajo | GitHub Projects |
+| Historias de usuario y bugs | GitHub Issues |
+| Releases y versionado | GitHub Releases |
+| Investigación e ideas | Notion |
+| Notas de reuniones | Notion |
+| Automatizaciones de flujo | n8n (Fase 3) |
+
+> Decisión formal registrada en [docs/decisions/DECISIONS.md](docs/decisions/DECISIONS.md) como ADR-002.
+
 ## Convenciones
 
 - Todo el código y documentación **en español**
