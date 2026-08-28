@@ -34,6 +34,9 @@ export default function LoginPage() {
     <main className="min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center">
+          <div className="mx-auto mb-4 w-16 h-16 rounded-2xl bg-[var(--primary)] flex items-center justify-center">
+            <span className="text-3xl font-bold text-[var(--primary-foreground)]">$</span>
+          </div>
           <h1 className="text-2xl font-bold">OpenFinanceKit</h1>
           <p className="text-[var(--muted-foreground)] mt-2">
             Ingresa con tu correo para acceder

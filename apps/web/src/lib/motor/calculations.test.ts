@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { calcularIndicadores, rangoMes, resultadoVacio } from "./calculations";
+import {
+  calcularIndicadores,
+  rangoMes,
+  resultadoVacio,
+  desplazarMes,
+  etiquetaMes,
+} from "./calculations";
 import type { DatosMotor } from "./types";
 
 /**
@@ -178,5 +184,38 @@ describe("rangoMes", () => {
       inicio: "2026-01-01",
       fin: "2026-02-01",
     });
+  });
+});
+
+describe("desplazarMes", () => {
+  it("avanza un mes", () => {
+    expect(desplazarMes("2026-08", 1)).toBe("2026-09");
+  });
+
+  it("retrocede un mes", () => {
+    expect(desplazarMes("2026-08", -1)).toBe("2026-07");
+  });
+
+  it("cruza diciembre → enero del año siguiente", () => {
+    expect(desplazarMes("2026-12", 1)).toBe("2027-01");
+  });
+
+  it("cruza enero → diciembre del año anterior", () => {
+    expect(desplazarMes("2026-01", -1)).toBe("2025-12");
+  });
+
+  it("desplaza varios meses", () => {
+    expect(desplazarMes("2026-08", -8)).toBe("2025-12");
+  });
+});
+
+describe("etiquetaMes", () => {
+  it("genera etiqueta legible en español", () => {
+    expect(etiquetaMes("2026-08")).toBe("agosto 2026");
+  });
+
+  it("maneja enero y diciembre", () => {
+    expect(etiquetaMes("2026-01")).toBe("enero 2026");
+    expect(etiquetaMes("2026-12")).toBe("diciembre 2026");
   });
 });
