@@ -68,6 +68,36 @@ export function rangoMes(mes: string): { inicio: string; fin: string } {
   return { inicio, fin };
 }
 
+/** Mes actual en formato "YYYY-MM". */
+export function mesActual(): string {
+  return new Date().toISOString().slice(0, 7);
+}
+
+/**
+ * Desplaza un mes N posiciones (positivo = futuro, negativo = pasado).
+ * Función pura. @param mes formato "YYYY-MM"
+ */
+export function desplazarMes(mes: string, delta: number): string {
+  const [year, month] = mes.split("-").map(Number);
+  // month es 1-12; el índice 0-based facilita el cálculo con Date
+  const d = new Date(Date.UTC(year, month - 1 + delta, 1));
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
+const NOMBRES_MES = [
+  "enero", "febrero", "marzo", "abril", "mayo", "junio",
+  "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+];
+
+/**
+ * Etiqueta legible de un mes. Ej: "2026-08" → "agosto 2026".
+ * Función pura. @param mes formato "YYYY-MM"
+ */
+export function etiquetaMes(mes: string): string {
+  const [year, month] = mes.split("-").map(Number);
+  return `${NOMBRES_MES[month - 1]} ${year}`;
+}
+
 // ── Helpers ─────────────────────────────────────────────────────────────
 
 /** Suma una lista de valores numéricos, tolerando null/undefined. */

@@ -78,3 +78,88 @@ export async function deleteCuenta(id: number) {
   if (error) throw new Error(error.message);
   revalidatePath("/config");
 }
+
+// ── Datos de ejemplo (seed) ─────────────────────────────────────────────
+
+/**
+ * Carga datos de ejemplo equivalentes a los del Excel OFK.
+ * Solo actúa si el usuario no tiene datos maestros (evita duplicar).
+ * Útil para probar la app rápidamente.
+ */
+export async function cargarDatosEjemplo() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+
+  // Idempotencia: no cargar si ya hay categorías
+  const { count } = await supabase
+    .from("categorias")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", user.id);
+  if (count && count > 0) return;
+
+  // Categorías (mismas del Excel)
+  const { data: categorias } = await supabase
+    .from("categorias")
+    .insert([
+      { nombre: "Sueldo", tipo: "Ingreso", user_id: user.id },
+      { nombre: "Freelance", tipo: "Ingreso", user_id: user.id },
+      { nombre: "Alimentación", tipo: "Gasto", user_id: user.id },
+      { nombre: "Transporte", tipo: "Gasto", user_id: user.id },
+    ])
+    .select("id, nombre, tipo");
+
+  // Cuentas (mismas del Excel)
+  const { data: cuentas } = await supabase
+    .from("cuentas")
+    .insert([
+      { nombre: "Efectivo", saldo_inicial: 0, user_id: user.id },
+      { nombre: "Banco", saldo_inicial: 0, user_id: user.id },
+      { nombre: "Tarjeta", saldo_inicial: 0, user_id: user.id },
+    ])
+    .select("id, nombre");
+
+  if (!categorias || !cuentas) {
+    revalidatePath("/config");
+    return;
+  }
+
+  const catSueldo = categorias.find((c) => c.nombre === "Sueldo")?.id;
+  const catAlim = categorias.find((c) => c.nombre === "Alimentación")?.id;
+  const ctaBanco = cuentas.find((c) => c.nombre === "Banco")?.id;
+  const ctaEfectivo = cuentas.find((c) => c.nombre === "Efectivo")?.id;
+
+  const hoy = new Date().toISOString().split("T")[0];
+
+  // Ingreso y gasto de ejemplo (equivalentes al Excel: 3500 y 120)
+  if (catSueldo && ctaBanco) {
+    await supabase.from("ingresos").insert({
+      fecha: hoy,
+      categoria_id: catSueldo,
+      cuenta_id: ctaBanco,
+      valor: 3500,
+      descripcion: "Sueldo (ejemplo)",
+      user_id: user.id,
+    });
+  }
+  if (catAlim && ctaEfectivo) {
+    await supabase.from("gastos").insert({
+      fecha: hoy,
+      categoria_id: catAlim,
+      cuenta_id: ctaEfectivo,
+      valor: 120,
+      descripcion: "Supermercado (ejemplo)",
+      user_id: user.id,
+    });
+  }
+
+  // Pagos de ejemplo (mismos estados del Excel)
+  await supabase.from("pagos").insert([
+    { concepto: "Internet", fecha_vencimiento: hoy, valor: 45, estado: "Pendiente", user_id: user.id },
+    { concepto: "Seguro", fecha_vencimiento: hoy, valor: 120, estado: "Pendiente", user_id: user.id },
+    { concepto: "Gimnasio", fecha_vencimiento: hoy, valor: 35, estado: "Vencido", user_id: user.id },
+  ]);
+
+  revalidatePath("/config");
+  revalidatePath("/dashboard");
+}

@@ -3,7 +3,14 @@ import { calcularIndicadores, rangoMes, resultadoVacio } from "./calculations";
 import type { DatosMotor, MotorResult } from "./types";
 
 export type { MotorResult, DatosMotor } from "./types";
-export { calcularIndicadores, rangoMes, resultadoVacio } from "./calculations";
+export {
+  calcularIndicadores,
+  rangoMes,
+  resultadoVacio,
+  mesActual,
+  desplazarMes,
+  etiquetaMes,
+} from "./calculations";
 
 /**
  * Obtiene los datos crudos del Motor desde Supabase para el usuario y mes dados.

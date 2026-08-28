@@ -1,6 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/layout/page-header";
-import { addCategoria, deleteCategoria, addCuenta, deleteCuenta } from "./actions";
+import {
+  addCategoria,
+  deleteCategoria,
+  addCuenta,
+  deleteCuenta,
+  cargarDatosEjemplo,
+} from "./actions";
 
 export default async function ConfigPage() {
   const supabase = await createClient();
@@ -21,9 +27,28 @@ export default async function ConfigPage() {
     .eq("user_id", user.id)
     .order("nombre");
 
+  const sinDatos = (!categorias || categorias.length === 0) && (!cuentas || cuentas.length === 0);
+
   return (
     <>
       <PageHeader title="Configuración" />
+
+      {/* Datos de ejemplo — solo si no hay nada configurado */}
+      {sinDatos && (
+        <form action={cargarDatosEjemplo} className="mb-6">
+          <div className="p-4 rounded-lg border border-dashed border-[var(--border)] text-center">
+            <p className="text-sm text-[var(--muted-foreground)] mb-3">
+              ¿Primera vez? Carga datos de ejemplo para probar la app.
+            </p>
+            <button
+              type="submit"
+              className="px-4 py-2 text-sm rounded-lg bg-[var(--primary)] text-[var(--primary-foreground)] font-medium hover:opacity-90 transition-opacity"
+            >
+              Cargar datos de ejemplo
+            </button>
+          </div>
+        </form>
+      )}
 
       {/* Categorías */}
       <section className="mb-8">

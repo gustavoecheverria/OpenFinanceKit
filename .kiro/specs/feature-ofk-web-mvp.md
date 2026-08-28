@@ -311,9 +311,13 @@ No se requiere configuración de GitHub Actions — Vercel lo hace nativo con la
 
 ### Fase 3 — Dashboard y UX
 
-- [ ] TAREA-013: Implementar Dashboard con 6 indicator cards
-- [ ] TAREA-014: Optimizar UX móvil (formularios rápidos, navegación touch)
-- [ ] TAREA-015: Agregar seed data (mismos datos de ejemplo del Excel)
+- [x] TAREA-013: Implementar Dashboard con 6 indicator cards (adelantado en Fase 2)
+- [ ] TAREA-014: Optimizar UX móvil — desglosada en:
+  - [ ] TAREA-014a: Selector de mes en Dashboard (Motor calcula el mes elegido)
+  - [ ] TAREA-014b: Estados de carga en formularios (previene doble submit)
+  - [ ] TAREA-014c: Manejo de errores amigable (no pantalla de error de Next)
+  - [ ] TAREA-014d: Pulido — login centrado + empty states (guiar a Config)
+- [ ] TAREA-015: Botón "Cargar datos de ejemplo" (seed opcional dentro de la app)
 
 ### Fase 4 — Deploy y validación
 
