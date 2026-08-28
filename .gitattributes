@@ -1,0 +1,39 @@
+# OpenFinanceKit — Normalización de fin de línea
+# Garantiza consistencia de line-endings entre Windows, macOS y Linux.
+
+# Por defecto: git normaliza a LF en el repo, respeta el SO al hacer checkout.
+* text=auto eol=lf
+
+# Archivos de texto explícitos (LF)
+*.ts    text eol=lf
+*.tsx   text eol=lf
+*.js    text eol=lf
+*.jsx   text eol=lf
+*.mjs   text eol=lf
+*.cjs   text eol=lf
+*.json  text eol=lf
+*.md    text eol=lf
+*.css   text eol=lf
+*.html  text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+*.sql   text eol=lf
+*.sh    text eol=lf
+*.py    text eol=lf
+*.txt   text eol=lf
+.gitignore     text eol=lf
+.gitattributes text eol=lf
+
+# Archivos binarios — nunca normalizar
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.webp  binary
+*.ico   binary
+*.pdf   binary
+*.xlsx  binary
+*.xls   binary
+*.woff  binary
+*.woff2 binary
+*.ttf   binary
