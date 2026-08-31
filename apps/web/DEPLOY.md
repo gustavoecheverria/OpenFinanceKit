@@ -1,5 +1,7 @@
 # OFK Web — Guía de Deploy (Vercel)
 
+> ¿Configurando el entorno en un dispositivo nuevo? Ver [DEVELOPMENT.md](./DEVELOPMENT.md).
+
 ## Requisitos previos
 
 - Cuenta en [Vercel](https://vercel.com) (gratis, Hobby plan)
