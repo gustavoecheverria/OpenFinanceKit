@@ -1,9 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/layout/page-header";
+import { CategoriaRow } from "@/components/config/categoria-row";
+import { CuentaRow } from "@/components/config/cuenta-row";
 import {
   addCategoria,
+  updateCategoria,
   deleteCategoria,
   addCuenta,
+  updateCuenta,
   deleteCuenta,
   cargarDatosEjemplo,
 } from "./actions";
@@ -81,30 +85,12 @@ export default async function ConfigPage() {
         {categorias && categorias.length > 0 ? (
           <ul className="space-y-2">
             {categorias.map((cat) => (
-              <li
+              <CategoriaRow
                 key={cat.id}
-                className="flex items-center justify-between px-3 py-2 bg-[var(--muted)] rounded-lg"
-              >
-                <div>
-                  <span className="text-sm font-medium">{cat.nombre}</span>
-                  <span className={`ml-2 text-xs px-1.5 py-0.5 rounded ${
-                    cat.tipo === "Ingreso"
-                      ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
-                      : "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300"
-                  }`}>
-                    {cat.tipo}
-                  </span>
-                </div>
-                <form action={deleteCategoria.bind(null, cat.id)}>
-                  <button
-                    type="submit"
-                    className="text-[var(--muted-foreground)] hover:text-[var(--destructive)] text-sm"
-                    aria-label={`Eliminar ${cat.nombre}`}
-                  >
-                    ✕
-                  </button>
-                </form>
-              </li>
+                categoria={cat}
+                onUpdate={updateCategoria}
+                onDelete={deleteCategoria}
+              />
             ))}
           </ul>
         ) : (
@@ -146,26 +132,12 @@ export default async function ConfigPage() {
         {cuentas && cuentas.length > 0 ? (
           <ul className="space-y-2">
             {cuentas.map((cuenta) => (
-              <li
+              <CuentaRow
                 key={cuenta.id}
-                className="flex items-center justify-between px-3 py-2 bg-[var(--muted)] rounded-lg"
-              >
-                <div>
-                  <span className="text-sm font-medium">{cuenta.nombre}</span>
-                  <span className="ml-2 text-xs text-[var(--muted-foreground)]">
-                    ${Number(cuenta.saldo_inicial).toLocaleString("es", { minimumFractionDigits: 2 })}
-                  </span>
-                </div>
-                <form action={deleteCuenta.bind(null, cuenta.id)}>
-                  <button
-                    type="submit"
-                    className="text-[var(--muted-foreground)] hover:text-[var(--destructive)] text-sm"
-                    aria-label={`Eliminar ${cuenta.nombre}`}
-                  >
-                    ✕
-                  </button>
-                </form>
-              </li>
+                cuenta={cuenta}
+                onUpdate={updateCuenta}
+                onDelete={deleteCuenta}
+              />
             ))}
           </ul>
         ) : (
