@@ -14,11 +14,21 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: 1,
-  reporter: process.env.CI ? "github" : "list",
+
+  // Reportes: HTML navegable + salida en consola. El HTML queda en qa/reports.
+  reporter: [
+    ["html", { outputFolder: "../../qa/reports/playwright", open: "never" }],
+    [process.env.CI ? "github" : "list"],
+  ],
+
+  // Carpeta de artefactos (screenshots, videos, traces) — evidencia en qa/.
+  outputDir: "../../qa/evidence/e2e",
 
   use: {
     baseURL: "http://localhost:3000",
-    trace: "on-first-retry",
+    screenshot: "on",  // captura al inicio y fin de cada test
+    video: "on",       // graba video completo de cada test
+    trace: "on",       // trace completo: cada acción, screenshot, red y DOM
   },
 
   projects: [
@@ -29,6 +39,15 @@ export default defineConfig({
       use: {
         ...devices["Desktop Chrome"],
         // Reutiliza la sesión creada en el setup
+        storageState: "e2e/.auth/user.json",
+      },
+      dependencies: ["setup"],
+    },
+    {
+      // OFK Web es mobile-first: validar también en viewport móvil
+      name: "mobile-chrome",
+      use: {
+        ...devices["Pixel 5"],
         storageState: "e2e/.auth/user.json",
       },
       dependencies: ["setup"],

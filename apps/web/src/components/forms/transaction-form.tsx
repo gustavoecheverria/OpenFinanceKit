@@ -130,6 +130,7 @@ export function TransactionForm({
           id="descripcion"
           name="descripcion"
           type="text"
+          maxLength={255}
           placeholder="Ej: Sueldo, café, supermercado..."
           className="w-full px-3 py-2 border border-[var(--border)] rounded-lg bg-[var(--background)]"
         />

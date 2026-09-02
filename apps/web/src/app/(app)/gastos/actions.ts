@@ -4,6 +4,16 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import type { FormState } from "@/lib/form-state";
 
+// ── Límites de longitud (G1) ────────────────────────────────────────────
+const MAX_DESCRIPCION = 255;
+
+// ── Validación de fecha ISO (G4) ────────────────────────────────────────
+function esFechaValida(fecha: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) return false;
+  const d = new Date(fecha);
+  return !isNaN(d.getTime());
+}
+
 export async function addGasto(
   _prevState: FormState,
   formData: FormData
@@ -16,10 +26,19 @@ export async function addGasto(
   const categoriaId = parseInt(formData.get("categoria_id") as string);
   const cuentaId = parseInt(formData.get("cuenta_id") as string);
   const valor = parseFloat(formData.get("valor") as string);
-  const descripcion = (formData.get("descripcion") as string) || null;
+  // G2: trim; G1: maxLength
+  const descripcionRaw = (formData.get("descripcion") as string)?.trim() || null;
+  const descripcion =
+    descripcionRaw && descripcionRaw.length > MAX_DESCRIPCION
+      ? descripcionRaw.slice(0, MAX_DESCRIPCION)
+      : descripcionRaw;
 
   if (!fecha || isNaN(categoriaId) || isNaN(cuentaId)) {
     return { error: "Completa la categoría, la cuenta y la fecha." };
+  }
+  // G4: validar formato y que sea fecha real
+  if (!esFechaValida(fecha)) {
+    return { error: "La fecha no es válida." };
   }
   if (isNaN(valor) || valor <= 0) {
     return { error: "El valor debe ser mayor que cero." };
