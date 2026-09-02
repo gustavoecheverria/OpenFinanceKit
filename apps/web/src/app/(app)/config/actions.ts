@@ -2,19 +2,30 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import type { FormState } from "@/lib/form-state";
+
+// ── Límites de longitud (G1) ────────────────────────────────────────────
+const MAX_NOMBRE = 100;
+const MAX_DESCRIPCION = 255;
 
 // ── Categorías ──────────────────────────────────────────────────────────
 
-export async function addCategoria(formData: FormData) {
+export async function addCategoria(
+  _prevState: FormState,
+  formData: FormData
+): Promise<FormState> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("No autenticado");
+  if (!user) return { error: "Tu sesión expiró. Vuelve a iniciar sesión." };
 
-  const nombre = formData.get("nombre") as string;
+  // G2: trim + G1: maxLength
+  const nombre = (formData.get("nombre") as string)?.trim();
   const tipo = formData.get("tipo") as string;
 
-  if (!nombre || !tipo) throw new Error("Nombre y tipo son obligatorios");
-  if (tipo !== "Ingreso" && tipo !== "Gasto") throw new Error("Tipo inválido");
+  if (!nombre) return { error: "El nombre es obligatorio." };
+  if (nombre.length > MAX_NOMBRE)
+    return { error: `El nombre no puede superar ${MAX_NOMBRE} caracteres.` };
+  if (tipo !== "Ingreso" && tipo !== "Gasto") return { error: "Tipo inválido." };
 
   const { error } = await supabase.from("categorias").insert({
     nombre,
@@ -22,8 +33,9 @@ export async function addCategoria(formData: FormData) {
     user_id: user.id,
   });
 
-  if (error) throw new Error(error.message);
+  if (error) return { error: "No se pudo crear la categoría. Intenta de nuevo." };
   revalidatePath("/config");
+  return { error: null, ok: true };
 }
 
 export async function updateCategoria(
@@ -38,6 +50,8 @@ export async function updateCategoria(
   const tipo = formData.get("tipo") as string;
 
   if (!nombre) return { error: "El nombre es obligatorio." };
+  if (nombre.length > MAX_NOMBRE)
+    return { error: `El nombre no puede superar ${MAX_NOMBRE} caracteres.` };
   if (tipo !== "Ingreso" && tipo !== "Gasto") return { error: "Tipo inválido." };
 
   const { error } = await supabase
@@ -81,16 +95,23 @@ export async function deleteCategoria(id: number): Promise<{ error: string | nul
 
 // ── Cuentas ─────────────────────────────────────────────────────────────
 
-export async function addCuenta(formData: FormData) {
+export async function addCuenta(
+  _prevState: FormState,
+  formData: FormData
+): Promise<FormState> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("No autenticado");
+  if (!user) return { error: "Tu sesión expiró. Vuelve a iniciar sesión." };
 
-  const nombre = formData.get("nombre") as string;
+  // G2: trim + G1: maxLength
+  const nombre = (formData.get("nombre") as string)?.trim();
   const saldoInicial = parseFloat(formData.get("saldo_inicial") as string);
 
-  if (!nombre) throw new Error("Nombre es obligatorio");
-  if (isNaN(saldoInicial) || saldoInicial < 0) throw new Error("Saldo inicial inválido");
+  if (!nombre) return { error: "El nombre es obligatorio." };
+  if (nombre.length > MAX_NOMBRE)
+    return { error: `El nombre no puede superar ${MAX_NOMBRE} caracteres.` };
+  if (isNaN(saldoInicial) || saldoInicial < 0)
+    return { error: "El saldo inicial debe ser un número mayor o igual a cero." };
 
   const { error } = await supabase.from("cuentas").insert({
     nombre,
@@ -98,8 +119,9 @@ export async function addCuenta(formData: FormData) {
     user_id: user.id,
   });
 
-  if (error) throw new Error(error.message);
+  if (error) return { error: "No se pudo crear la cuenta. Intenta de nuevo." };
   revalidatePath("/config");
+  return { error: null, ok: true };
 }
 
 export async function updateCuenta(
@@ -114,6 +136,8 @@ export async function updateCuenta(
   const saldoInicial = parseFloat(formData.get("saldo_inicial") as string);
 
   if (!nombre) return { error: "El nombre es obligatorio." };
+  if (nombre.length > MAX_NOMBRE)
+    return { error: `El nombre no puede superar ${MAX_NOMBRE} caracteres.` };
   if (isNaN(saldoInicial) || saldoInicial < 0) {
     return { error: "El saldo inicial debe ser un número mayor o igual a cero." };
   }

@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/layout/page-header";
 import { CategoriaRow } from "@/components/config/categoria-row";
 import { CuentaRow } from "@/components/config/cuenta-row";
+import { AddCategoriaForm } from "@/components/config/add-categoria-form";
+import { AddCuentaForm } from "@/components/config/add-cuenta-form";
 import {
   addCategoria,
   updateCategoria,
@@ -58,29 +60,8 @@ export default async function ConfigPage() {
       <section className="mb-8">
         <h2 className="text-lg font-semibold mb-3">Categorías</h2>
 
-        <form action={addCategoria} className="flex gap-2 mb-4">
-          <input
-            name="nombre"
-            type="text"
-            placeholder="Nombre"
-            required
-            className="flex-1 px-3 py-2 border border-[var(--border)] rounded-lg bg-[var(--background)] text-sm"
-          />
-          <select
-            name="tipo"
-            required
-            className="px-3 py-2 border border-[var(--border)] rounded-lg bg-[var(--background)] text-sm"
-          >
-            <option value="Ingreso">Ingreso</option>
-            <option value="Gasto">Gasto</option>
-          </select>
-          <button
-            type="submit"
-            className="px-3 py-2 bg-[var(--primary)] text-[var(--primary-foreground)] rounded-lg text-sm font-medium"
-          >
-            +
-          </button>
-        </form>
+        {/* Formulario de creación con feedback de error (G3) */}
+        <AddCategoriaForm action={addCategoria} />
 
         {categorias && categorias.length > 0 ? (
           <ul className="space-y-2">
@@ -104,30 +85,8 @@ export default async function ConfigPage() {
       <section>
         <h2 className="text-lg font-semibold mb-3">Cuentas</h2>
 
-        <form action={addCuenta} className="flex gap-2 mb-4">
-          <input
-            name="nombre"
-            type="text"
-            placeholder="Nombre"
-            required
-            className="flex-1 px-3 py-2 border border-[var(--border)] rounded-lg bg-[var(--background)] text-sm"
-          />
-          <input
-            name="saldo_inicial"
-            type="number"
-            step="0.01"
-            min="0"
-            placeholder="Saldo"
-            required
-            className="w-24 px-3 py-2 border border-[var(--border)] rounded-lg bg-[var(--background)] text-sm"
-          />
-          <button
-            type="submit"
-            className="px-3 py-2 bg-[var(--primary)] text-[var(--primary-foreground)] rounded-lg text-sm font-medium"
-          >
-            +
-          </button>
-        </form>
+        {/* Formulario de creación con feedback de error (G3) */}
+        <AddCuentaForm action={addCuenta} />
 
         {cuentas && cuentas.length > 0 ? (
           <ul className="space-y-2">

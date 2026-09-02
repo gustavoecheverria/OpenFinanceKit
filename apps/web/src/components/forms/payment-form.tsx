@@ -62,6 +62,7 @@ export function PaymentForm({
           name="concepto"
           type="text"
           required
+          maxLength={255}
           placeholder="Ej: Internet, seguro, gimnasio..."
           className="w-full px-3 py-2 border border-[var(--border)] rounded-lg bg-[var(--background)]"
         />
