@@ -10,7 +10,7 @@ export default async function PagosPage() {
 
   const { data: pagos } = await supabase
     .from("pagos")
-    .select("*")
+    .select("*, cuentas(nombre)")
     .eq("user_id", user.id)
     .order("fecha_vencimiento", { ascending: true })
     .limit(50);
@@ -31,7 +31,7 @@ export default async function PagosPage() {
 
       {pagos && pagos.length > 0 ? (
         <ul className="space-y-2">
-          {pagos.map((pago) => (
+          {pagos.map((pago: any) => (
             <li
               key={pago.id}
               className="px-3 py-3 bg-[var(--muted)] rounded-lg"
@@ -45,6 +45,11 @@ export default async function PagosPage() {
                     <span className="text-sm truncate">{pago.concepto}</span>
                   </div>
                   <div className="flex items-center gap-2 mt-1">
+                    {pago.cuentas && (
+                      <span className="text-xs text-[var(--muted-foreground)]">
+                        Cuenta: {pago.cuentas.nombre}
+                      </span>
+                    )}
                     <span className="text-xs text-[var(--muted-foreground)]">
                       Vence: {pago.fecha_vencimiento}
                     </span>

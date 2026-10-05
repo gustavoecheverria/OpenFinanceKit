@@ -5,6 +5,11 @@ import { useRouter } from "next/navigation";
 import { SubmitButton } from "./submit-button";
 import { initialFormState, type FormState } from "@/lib/form-state";
 
+interface Account {
+  id: number;
+  nombre: string;
+}
+
 /**
  * Formulario para registrar un pago programado.
  * Usa useActionState para mostrar errores amigables sin salir de la página.
@@ -12,8 +17,10 @@ import { initialFormState, type FormState } from "@/lib/form-state";
  */
 export function PaymentForm({
   action,
+  cuentas = [],
 }: {
   action: (prev: FormState, data: FormData) => Promise<FormState>;
+  cuentas?: Account[];
 }) {
   const [state, formAction] = useActionState(action, initialFormState);
   const router = useRouter();
@@ -81,6 +88,26 @@ export function PaymentForm({
           defaultValue={today}
           className="w-full px-3 py-2 border border-[var(--border)] rounded-lg bg-[var(--background)]"
         />
+      </div>
+
+      {/* Cuenta */}
+      <div>
+        <label htmlFor="cuenta_id" className="block text-sm font-medium mb-1">
+          Cuenta
+        </label>
+        <select
+          id="cuenta_id"
+          name="cuenta_id"
+          required
+          className="w-full px-3 py-2 border border-[var(--border)] rounded-lg bg-[var(--background)]"
+        >
+          <option value="">Selecciona una cuenta...</option>
+          {cuentas.map((cuenta) => (
+            <option key={cuenta.id} value={cuenta.id}>
+              {cuenta.nombre}
+            </option>
+          ))}
+        </select>
       </div>
 
       {/* Estado */}

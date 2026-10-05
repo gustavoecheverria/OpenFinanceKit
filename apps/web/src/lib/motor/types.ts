@@ -32,3 +32,29 @@ export interface DatosMotor {
   pagosVencidos: number[];
   pagosPagados: number[];
 }
+
+/** Datos crudos de una cuenta para calcular su saldo. */
+export interface DatosPorCuenta {
+  id: number;
+  nombre: string;
+  saldoInicial: number;
+  ingresos: number[];
+  gastos: number[];
+  pagosPagados: number[];
+}
+
+/** Saldo calculado de una cuenta individual. */
+export interface SaldoCuenta {
+  id: number;
+  nombre: string;
+  saldoInicial: number;
+  totalIngresos: number;
+  totalGastos: number;
+  totalPagosPagados: number;
+  saldoActual: number;
+}
+
+/** Resultado de la función calcularSaldosPorCuenta. */
+export interface SaldosPorCuentaResult {
+  cuentas: SaldoCuenta[];
+}
