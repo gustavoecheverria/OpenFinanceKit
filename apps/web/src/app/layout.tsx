@@ -31,7 +31,7 @@ export default function RootLayout({
       <head>
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
       </head>
-      <body className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
+      <body className="bg-[var(--background)] text-[var(--foreground)]">
         <PWARegister />
         {children}
       </body>
