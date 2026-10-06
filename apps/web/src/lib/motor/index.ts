@@ -11,6 +11,8 @@ export {
   mesActual,
   desplazarMes,
   etiquetaMes,
+
+export { obtenerPagosSinAsignar, reasignarPagoACuenta };
 } from "./calculations";
 
 /**
@@ -161,4 +163,93 @@ export async function obtenerSaldosPorCuenta(): Promise<SaldosPorCuentaResult> {
 
   const datosPorCuenta = await obtenerSaldosPorCuentaData(user.id);
   return calcularSaldosPorCuenta(datosPorCuenta);
+}
+
+/**
+ * Obtiene los pagos del usuario que tienen cuenta_id = NULL.
+ * Estos son pagos antiguos creados antes de la migración 002.
+ * Están descontados del saldo global pero no de ninguna cuenta individual.
+ */
+export async function obtenerPagosSinAsignar(): Promise<Array<{
+  id: number;
+  concepto: string;
+  fecha_vencimiento: string | null;
+  valor: number;
+  estado: string;
+}>> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return [];
+  }
+
+  const { data } = await supabase
+    .from("pagos")
+    .select("id, concepto, fecha_vencimiento, valor, estado")
+    .eq("user_id", user.id)
+    .is("cuenta_id", null)
+    .eq("estado", "Pagado")
+    .order("fecha_vencimiento", { ascending: false });
+
+  return data || [];
+}
+
+/**
+ * Reasigna un pago a una cuenta específica.
+ * Requiere que el usuario sea propietario del pago y la cuenta.
+ * RN-004: Modificación de datos vía Server Action.
+ */
+export async function reasignarPagoACuenta(
+  pagoId: number,
+  cuentaId: number
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: "No autenticado" };
+  }
+
+  // Validar que el pago pertenece al usuario y está sin asignar
+  const { data: pago, error: errorPago } = await supabase
+    .from("pagos")
+    .select("id, user_id, cuenta_id")
+    .eq("id", pagoId)
+    .eq("user_id", user.id)
+    .is("cuenta_id", null)
+    .single();
+
+  if (errorPago || !pago) {
+    return { success: false, error: "Pago no encontrado o ya está asignado" };
+  }
+
+  // Validar que la cuenta pertenece al usuario
+  const { data: cuenta, error: errorCuenta } = await supabase
+    .from("cuentas")
+    .select("id, user_id")
+    .eq("id", cuentaId)
+    .eq("user_id", user.id)
+    .single();
+
+  if (errorCuenta || !cuenta) {
+    return { success: false, error: "Cuenta no encontrada" };
+  }
+
+  // Reasignar el pago
+  const { error: errorUpdate } = await supabase
+    .from("pagos")
+    .update({ cuenta_id: cuentaId })
+    .eq("id", pagoId)
+    .eq("user_id", user.id);
+
+  if (errorUpdate) {
+    return { success: false, error: errorUpdate.message };
+  }
+
+  return { success: true };
 }
