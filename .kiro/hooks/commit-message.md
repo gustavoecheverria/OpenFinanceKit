@@ -45,6 +45,14 @@ Refs: #número-de-issue (si aplica)
 
 | Alcance | Área |
 |---------|------|
+| `web` | Cambios transversales en apps/web/ |
+| `motor` | Lógica de cálculos en src/lib/motor/ |
+| `auth` | Autenticación, login, middleware, Supabase Auth |
+| `gastos` | Módulo de gastos |
+| `ingresos` | Módulo de ingresos |
+| `pagos` | Módulo de pagos |
+| `dashboard` | Dashboard e indicadores |
+| `configuracion` | Módulo de configuración de la app (categorías, cuentas) |
 | `excel` | Archivos en product/excel/ |
 | `docs` | Archivos en docs/ |
 | `spec` | Archivos en .kiro/specs/ |

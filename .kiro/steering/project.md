@@ -8,8 +8,8 @@ inclusion: always
 
 - **Nombre:** OpenFinanceKit
 - **Acrónimo:** OFK
-- **Versión actual:** v0.1.0
-- **Sprint activo:** Sprint 1 — Architecture Freeze
+- **Versión actual:** v0.2.0
+- **Rama activa:** develop (integración)
 - **Repositorio:** https://github.com/gustavoecheverria/OpenFinanceKit
 - **Rama estable:** `main`
 - **Rama de integración:** `develop`
@@ -22,13 +22,13 @@ OpenFinanceKit es un framework de gestión financiera modular. No es solo un Exc
 
 ```
 OpenFinanceKit
-├── OFK Excel        ← Implementación actual
-├── OFK Web          ← Futuro
+├── OFK Excel        ← Implementación de referencia (product/excel/)
+├── OFK Web          ← Implementación activa. Next.js 15 + Supabase, app PWA
 ├── OFK Mobile       ← Futuro
 ├── OFK API          ← Futuro
 ├── OFK Power BI     ← Futuro
 ├── OFK AI Assistant ← Futuro
-└── OFK Automation   ← Futuro (Sprint 7+)
+└── OFK Automation   ← Futuro
 ```
 
 ## Estructura del repositorio

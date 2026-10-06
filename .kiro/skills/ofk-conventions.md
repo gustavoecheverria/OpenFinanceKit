@@ -75,7 +75,7 @@ v MAJOR . MINOR . PATCH
   └─────────────────── Cambios incompatibles en arquitectura
 ```
 
-Versión actual: `v0.1.0`
+Versión actual: `v0.2.0`
 
 ## Reglas de negocio vigentes
 
