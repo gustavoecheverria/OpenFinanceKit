@@ -19,7 +19,13 @@ export default async function GastosPage({
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
-  // Obtener todas las cuentas
+  // Obtener todas las categorías y cuentas para los selects del modal
+  const { data: categorias } = await supabase
+    .from("categorias")
+    .select("id, nombre")
+    .eq("user_id", user.id)
+    .order("nombre");
+
   const { data: cuentas } = await supabase
     .from("cuentas")
     .select("id, nombre")
@@ -73,15 +79,8 @@ export default async function GastosPage({
       />
 
       <GastosListClient
-        cuentaId={cuentaId}
-        mes={mes}
-        page={page}
+        categorias={categorias || []}
         cuentas={cuentas || []}
-        nombreMes={nombreMes}
-        count={count || 0}
-        pageSize={pageSize}
-        offset={offset}
-        totalPages={totalPages}
         gastos={gastos || []}
       />
     </>
