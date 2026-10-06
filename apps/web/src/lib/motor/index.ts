@@ -11,8 +11,6 @@ export {
   mesActual,
   desplazarMes,
   etiquetaMes,
-
-export { obtenerPagosSinAsignar, reasignarPagoACuenta };
 } from "./calculations";
 
 /**

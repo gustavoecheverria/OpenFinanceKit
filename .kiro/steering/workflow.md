@@ -62,10 +62,24 @@ main        ← Solo releases aprobados por el usuario
 
 ## Flujo para commits
 
-1. Kiro **nunca** hace commit sin antes pasar por el hook `commit-message`
-2. El hook analiza `git diff --staged` y propone el mensaje
-3. El usuario aprueba o ajusta el mensaje
-4. Solo entonces se ejecuta el `git commit`
+1. Kiro **SIEMPRE** pregunta al usuario antes de hacer cualquier commit
+2. El usuario valida localmente los cambios (probar en local, revisar código)
+3. Solo después de validación, el usuario autoriza explícitamente: "apruebo"
+4. Kiro hace `git add` de los archivos correspondientes
+5. Kiro ejecuta el hook `commit-message` (genera el mensaje automático)
+6. Kiro presenta el mensaje al usuario para aprobación
+7. Usuario aprueba el mensaje: "OK el commit"
+8. Solo entonces Kiro ejecuta `git commit`
+9. **NO SE HACE PUSH SIN AUTORIZACIÓN EXPLÍCITA**
+
+### Regla de Oro
+
+```
+NUNCA hacer commit o push sin validación y autorización previa del usuario.
+Ni siquiera si es "obvio" que está bien.
+Ni siquiera si "ya pasó QA".
+SIEMPRE esperar explícitamente: "apruebo" o "OK"
+```
 
 ---
 
@@ -74,7 +88,24 @@ main        ← Solo releases aprobados por el usuario
 - **Issues:** Kiro puede crear issues si el usuario lo solicita. Nunca sin pedirlo.
 - **GitHub Projects:** Kiro puede mover tarjetas si el usuario lo solicita.
 - **Notion:** Kiro puede crear/editar páginas si el usuario lo solicita.
-- **Push:** Solo con autorización explícita en cada caso.
+- **Push a origin:** **PROHIBIDO sin autorización explícita del usuario en CADA PUSH**
+  - Antes de cualquier push (develop, main, feature): "¿Autorizo push?"
+  - Usuario responde: "sí apruebo" o "no, haz X primero"
+  - Solo entonces: `git push`
+
+### Secuencia correcta
+
+```
+Kiro: Cambios listos en feature/X. ¿Validás en local y autorizás el commit?
+Usuario: [valida en local] Apruebo
+Kiro: [hace commit]
+Kiro: ¿Autorizás merge a develop?
+Usuario: Sí, merge
+Kiro: [hace merge]
+Kiro: ¿Autorizás push a origin/develop?
+Usuario: Sí, pushea
+Kiro: [push]
+```
 
 ---
 
