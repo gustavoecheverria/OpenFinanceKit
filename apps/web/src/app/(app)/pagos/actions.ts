@@ -27,6 +27,7 @@ export async function addPago(
   const fechaVencimiento = formData.get("fecha_vencimiento") as string;
   const valor = parseFloat(formData.get("valor") as string);
   const estado = (formData.get("estado") as string) || "Pendiente";
+  const cuentaId = parseInt(formData.get("cuenta_id") as string);
 
   if (!concepto || !fechaVencimiento) {
     return { error: "Completa el concepto y la fecha de vencimiento." };
@@ -44,6 +45,21 @@ export async function addPago(
   if (!["Pendiente", "Pagado", "Vencido"].includes(estado)) {
     return { error: "Estado inválido." };
   }
+  if (isNaN(cuentaId) || cuentaId <= 0) {
+    return { error: "Debes seleccionar una cuenta válida." };
+  }
+
+  // Verificar que la cuenta pertenece al usuario (RN-002 security check)
+  const { data: cuenta } = await supabase
+    .from("cuentas")
+    .select("id")
+    .eq("id", cuentaId)
+    .eq("user_id", user.id)
+    .single();
+
+  if (!cuenta) {
+    return { error: "La cuenta seleccionada no existe o no pertenece a ti." };
+  }
 
   const { error } = await supabase.from("pagos").insert({
     concepto,
@@ -51,6 +67,7 @@ export async function addPago(
     valor,
     estado,
     user_id: user.id,
+    cuenta_id: cuentaId,
   });
 
   if (error) return { error: "No se pudo guardar el pago. Intenta de nuevo." };

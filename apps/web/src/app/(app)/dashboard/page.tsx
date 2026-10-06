@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { calcularMotor, mesActual, desplazarMes, etiquetaMes } from "@/lib/motor";
+import { calcularMotor, mesActual, desplazarMes, etiquetaMes, obtenerSaldosPorCuenta } from "@/lib/motor";
 import { PageHeader } from "@/components/layout/page-header";
 import { MonthSelector } from "@/components/dashboard/month-selector";
+import { AccountBalanceList } from "@/components/dashboard/account-balance-list";
 
 export default async function DashboardPage({
   searchParams,
@@ -14,6 +15,7 @@ export default async function DashboardPage({
   const mes = /^\d{4}-\d{2}$/.test(params.mes ?? "") ? params.mes! : hoy;
 
   const motor = await calcularMotor(mes);
+  const saldosPorCuenta = await obtenerSaldosPorCuenta();
 
   // Sin actividad histórica = usuario nuevo (saldo, ingresos y gastos en cero)
   const sinActividad =
@@ -66,6 +68,9 @@ export default async function DashboardPage({
           variant="default"
         />
       </div>
+
+      {/* Saldos por cuenta */}
+      <AccountBalanceList cuentas={saldosPorCuenta.cuentas} />
 
       {/* Empty state: sin actividad histórica, guiar al usuario */}
       {sinActividad && (

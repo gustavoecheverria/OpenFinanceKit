@@ -1,4 +1,4 @@
-import type { DatosMotor, MotorResult } from "./types";
+import type { DatosMotor, MotorResult, DatosPorCuenta, SaldosPorCuentaResult } from "./types";
 
 /**
  * Motor de cálculos de OpenFinanceKit — lógica pura.
@@ -19,7 +19,11 @@ export function calcularIndicadores(datos: DatosMotor): MotorResult {
 
   // Cálculos derivados
   const balanceMes = ingresosMes - gastosMes;
-  const saldoActual = sumaSaldosIniciales + totalIngresosHist - totalGastosHist;
+  // RN-002: Los pagos en estado "Pagado" se descuentan del saldo igual que los gastos.
+  // Solo se descuentan los que tienen cuenta_id (los creados antes de la migración
+  // tienen NULL y no se deben descontar porque no se sabe de dónde salieron).
+  const saldoActual =
+    sumaSaldosIniciales + totalIngresosHist - totalGastosHist - totalPagado;
   const disponibleRestante = saldoActual - pendientePago;
   const porcentajeGastado =
     ingresosMes > 0 ? Math.round((gastosMes / ingresosMes) * 1000) / 10 : 0;
@@ -96,6 +100,34 @@ const NOMBRES_MES = [
 export function etiquetaMes(mes: string): string {
   const [year, month] = mes.split("-").map(Number);
   return `${NOMBRES_MES[month - 1]} ${year}`;
+}
+
+/**
+ * Calcula el saldo actual de cada cuenta individualmente.
+ * Función pura — sin I/O. RN-002: La lógica vive en el Motor.
+ * @param datosPorCuenta array de datos crudos por cuenta
+ * @returns SaldosPorCuentaResult con cuentas calculadas
+ */
+export function calcularSaldosPorCuenta(
+  datosPorCuenta: DatosPorCuenta[]
+): SaldosPorCuentaResult {
+  const cuentas = datosPorCuenta.map((d) => {
+    const totalIngresos = sumar(d.ingresos);
+    const totalGastos = sumar(d.gastos);
+    const totalPagosPagados = sumar(d.pagosPagados);
+    const saldoActual =
+      d.saldoInicial + totalIngresos - totalGastos - totalPagosPagados;
+    return {
+      id: d.id,
+      nombre: d.nombre,
+      saldoInicial: d.saldoInicial,
+      totalIngresos,
+      totalGastos,
+      totalPagosPagados,
+      saldoActual,
+    };
+  });
+  return { cuentas };
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────────

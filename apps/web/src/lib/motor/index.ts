@@ -1,10 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
-import { calcularIndicadores, rangoMes, resultadoVacio } from "./calculations";
-import type { DatosMotor, MotorResult } from "./types";
+import { calcularIndicadores, rangoMes, resultadoVacio, calcularSaldosPorCuenta } from "./calculations";
+import type { DatosMotor, MotorResult, DatosPorCuenta, SaldosPorCuentaResult } from "./types";
 
-export type { MotorResult, DatosMotor } from "./types";
+export type { MotorResult, DatosMotor, DatosPorCuenta, SaldoCuenta, SaldosPorCuentaResult } from "./types";
 export {
   calcularIndicadores,
+  calcularSaldosPorCuenta,
   rangoMes,
   resultadoVacio,
   mesActual,
@@ -40,7 +41,7 @@ async function obtenerDatosMotor(
     supabase.from("cuentas").select("saldo_inicial").eq("user_id", userId),
     supabase.from("pagos").select("valor").eq("user_id", userId).eq("estado", "Pendiente"),
     supabase.from("pagos").select("valor").eq("user_id", userId).eq("estado", "Vencido"),
-    supabase.from("pagos").select("valor").eq("user_id", userId).eq("estado", "Pagado"),
+    supabase.from("pagos").select("valor").eq("user_id", userId).eq("estado", "Pagado").not("cuenta_id", "is", null),
   ]);
 
   return {
@@ -84,4 +85,80 @@ function extraer(
 ): number[] {
   if (!rows) return [];
   return rows.map((row) => Number(row[field] || 0));
+}
+
+/**
+ * Obtiene los saldos actuales de todas las cuentas del usuario.
+ * Capa de I/O — hace queries a Supabase y llama a calcularSaldosPorCuenta.
+ * Optimización posible: GROUP BY en SQL (pero por MVP usamos queries simples).
+ */
+async function obtenerSaldosPorCuentaData(
+  userId: string
+): Promise<DatosPorCuenta[]> {
+  const supabase = await createClient();
+
+  // Obtener todas las cuentas del usuario
+  const { data: cuentas } = await supabase
+    .from("cuentas")
+    .select("id, nombre, saldo_inicial")
+    .eq("user_id", userId)
+    .order("nombre");
+
+  if (!cuentas || cuentas.length === 0) {
+    return [];
+  }
+
+  // Para cada cuenta, obtener ingresos, gastos y pagos pagados
+  const datosPorCuenta: DatosPorCuenta[] = await Promise.all(
+    cuentas.map(async (cuenta) => {
+      const [{ data: ingresos }, { data: gastos }, { data: pagosPagados }] =
+        await Promise.all([
+          supabase
+            .from("ingresos")
+            .select("valor")
+            .eq("user_id", userId)
+            .eq("cuenta_id", cuenta.id),
+          supabase
+            .from("gastos")
+            .select("valor")
+            .eq("user_id", userId)
+            .eq("cuenta_id", cuenta.id),
+          supabase
+            .from("pagos")
+            .select("valor")
+            .eq("user_id", userId)
+            .eq("cuenta_id", cuenta.id)
+            .eq("estado", "Pagado"),
+        ]);
+
+      return {
+        id: cuenta.id,
+        nombre: cuenta.nombre,
+        saldoInicial: Number(cuenta.saldo_inicial),
+        ingresos: extraer(ingresos, "valor"),
+        gastos: extraer(gastos, "valor"),
+        pagosPagados: extraer(pagosPagados, "valor"),
+      };
+    })
+  );
+
+  return datosPorCuenta;
+}
+
+/**
+ * Wrapper público que obtiene y calcula los saldos por cuenta para el usuario autenticado.
+ * Si no hay usuario, devuelve un resultado vacío.
+ */
+export async function obtenerSaldosPorCuenta(): Promise<SaldosPorCuentaResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { cuentas: [] };
+  }
+
+  const datosPorCuenta = await obtenerSaldosPorCuentaData(user.id);
+  return calcularSaldosPorCuenta(datosPorCuenta);
 }

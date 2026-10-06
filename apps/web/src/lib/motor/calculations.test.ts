@@ -5,8 +5,9 @@ import {
   resultadoVacio,
   desplazarMes,
   etiquetaMes,
+  calcularSaldosPorCuenta,
 } from "./calculations";
-import type { DatosMotor } from "./types";
+import type { DatosMotor, DatosPorCuenta } from "./types";
 
 /**
  * Tests del Motor de OpenFinanceKit.
@@ -217,5 +218,83 @@ describe("etiquetaMes", () => {
   it("maneja enero y diciembre", () => {
     expect(etiquetaMes("2026-01")).toBe("enero 2026");
     expect(etiquetaMes("2026-12")).toBe("diciembre 2026");
+  });
+});
+
+
+describe("calcularSaldosPorCuenta", () => {
+  it("calcula correctamente el saldo de una sola cuenta", () => {
+    const datos: DatosPorCuenta[] = [
+      {
+        id: 1,
+        nombre: "Banco Principal",
+        saldoInicial: 1000,
+        ingresos: [500, 300],
+        gastos: [200],
+        pagosPagados: [100],
+      },
+    ];
+
+    const resultado = calcularSaldosPorCuenta(datos);
+
+    expect(resultado.cuentas).toHaveLength(1);
+    expect(resultado.cuentas[0]).toEqual({
+      id: 1,
+      nombre: "Banco Principal",
+      saldoInicial: 1000,
+      totalIngresos: 800,
+      totalGastos: 200,
+      totalPagosPagados: 100,
+      saldoActual: 1500, // 1000 + 800 - 200 - 100
+    });
+  });
+
+  it("calcula correctamente múltiples cuentas", () => {
+    const datos: DatosPorCuenta[] = [
+      {
+        id: 1,
+        nombre: "Banco",
+        saldoInicial: 1000,
+        ingresos: [500],
+        gastos: [200],
+        pagosPagados: [100],
+      },
+      {
+        id: 2,
+        nombre: "Efectivo",
+        saldoInicial: 500,
+        ingresos: [200],
+        gastos: [150],
+        pagosPagados: [0],
+      },
+    ];
+
+    const resultado = calcularSaldosPorCuenta(datos);
+
+    expect(resultado.cuentas).toHaveLength(2);
+    expect(resultado.cuentas[0].saldoActual).toBe(1200); // 1000 + 500 - 200 - 100
+    expect(resultado.cuentas[1].saldoActual).toBe(550); // 500 + 200 - 150 - 0
+  });
+
+  it("calcula saldo negativo cuando gastos + pagos > ingresos + inicial", () => {
+    const datos: DatosPorCuenta[] = [
+      {
+        id: 1,
+        nombre: "Banco",
+        saldoInicial: 100,
+        ingresos: [],
+        gastos: [200],
+        pagosPagados: [],
+      },
+    ];
+
+    const resultado = calcularSaldosPorCuenta(datos);
+
+    expect(resultado.cuentas[0].saldoActual).toBe(-100);
+  });
+
+  it("devuelve array vacío cuando no hay cuentas", () => {
+    const resultado = calcularSaldosPorCuenta([]);
+    expect(resultado.cuentas).toHaveLength(0);
   });
 });
