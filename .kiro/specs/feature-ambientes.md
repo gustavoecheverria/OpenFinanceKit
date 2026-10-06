@@ -4,17 +4,17 @@
 
 **Versión:** 0.2.0
 
-**Estado:** Draft
+**Estado:** ✅ Completado — Documentación implementada, Vercel configurado
 
 **Sprint:** Sprint 2
 
-**Rama:** feature/ambientes
+**Rama:** feature/ambientes (histórica, ya mergeada)
 
 **Issue:** N/A
 
 **Autor:** Gustavo Echeverría
 
-**Última actualización:** 2026-08-27
+**Última actualización:** 2026-10-05 (actualizado: confirmado en producción)
 
 ---
 
@@ -34,11 +34,11 @@ Si no se implementa: no hay una URL estable de UAT para que QA pruebe, ni docume
 
 ## 3. Objetivos
 
-- [ ] OBJ-001: UAT accesible desde una URL fija (rama `develop` en Vercel)
-- [ ] OBJ-002: Producción estable (rama `main`, ya existe)
-- [ ] OBJ-003: Local documentado para pruebas en dispositivos de la red
-- [ ] OBJ-004: Documentación clara de la estrategia de ambientes
-- [ ] OBJ-005: Redirect URLs de Supabase configuradas para todos los ambientes
+- [x] OBJ-001: UAT accesible desde una URL fija (rama `develop` en Vercel) — openfinancekit-uat.vercel.app
+- [x] OBJ-002: Producción estable (rama `main`, ya existe) — open-finance-kit.vercel.app
+- [x] OBJ-003: Local documentado para pruebas en dispositivos de la red
+- [x] OBJ-004: Documentación clara de la estrategia de ambientes (.kiro/steering/deployment.md)
+- [x] OBJ-005: Redirect URLs de Supabase configuradas para todos los ambientes
 
 ---
 

@@ -4,17 +4,17 @@
 
 **Versión:** 0.2.0
 
-**Estado:** Draft
+**Estado:** ✅ Completado — Mergeado a develop y main (v0.2.0)
 
 **Sprint:** Sprint 2
 
-**Rama:** feature/ofk-web-mvp
+**Rama:** feature/ofk-web-mvp (histórica, ya mergeada)
 
 **Issue:** N/A
 
 **Autor:** Gustavo Echeverría
 
-**Última actualización:** 2026-08-27
+**Última actualización:** 2026-10-05 (actualizado: confirmado en producción v0.2.0)
 
 ---
 
@@ -36,14 +36,14 @@ Si no se implementa: el producto sigue siendo un ejercicio técnico sin utilidad
 
 ## 3. Objetivos
 
-- [ ] OBJ-001: App accesible desde cualquier dispositivo via URL (PWA instalable)
-- [ ] OBJ-002: Registro rápido de ingresos desde formulario móvil-first
-- [ ] OBJ-003: Registro rápido de gastos desde formulario móvil-first
-- [ ] OBJ-004: Registro y gestión de pagos programados
-- [ ] OBJ-005: Dashboard con los 6 indicadores del MVP (mismo que Excel)
-- [ ] OBJ-006: Configuración de categorías y cuentas desde la app
-- [ ] OBJ-007: Deploy automático (push → producción) via Vercel
-- [ ] OBJ-008: Autenticación básica (solo el dueño accede a sus datos)
+- [x] OBJ-001: App accesible desde cualquier dispositivo via URL (PWA instalable)
+- [x] OBJ-002: Registro rápido de ingresos desde formulario móvil-first
+- [x] OBJ-003: Registro rápido de gastos desde formulario móvil-first
+- [x] OBJ-004: Registro y gestión de pagos programados
+- [x] OBJ-005: Dashboard con los 6 indicadores del MVP (mismo que Excel)
+- [x] OBJ-006: Configuración de categorías y cuentas desde la app
+- [x] OBJ-007: Deploy automático (push → producción) via Vercel
+- [x] OBJ-008: Autenticación básica (solo el dueño accede a sus datos)
 
 ---
 

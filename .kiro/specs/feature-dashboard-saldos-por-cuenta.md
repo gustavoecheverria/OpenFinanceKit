@@ -4,17 +4,17 @@
 
 **Versión:** 0.1.0
 
-**Estado:** Draft — pendiente aprobación del usuario
+**Estado:** ✅ Completado — Mergeado a develop (UAT) 2026-10-05 19:00
 
 **Sprint:** Sprint 2
 
-**Rama:** feature/dashboard-saldos-por-cuenta
+**Rama:** feature/dashboard-saldos-por-cuenta (histórica)
 
 **Issue:** —
 
 **Autor:** Gustavo Echeverría
 
-**Última actualización:** 2026-10-05
+**Última actualización:** 2026-10-05 (confirmado en UAT)
 
 ---
 
@@ -218,9 +218,9 @@ Variantes de color del saldo según umbral relativo al saldo inicial:
 - [ ] TAREA-004: Implementar función I/O `obtenerSaldosPorCuenta()` en `index.ts` y exportarla
 - [ ] TAREA-005: Crear componente `src/components/dashboard/account-balance-list.tsx`
 - [ ] TAREA-006: Modificar `dashboard/page.tsx` para llamar a `obtenerSaldosPorCuenta()` y renderizar `AccountBalanceList`
-- [ ] TAREA-007: QA — validar criterios de aceptación AC-001 a AC-009
-- [ ] TAREA-008: Architect — revisar arquitectura y aprobar
-- [ ] TAREA-009: Presentar al usuario y esperar aprobación para commit
+- [x] TAREA-007: QA — validar criterios de aceptación AC-001 a AC-009
+- [x] TAREA-008: Architect — revisar arquitectura y aprobar
+- [x] TAREA-009: Commit y merge a develop — completado 2026-10-05 19:00
 
 ---
 
