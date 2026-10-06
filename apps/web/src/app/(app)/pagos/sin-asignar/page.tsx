@@ -16,14 +16,19 @@ export default async function PagosSinAsignarPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  let cuentas = [];
+  interface Cuenta {
+    id: number;
+    nombre: string;
+  }
+
+  let cuentas: Cuenta[] = [];
   if (user) {
     const { data } = await supabase
       .from("cuentas")
       .select("id, nombre")
       .eq("user_id", user.id)
       .order("nombre");
-    cuentas = data || [];
+    cuentas = (data || []) as Cuenta[];
   }
 
   return (
