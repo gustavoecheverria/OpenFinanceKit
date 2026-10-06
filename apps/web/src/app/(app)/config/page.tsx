@@ -4,6 +4,7 @@ import { CategoriaRow } from "@/components/config/categoria-row";
 import { CuentaRow } from "@/components/config/cuenta-row";
 import { AddCategoriaForm } from "@/components/config/add-categoria-form";
 import { AddCuentaForm } from "@/components/config/add-cuenta-form";
+import { obtenerSaldosPorCuenta } from "@/lib/motor";
 import {
   addCategoria,
   updateCategoria,
@@ -32,6 +33,12 @@ export default async function ConfigPage() {
     .select("*")
     .eq("user_id", user.id)
     .order("nombre");
+
+  // Obtener saldos actuales de las cuentas
+  const saldosPorCuenta = await obtenerSaldosPorCuenta();
+  const saldosActuales = new Map(
+    saldosPorCuenta.cuentas.map((c) => [c.id, c.saldoActual])
+  );
 
   const sinDatos = (!categorias || categorias.length === 0) && (!cuentas || cuentas.length === 0);
 
@@ -94,6 +101,7 @@ export default async function ConfigPage() {
               <CuentaRow
                 key={cuenta.id}
                 cuenta={cuenta}
+                saldoActual={saldosActuales.get(cuenta.id) || 0}
                 onUpdate={updateCuenta}
                 onDelete={deleteCuenta}
               />

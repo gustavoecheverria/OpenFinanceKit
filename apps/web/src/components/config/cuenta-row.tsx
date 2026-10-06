@@ -9,13 +9,16 @@ type DeleteAction = (id: number) => Promise<{ error: string | null }>;
 
 /**
  * Fila de cuenta con modo lectura y modo edición inline.
+ * Muestra Saldo Inicial y Saldo Actual (calculado).
  */
 export function CuentaRow({
   cuenta,
+  saldoActual,
   onUpdate,
   onDelete,
 }: {
   cuenta: Cuenta;
+  saldoActual: number;
   onUpdate: UpdateAction;
   onDelete: DeleteAction;
 }) {
@@ -79,9 +82,14 @@ export function CuentaRow({
     <li className="flex items-center justify-between px-3 py-2 bg-[var(--muted)] rounded-lg">
       <div>
         <span className="text-sm font-medium">{cuenta.nombre}</span>
-        <span className="ml-2 text-xs text-[var(--muted-foreground)]">
-          ${Number(cuenta.saldo_inicial).toLocaleString("es", { minimumFractionDigits: 2 })}
-        </span>
+        <div className="flex gap-4 mt-1 text-xs text-[var(--muted-foreground)]">
+          <span>
+            Inicial: ${Number(cuenta.saldo_inicial).toLocaleString("es", { minimumFractionDigits: 2 })}
+          </span>
+          <span className="font-semibold text-[var(--foreground)]">
+            Actual: ${Number(saldoActual).toLocaleString("es", { minimumFractionDigits: 2 })}
+          </span>
+        </div>
       </div>
       <div className="flex items-center gap-2">
         <button
