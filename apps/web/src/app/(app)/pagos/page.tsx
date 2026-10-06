@@ -20,12 +20,20 @@ export default async function PagosPage() {
       <PageHeader
         title="Pagos"
         action={
-          <Link
-            href="/pagos/nuevo"
-            className="px-3 py-1.5 bg-[var(--primary)] text-[var(--primary-foreground)] rounded-lg text-sm font-medium"
-          >
-            + Nuevo
-          </Link>
+          <div className="flex gap-2">
+            <Link
+              href="/pagos/sin-asignar"
+              className="px-3 py-1.5 bg-[var(--warning)]/20 text-[var(--warning)] rounded-lg text-sm font-medium hover:opacity-80"
+            >
+              ⚠ Sin asignar
+            </Link>
+            <Link
+              href="/pagos/nuevo"
+              className="px-3 py-1.5 bg-[var(--primary)] text-[var(--primary-foreground)] rounded-lg text-sm font-medium"
+            >
+              + Nuevo
+            </Link>
+          </div>
         }
       />
 
