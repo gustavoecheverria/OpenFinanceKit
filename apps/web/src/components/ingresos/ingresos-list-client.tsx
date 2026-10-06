@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { EditarGastoModal } from "./editar-gasto-modal";
-import { deleteGasto } from "@/app/(app)/gastos/actions";
+import { EditarIngresoModal } from "./editar-ingreso-modal";
+import { deleteIngreso } from "@/app/(app)/ingresos/actions";
 
-interface Gasto {
+interface Ingreso {
   id: number;
   valor: number;
   fecha: string;
@@ -15,68 +15,66 @@ interface Gasto {
   cuentas: { nombre: string } | null;
 }
 
-interface GastosListClientProps {
-  gastos: Gasto[];
+interface IngresosListClientProps {
+  ingresos: Ingreso[];
   categorias: Array<{ id: number; nombre: string }>;
   cuentas: Array<{ id: number; nombre: string }>;
 }
 
-export function GastosListClient({
-  gastos,
+export function IngresosListClient({
+  ingresos,
   categorias,
   cuentas,
-}: GastosListClientProps) {
+}: IngresosListClientProps) {
   const [editandoId, setEditandoId] = useState<number | null>(null);
-  const gastoEditando = gastos.find((g) => g.id === editandoId);
+  const ingresoEditando = ingresos.find((i) => i.id === editandoId);
 
   return (
     <>
       <ul className="space-y-2">
-        {gastos.map((gasto) => (
+        {ingresos.map((ingreso) => (
           <li
-            key={gasto.id}
+            key={ingreso.id}
             className="flex items-center justify-between px-3 py-3 bg-[var(--muted)] rounded-lg"
           >
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-[var(--destructive)]">
-                  -${Number(gasto.valor).toLocaleString("es", { minimumFractionDigits: 2 })}
+                <span className="text-sm font-medium text-[var(--success)]">
+                  +${Number(ingreso.valor).toLocaleString("es", { minimumFractionDigits: 2 })}
                 </span>
                 <span className="text-xs text-[var(--muted-foreground)] truncate">
-                  {gasto.categorias?.nombre}
+                  {ingreso.categorias?.nombre}
                 </span>
               </div>
-              <div className="flex items-center justify-between mt-0.5">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-[var(--muted-foreground)]">
-                    {gasto.fecha}
+              <div className="flex items-center gap-2 mt-0.5">
+                <span className="text-xs text-[var(--muted-foreground)]">
+                  {ingreso.fecha}
+                </span>
+                {ingreso.descripcion && (
+                  <span className="text-xs text-[var(--muted-foreground)] truncate">
+                    · {ingreso.descripcion}
                   </span>
-                  {gasto.descripcion && (
-                    <span className="text-xs text-[var(--muted-foreground)] truncate">
-                      · {gasto.descripcion}
-                    </span>
-                  )}
-                </div>
-                {gasto.cuentas && (
+                )}
+                {ingreso.cuentas && (
                   <span className="text-xs bg-[var(--primary)]/20 text-[var(--primary)] px-1.5 py-0.5 rounded truncate ml-2">
-                    {gasto.cuentas.nombre}
+                    {ingreso.cuentas.nombre}
                   </span>
                 )}
               </div>
             </div>
             <div className="flex items-center gap-1 ml-2">
               <button
-                onClick={() => setEditandoId(gasto.id)}
+                onClick={() => setEditandoId(ingreso.id)}
                 className="text-[var(--muted-foreground)] hover:text-[var(--primary)] text-sm"
-                aria-label="Editar gasto"
+                aria-label="Editar ingreso"
               >
                 ✎
               </button>
-              <form action={deleteGasto.bind(null, gasto.id)}>
+              <form action={deleteIngreso.bind(null, ingreso.id)}>
                 <button
                   type="submit"
                   className="text-[var(--muted-foreground)] hover:text-[var(--destructive)] text-sm"
-                  aria-label="Eliminar gasto"
+                  aria-label="Eliminar ingreso"
                 >
                   ✕
                 </button>
@@ -86,9 +84,9 @@ export function GastosListClient({
         ))}
       </ul>
 
-      {gastoEditando && (
-        <EditarGastoModal
-          gasto={gastoEditando}
+      {ingresoEditando && (
+        <EditarIngresoModal
+          ingreso={ingresoEditando}
           categorias={categorias}
           cuentas={cuentas}
           onClose={() => setEditandoId(null)}
