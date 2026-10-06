@@ -29,7 +29,7 @@ export default function RootLayout({
   return (
     <html lang="es">
       <head>
-        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+        <link rel="apple-touch-icon" href="/icons/icon-180x180.png" />
       </head>
       <body className="bg-[var(--background)] text-[var(--foreground)]">
         <PWARegister />
