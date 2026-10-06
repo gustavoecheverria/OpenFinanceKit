@@ -1,4 +1,5 @@
 import type { SaldoCuenta } from "@/lib/motor";
+import Link from "next/link";
 
 interface AccountBalanceListProps {
   cuentas: SaldoCuenta[];
@@ -6,6 +7,7 @@ interface AccountBalanceListProps {
 
 /**
  * Muestra una lista de tarjetas con el saldo de cada cuenta.
+ * Cada tarjeta es clickeable y lleva a /cuentas/[id] para ver el detalle.
  * Server Component — no usa hooks de cliente.
  * RN-003: Solo visualiza, no calcula.
  */
@@ -72,7 +74,10 @@ function AccountBalanceCard({ cuenta }: AccountBalanceCardProps) {
   }
 
   return (
-    <div className="p-3 bg-[var(--muted)] rounded-lg border border-[var(--border)]">
+    <Link
+      href={`/cuentas/${cuenta.id}`}
+      className="block p-3 bg-[var(--muted)] rounded-lg border border-[var(--border)] hover:opacity-80 hover:border-[var(--primary)] transition-all"
+    >
       <p className="text-xs text-[var(--muted-foreground)] mb-1">{cuenta.nombre}</p>
       <p className={`text-lg font-bold ${colorIndicador}`}>
         ${cuenta.saldoActual.toLocaleString("es", {
@@ -86,6 +91,6 @@ function AccountBalanceCard({ cuenta }: AccountBalanceCardProps) {
           maximumFractionDigits: 2,
         })}
       </p>
-    </div>
+    </Link>
   );
 }
