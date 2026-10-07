@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { calcularMotor, mesActual, desplazarMes, etiquetaMes, obtenerSaldosPorCuenta } from "@/lib/motor";
+import { calcularMotor, mesActual, desplazarMes, etiquetaMes, obtenerSaldosPorCuenta, obtenerVencimientosProximos } from "@/lib/motor";
 import { PageHeader } from "@/components/layout/page-header";
 import { MonthSelector } from "@/components/dashboard/month-selector";
 import { AccountBalanceList } from "@/components/dashboard/account-balance-list";
+import { ProximosVencimientos } from "@/components/dashboard/proximos-vencimientos";
 
 export default async function DashboardPage({
   searchParams,
@@ -16,6 +17,11 @@ export default async function DashboardPage({
 
   const motor = await calcularMotor(mes);
   const saldosPorCuenta = await obtenerSaldosPorCuenta();
+
+  // Pagos programados que entran en la ventana de alerta (5 días por defecto).
+  // Incluye los vencidos: si el usuario dejó pasar un pago, es lo más
+  // importante que tiene que ver.
+  const vencimientosProximos = await obtenerVencimientosProximos();
 
   // Sin actividad histórica = usuario nuevo (saldo, ingresos y gastos en cero)
   const sinActividad =
@@ -71,6 +77,9 @@ export default async function DashboardPage({
 
       {/* Saldos por cuenta */}
       <AccountBalanceList cuentas={saldosPorCuenta.cuentas} />
+
+      {/* Pagos programados por vencer */}
+      <ProximosVencimientos pagos={vencimientosProximos} />
 
       {/* Empty state: sin actividad histórica, guiar al usuario */}
       {sinActividad && (

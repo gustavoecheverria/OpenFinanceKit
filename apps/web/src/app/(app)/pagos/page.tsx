@@ -1,7 +1,13 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/layout/page-header";
+import { PagosProgramadosList } from "@/components/pagos/pagos-programados-list";
+import { obtenerPagosProgramados } from "@/lib/motor";
 import { deletePago, updateEstadoPago } from "./actions";
+import {
+  usarPagoProgramado,
+  togglePagoProgramadoActivo,
+} from "./programado/actions";
 
 export default async function PagosPage() {
   const supabase = await createClient();
@@ -15,12 +21,17 @@ export default async function PagosPage() {
     .order("fecha_vencimiento", { ascending: true })
     .limit(50);
 
+  // Pagos programados (plantillas recurrentes), con el estado ya calculado
+  // por el Motor. No se limitan a 50: cada cuenta es una sola fila y el
+  // estado se renueva solo.
+  const pagosProgramados = await obtenerPagosProgramados();
+
   return (
     <>
       <PageHeader
         title="Pagos"
         action={
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Link
               href="/pagos/sin-asignar"
               className="px-3 py-1.5 bg-[var(--warning)]/20 text-[var(--warning)] rounded-lg text-sm font-medium hover:opacity-80"
@@ -29,16 +40,36 @@ export default async function PagosPage() {
             </Link>
             <Link
               href="/pagos/nuevo"
-              className="px-3 py-1.5 bg-[var(--primary)] text-[var(--primary-foreground)] rounded-lg text-sm font-medium"
+              className="px-3 py-1.5 bg-[var(--muted)] text-[var(--foreground)] rounded-lg text-sm font-medium hover:opacity-80"
             >
-              + Nuevo
+              + Pago único
+            </Link>
+            <Link
+              href="/pagos/programado/nuevo"
+              className="px-3 py-1.5 bg-[var(--primary)] text-[var(--primary-foreground)] rounded-lg text-sm font-medium hover:opacity-90"
+            >
+              + Programado
             </Link>
           </div>
         }
       />
 
+      <PagosProgramadosList
+        pagos={pagosProgramados}
+        onUsarPago={usarPagoProgramado}
+        onDesactivar={togglePagoProgramadoActivo}
+      />
+
+      {/* Pagos únicos: compromisos de una sola vez (tabla `pagos`) */}
       {pagos && pagos.length > 0 ? (
-        <ul className="space-y-2">
+        <div className="mt-6">
+          <div className="flex items-baseline justify-between mb-2">
+            <h2 className="text-sm font-semibold">Pagos únicos</h2>
+            <span className="text-xs text-[var(--muted-foreground)]">
+              Compromisos de una sola vez
+            </span>
+          </div>
+          <ul className="space-y-2">
           {pagos.map((pago: any) => (
             <li
               key={pago.id}
@@ -100,10 +131,12 @@ export default async function PagosPage() {
               )}
             </li>
           ))}
-        </ul>
+          </ul>
+        </div>
       ) : (
-        <p className="text-sm text-[var(--muted-foreground)]">
-          No hay pagos registrados. Toca &quot;+ Nuevo&quot; para agregar uno.
+        <p className="text-sm text-[var(--muted-foreground)] mt-6">
+          No hay pagos únicos registrados. Usá &quot;+ Pago único&quot; para
+          agregar uno, o &quot;+ Programado&quot; si se repite cada período.
         </p>
       )}
     </>
