@@ -105,6 +105,15 @@ export function etiquetaMes(mes: string): string {
 /**
  * Calcula el saldo actual de cada cuenta individualmente.
  * Función pura — sin I/O. RN-002: La lógica vive en el Motor.
+ *
+ * SALDO DE UNA CUENTA:
+ *   saldoInicial + ingresos - gastos - pagosPagados
+ *     - transferenciasSalientes + transferenciasEntrantes
+ *
+ * Una transferencia NO altera el saldo global: se resta en la cuenta origen y
+ * se suma en la cuenta destino, en la misma operación. Por eso la suma de los
+ * saldos por cuenta sigue cuadrando con el saldo global de calcularIndicadores.
+ *
  * @param datosPorCuenta array de datos crudos por cuenta
  * @returns SaldosPorCuentaResult con cuentas calculadas
  */
@@ -115,8 +124,15 @@ export function calcularSaldosPorCuenta(
     const totalIngresos = sumar(d.ingresos);
     const totalGastos = sumar(d.gastos);
     const totalPagosPagados = sumar(d.pagosPagados);
+    const totalTransferenciasSalientes = sumar(d.transferenciasSalientes);
+    const totalTransferenciasEntrantes = sumar(d.transferenciasEntrantes);
     const saldoActual =
-      d.saldoInicial + totalIngresos - totalGastos - totalPagosPagados;
+      d.saldoInicial +
+      totalIngresos -
+      totalGastos -
+      totalPagosPagados -
+      totalTransferenciasSalientes +
+      totalTransferenciasEntrantes;
     return {
       id: d.id,
       nombre: d.nombre,
@@ -124,6 +140,8 @@ export function calcularSaldosPorCuenta(
       totalIngresos,
       totalGastos,
       totalPagosPagados,
+      totalTransferenciasSalientes,
+      totalTransferenciasEntrantes,
       saldoActual,
     };
   });
@@ -132,8 +150,12 @@ export function calcularSaldosPorCuenta(
 
 // ── Helpers ─────────────────────────────────────────────────────────────
 
-/** Suma una lista de valores numéricos, tolerando null/undefined. */
-function sumar(valores: number[]): number {
+/**
+ * Suma una lista de valores numéricos, tolerando null/undefined.
+ * Acepta `undefined` porque los campos opcionales de DatosPorCuenta
+ * (transferenciasSalientes / transferenciasEntrantes) equivalen a lista vacía.
+ */
+function sumar(valores: number[] | undefined): number {
   if (!valores || valores.length === 0) return 0;
   return valores.reduce((sum, v) => sum + Number(v || 0), 0);
 }

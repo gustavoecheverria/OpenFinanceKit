@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/layout/page-header";
 import { CategoriaRow } from "@/components/config/categoria-row";
@@ -90,7 +91,17 @@ export default async function ConfigPage() {
 
       {/* Cuentas */}
       <section>
-        <h2 className="text-lg font-semibold mb-3">Cuentas</h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-semibold">Cuentas</h2>
+          {cuentas && cuentas.length >= 2 && (
+            <Link
+              href="/cuentas/transferir"
+              className="px-3 py-1.5 bg-[var(--muted)] text-[var(--foreground)] rounded-lg text-sm hover:opacity-80"
+            >
+              Transferir
+            </Link>
+          )}
+        </div>
 
         {/* Formulario de creación con feedback de error (G3) */}
         <AddCuentaForm action={addCuenta} />
