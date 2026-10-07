@@ -88,7 +88,26 @@ setup("autenticar usuario de prueba", async ({ page }) => {
     timeout: 15_000,
   });
 
-  // 5. Guardar el estado de autenticación
+  // 5. Limpiar los pagos programados de corridas anteriores.
+  //
+  // Sin esto, cada corrida suma plantillas hasta que /pagos tarda demasiado y
+  // los tests se caen por timeout, con resultados que alternan entre corridas.
+  // Solo se borran pagos programados: no tocan cuentas ni categorías, que las
+  // necesitan los tests de config-crud.
+  const { data: progsLimpios } = await admin
+    .from("pagos_programados")
+    .select("id, concepto")
+    .eq("user_id", data.user!.id)
+    .like("concepto", "%-%");
+
+  if (progsLimpios?.length) {
+    await admin
+      .from("pagos_programados")
+      .delete()
+      .in("id", progsLimpios.map((p: { id: number }) => p.id));
+  }
+
+  // 6. Guardar el estado de autenticación
   fs.mkdirSync(path.dirname(authFile), { recursive: true });
   await page.context().storageState({ path: authFile });
 });

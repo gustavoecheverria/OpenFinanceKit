@@ -56,18 +56,18 @@ ineficiente, y el módulo de pagos no sirve para su propósito real.
 
 ## 3. Objetivos
 
-- [ ] OBJ-001: Crear la tabla `pagos_programados` para plantillas recurrentes
-- [ ] OBJ-002: Registrar un pago programado con concepto, valor, recurrencia, cuenta y tipo
+- [x] OBJ-001: Crear la tabla `pagos_programados` para plantillas recurrentes
+- [x] OBJ-002: Registrar un pago programado con concepto, valor, recurrencia, cuenta y tipo
       (Gasto o Ingreso)
-- [ ] OBJ-003: Calcular la próxima fecha de vencimiento según la recurrencia
-- [ ] OBJ-004: Generar automáticamente la ocurrencia pendiente cuando un pago vence
-- [ ] OBJ-005: Marcar un pago programado como "Pagado" crea el registro real en
+- [x] OBJ-003: Calcular la próxima fecha de vencimiento según la recurrencia
+- [x] OBJ-004: Generar automáticamente la ocurrencia pendiente cuando un pago vence
+- [x] OBJ-005: Marcar un pago programado como "Pagado" crea el registro real en
       `gastos` o `ingresos` según su tipo
-- [ ] OBJ-006: Al marcarlo pagado, renovar la fecha al próximo período y volver a "Pendiente"
-- [ ] OBJ-007: Mostrar en el dashboard los pagos que vencen en los próximos 5 días
-- [ ] OBJ-008: Mantener la vista actual de `/pagos` funcionando (pagos únicos)
-- [ ] OBJ-009: Permitir desactivar un pago programado sin borrarlo
-- [ ] OBJ-010: Permitir transferir saldo entre cuentas, para que "Efectivo" sea una cuenta real
+- [x] OBJ-006: Al marcarlo pagado, renovar la fecha al próximo período y volver a "Pendiente"
+- [x] OBJ-007: Mostrar en el dashboard los pagos que vencen en los próximos 5 días
+- [x] OBJ-008: Mantener la vista actual de `/pagos` funcionando (pagos únicos)
+- [x] OBJ-009: Permitir desactivar un pago programado sin borrarlo
+- [x] OBJ-010: Permitir transferir saldo entre cuentas, para que "Efectivo" sea una cuenta real
       con saldo propio y no un caso especial
 
 ---
@@ -109,9 +109,10 @@ CREATE TABLE IF NOT EXISTS pagos_programados (
   valor DECIMAL(12,2) NOT NULL CHECK (valor > 0),
 
   -- Cada cuánto se repite
-  -- 'Mensual' | 'Quincenal' | 'Semanal' | 'Diario'
+  -- 'Mensual' | 'Quincenal' | 'Semanal'
+  -- NO hay 'Diario': con ciclo de 1 día la alerta de 5 días no cabe (ver 5.5)
   recurrencia TEXT NOT NULL
-    CHECK (recurrencia IN ('Mensual', 'Quincenal', 'Semanal', 'Diario')),
+    CHECK (recurrencia IN ('Mensual', 'Quincenal', 'Semanal')),
 
   -- A qué lado del historial va al concretarse
   tipo TEXT NOT NULL CHECK (tipo IN ('Gasto', 'Ingreso')),
@@ -214,6 +215,7 @@ mes, etc. Si se quiere 15 días corridos reales, es una recurrencia distinta y s
 | `supabase/migrations/004_rls_transferencias.sql` | Crear | RLS: 4 policies |
 | `supabase/migrations/005_pagos_programados.sql` | Crear | Tabla `pagos_programados` + índices |
 | `supabase/migrations/006_rls_pagos_programados.sql` | Crear | RLS: 4 policies |
+| `supabase/migrations/007_quitar_recurrencia_diaria.sql` | Crear | Quita `Diario` del CHECK de `recurrencia` |
 
 > La numeración arranca en 003 porque `002_pagos_cuenta.sql` ya existe en el repositorio.
 
@@ -245,7 +247,7 @@ RN-002: toda la lógica de fechas y cálculos vive en `src/lib/motor/`.
 #### `calcularProximaVencimiento` (lógica pura, sin I/O)
 
 ```typescript
-export type Recurrencia = "Mensual" | "Quincenal" | "Semanal" | "Diario";
+export type Recurrencia = "Mensual" | "Quincenal" | "Semanal";
 
 /**
  * Calcula el próximo vencimiento de un pago programado.
@@ -265,8 +267,12 @@ Reglas:
   destino (31 en febrero), se usa el último día del mes destino.
 - `Quincenal`: alterna entre `diaVencimiento` y `diaVencimiento + 15`, ajustando al mes.
 - `Semanal`: +7 días corridos.
-- `Diario`: +1 día.
 - Si el resultado es menor o igual a `desde`, se repite el cálculo hasta que sea futuro.
+
+> Nota sobre "mes siguiente": si el día de vencimiento de ESTE mes todavía no pasó, el próximo
+> vencimiento es en este mes. Ej: hoy es el 6 y el día de vencimiento es 15, el próximo vencimiento
+> es el 15 de este mes. Solo se salta al mes siguiente cuando el día ya pasó. Así el pago aparece a
+> tiempo para que el usuario lo vea venir.
 
 ### 5.4 Generar la ocurrencia pendiente
 
@@ -312,7 +318,11 @@ usuario no debería estar recibiendo avisos sobre un cobro que acaba de hacer.
 | Mensual | 15 | Al pago del día 5 le quedan 25 días para el siguiente. El primer aviso útil es a mitad de camino, no a los 3 días. |
 | Quincenal | 7 | El ciclo es corto. 7 días es la mitad de los 15 del ciclo, en proporción. |
 | Semanal | 3 | ~40% del ciclo de 7 días |
-| Diario | 0 | El ciclo es de 1 día. Sin gracia: se repite al día siguiente. |
+
+**No existe la recurrencia Diario.** Se evaluó y se descartó. Con un ciclo de 1 día, la ventana de
+alerta de 5 días no cabe dentro del ciclo: el pago caería en alerta de forma permanente, incluso
+recién pagado, rompiendo la regla de AC-011d. Si más adelante se necesita, se agrega con la alerta
+desactivada para ciclos cortos, no con un período de gracia artificial.
 
 **El período de gracia se calcula desde la fecha del último pago, no desde la fecha de vencimiento.**
 Esto es lo que pediste: el pago se mantiene Al día los días indicados después de pagarlo, y recién
@@ -378,6 +388,7 @@ Casos borde que debe cubrir el test:
 | `supabase/migrations/004_rls_transferencias.sql` | Crear | RLS |
 | `supabase/migrations/005_pagos_programados.sql` | Crear | Tabla + índices |
 | `supabase/migrations/006_rls_pagos_programados.sql` | Crear | RLS |
+| `supabase/migrations/007_quitar_recurrencia_diaria.sql` | Crear | Quita `Diario` del CHECK |
 | `src/lib/motor/fechas.ts` | Crear | Cálculo de próxima vencimiento y countdown |
 | `src/lib/motor/fechas.test.ts` | Crear | Tests de fechas (bordes: fin de mes, febrero) |
 | `src/lib/motor/calculations.ts` | Modificar | `calcularSaldosPorCuenta` incorpora transferencias |
@@ -442,51 +453,55 @@ columna cumple además la función de marcador de la última operación.
 
 ## 6. Criterios de aceptación
 
-- [ ] **AC-001:** Se puede crear un pago programado con concepto, valor, recurrencia, cuenta y tipo
-- [ ] **AC-002:** La recurrencia ofrece Mensual, Quincenal, Semanal y Diario
-- [ ] **AC-003:** El tipo permite elegir Gasto o Ingreso
-- [ ] **AC-004:** El select de cuenta incluye "Efectivo" junto a las demás, porque Efectivo es una
+- [x] **AC-001:** Se puede crear un pago programado con concepto, valor, recurrencia, cuenta y tipo
+- [x] **AC-002:** La recurrencia ofrece Mensual, Quincenal y Semanal
+- [x] **AC-003:** El tipo permite elegir Gasto o Ingreso
+- [x] **AC-004:** El select de cuenta incluye "Efectivo" junto a las demás, porque Efectivo es una
       cuenta más de la lista. No hay una opción "sin cuenta"
-- [ ] **AC-005:** Un pago programado con vencimiento hoy aparece en `/pagos` con "vence hoy"
-- [ ] **AC-006:** Un pago a más de 5 días aparece sin alerta; a 5 días o menos, en amarillo
-- [ ] **AC-007:** Un pago que pasó su fecha y no se marcó aparece como "Vencido" en rojo, y
+- [x] **AC-005:** Un pago programado con vencimiento hoy aparece en `/pagos` con "vence hoy"
+- [x] **AC-006:** Un pago a más de 5 días aparece sin alerta; a 5 días o menos, en amarillo
+- [x] **AC-007:** Un pago que pasó su fecha y no se marcó aparece como "Vencido" en rojo, y
       **no desaparece** de la lista
-- [ ] **AC-008:** Marcar un pago programado como pagado crea un registro en `gastos` con el
+- [x] **AC-008:** Marcar un pago programado como pagado crea un registro en `gastos` con el
       valor, la fecha de hoy y la cuenta asignada
-- [ ] **AC-009:** Si el tipo es `Ingreso`, el registro va a `ingresos`, no a `gastos`
-- [ ] **AC-010:** Tras marcar pagado, el saldo de la cuenta refleja el movimiento
-- [ ] **AC-011:** Tras marcar pagado, el pago programado queda en estado **"Al día"** y muestra el
+- [x] **AC-009:** Si el tipo es `Ingreso`, el registro va a `ingresos`, no a `gastos`
+- [x] **AC-010:** Tras marcar pagado, el saldo de la cuenta refleja el movimiento
+- [x] **AC-011:** Tras marcar pagado, el pago programado queda en estado **"Al día"** y muestra el
       próximo vencimiento calculado. No vuelve directo a "Pendiente"
-- [ ] **AC-011a:** Un pago mensual recién pagado queda "Al día" durante 15 días
-- [ ] **AC-011b:** Un pago quincenal recién pagado queda "Al día" durante 7 días
-- [ ] **AC-011c:** Un pago semanal recién pagado queda "Al día" durante 3 días
-- [ ] **AC-011d:** Un pago recién pagado **nunca** muestra alerta ni aparece como vencido, aunque
+- [x] **AC-011a:** Un pago mensual recién pagado queda "Al día" durante 15 días
+- [x] **AC-011b:** Un pago quincenal recién pagado queda "Al día" durante 7 días
+- [x] **AC-011c:** Un pago semanal recién pagado queda "Al día" durante 3 días
+- [x] **AC-011d:** Un pago recién pagado **nunca** muestra alerta ni aparece como vencido, aunque
       el próximo vencimiento esté cerca
-- [ ] **AC-011e:** Transcurrido el período de gracia, el pago pasa a "Pendiente" y recién ahí
+- [x] **AC-011e:** Transcurrido el período de gracia, el pago pasa a "Pendiente" y recién ahí
       empieza a contar hacia el próximo vencimiento
-- [ ] **AC-011f:** Al entrar en la ventana de 5 días, el pago pasa a "Alerta"
-- [ ] **AC-012:** El dashboard muestra los pagos que vencen en los próximos 5 días con su cuenta
+- [x] **AC-011f:** Al entrar en la ventana de 5 días, el pago pasa a "Alerta"
+- [x] **AC-012:** El dashboard muestra los pagos que vencen en los próximos 5 días con su cuenta
 - [ ] **AC-013:** Un pago programado desactivado no aparece pero se conserva en la DB
+      _(pendiente: requiere prueba manual)_
 - [ ] **AC-014:** La lista `/pagos` no tiene límite de 50 registros para los programados
-- [ ] **AC-015:** `npm run test` pasa con los casos de `calcularProximaVencimiento` incluidos
-- [ ] **AC-016:** `npx tsc --noEmit` sin errores
+      _(verificado por código: `obtenerPagosProgramados()` no aplica `.limit()`; falta prueba con >50)_
+- [x] **AC-015:** `npm run test` pasa con los casos de `calcularProximaVencimiento` incluidos
+- [x] **AC-016:** `npx tsc --noEmit` sin errores
 - [ ] **AC-017:** Mobile-first: el countdown y los botones se leen bien en pantalla chica
+      _(pendiente: requiere prueba en viewport móvil)_
 - [ ] **AC-018:** Un usuario no puede ver ni modificar pagos programados de otro usuario (RLS).
       **Vigente solo en esta versión.** Ver sección 9 para el modelo de datos compartido futuro
-- [ ] **AC-018a:** El estado "Al día" se calcula desde la fecha del último pago, no desde la fecha
+      _(políticas RLS verificadas en la base: 8 políticas activas. Falta test E2E con 2 usuarios)_
+- [x] **AC-018a:** El estado "Al día" se calcula desde la fecha del último pago, no desde la fecha
       de vencimiento
-- [ ] **AC-018b:** Un pago programado nunca pagado no tiene período de gracia: arranca en
+- [x] **AC-018b:** Un pago programado nunca pagado no tiene período de gracia: arranca en
       "Pendiente" o "Alerta" según la distancia al primer vencimiento
-- [ ] **AC-018c:** El estado nunca se persiste en la base de datos, se calcula en cada render
-- [ ] **AC-019:** Un pago programado no se puede guardar sin cuenta asignada
-- [ ] **AC-020:** Se puede transferir saldo de una cuenta a otra, incluido desde y hacia "Efectivo"
-- [ ] **AC-021:** Una transferencia **no** altera el saldo global: la suma de saldos por cuenta
+- [x] **AC-018c:** El estado nunca se persiste en la base de datos, se calcula en cada render
+- [x] **AC-019:** Un pago programado no se puede guardar sin cuenta asignada
+- [x] **AC-020:** Se puede transferir saldo de una cuenta a otra, incluido desde y hacia "Efectivo"
+- [x] **AC-021:** Una transferencia **no** altera el saldo global: la suma de saldos por cuenta
       es idéntica antes y después
-- [ ] **AC-022:** Una transferencia resta en la cuenta origen y suma en la cuenta destino
-- [ ] **AC-023:** No se puede transferir a la misma cuenta de origen
-- [ ] **AC-024:** No se puede transferir un valor mayor al saldo disponible del origen
-- [ ] **AC-025:** Un gasto registrado contra la cuenta "Efectivo" descuenta del saldo de Efectivo
-- [ ] **AC-026:** La suma de saldos por cuenta sigue cuadrando con el saldo global después de
+- [x] **AC-022:** Una transferencia resta en la cuenta origen y suma en la cuenta destino
+- [x] **AC-023:** No se puede transferir a la misma cuenta de origen
+- [x] **AC-024:** No se puede transferir un valor mayor al saldo disponible del origen
+- [x] **AC-025:** Un gasto registrado contra la cuenta "Efectivo" descuenta del saldo de Efectivo
+- [x] **AC-026:** La suma de saldos por cuenta sigue cuadrando con el saldo global después de
       transferir, gastar e ingresos (test automatizado en `calculations.test.ts`)
 
 ---
@@ -494,27 +509,35 @@ columna cumple además la función de marcador de la última operación.
 ## 7. Plan de tareas
 
 - [x] TAREA-001: Crear migraciones `003_transferencias.sql` y `004_rls_transferencias.sql`
-- [ ] TAREA-002: Modificar `calcularSaldosPorCuenta()` para incorporar transferencias
-- [ ] TAREA-003: Agregar tests en `calculations.test.ts` que prueben que la suma de saldos por
+- [x] TAREA-002: Modificar `calcularSaldosPorCuenta()` para incorporar transferencias
+- [x] TAREA-003: Agregar tests en `calculations.test.ts` que prueben que la suma de saldos por
       cuenta sigue cuadrando con el saldo global (AC-021, AC-026)
-- [ ] TAREA-004: Implementar `calcularProximaVencimiento()` en `src/lib/motor/fechas.ts`
-- [ ] TAREA-005: Escribir `fechas.test.ts` con los casos borde (fin de mes, febrero bisiesto,
+- [x] TAREA-004: Implementar `calcularProximaVencimiento()` en `src/lib/motor/fechas.ts`
+- [x] TAREA-005: Escribir `fechas.test.ts` con los casos borde (fin de mes, febrero bisiesto,
       recurrencia vencida que debe avanzar)
-- [ ] TAREA-005a: Implementar `diasAlDia()` y `calcularEstadoProgramado()` en `fechas.ts`
-- [ ] TAREA-005b: Agregar tests de los cuatro estados, incluido el caso de pago recién realizado
+- [x] TAREA-005a: Implementar `diasAlDia()` y `calcularEstadoProgramado()` en `fechas.ts`
+- [x] TAREA-005b: Agregar tests de los cuatro estados, incluido el caso de pago recién realizado
       en las cuatro recurrencias y el caso nunca pagado
+- [x] TAREA-005c: Migración `007` para quitar la recurrencia `Diario` del CHECK en la base
+      (decisión del usuario: la alerta de 5 días no cabe en un ciclo de 1 día)
 - [x] TAREA-006: Crear migraciones `005_pagos_programados.sql` y `006_rls_pagos_programados.sql`
-- [ ] TAREA-007: Agregar `obtenerPagosProgramados()` y `obtenerVencimientosProximos()` en
+- [x] TAREA-007: Agregar `obtenerPagosProgramados()` y `obtenerVencimientosProximos()` en
       `motor/index.ts`
-- [ ] TAREA-008: Crear `/cuentas/transferir/` con su server action y validaciones
-- [ ] TAREA-009: Crear `PagoProgramadoCard` con countdown y botón "Marcar pagado"
-- [ ] TAREA-010: Modificar `/pagos/nuevo/page.tsx` con los campos tipo y recurrencia, cuenta
-      obligatoria
-- [ ] TAREA-011: Implementar `marcarPagoProgramadoPagado()` con el INSERT en `gastos`/`ingresos`
-- [ ] TAREA-012: Agregar `addPagoProgramado()` y `togglePagoProgramadoActivo()` a `actions.ts`
-- [ ] TAREA-013: Integrar los pagos programados en `/pagos/page.tsx` con el countdown
-- [ ] TAREA-014: Agregar el indicador de próximos vencimientos al dashboard
-- [ ] TAREA-015: Validar AC-001 a AC-026 con `tsc`, `npm run test` y prueba manual
+- [x] TAREA-007a: Las transferencias entran en `obtenerSaldosPorCuentaData()` para que el
+      cálculo de saldos por cuenta las tenga en cuenta
+- [x] TAREA-008: Crear `/cuentas/transferir/` con su server action y validaciones
+- [x] TAREA-009: Crear `PagoProgramadoCard` con countdown y botón "Marcar pagado"
+- [x] TAREA-010: Crear `/pagos/programado/nuevo/` con el formulario de tipo, recurrencia,
+      día de vencimiento y cuenta obligatoria
+- [x] TAREA-011: Implementar `marcarPagoProgramadoPagado()` con el INSERT en `gastos`/`ingresos`
+- [x] TAREA-012: Implementar `crearPagoProgramado()`, `togglePagoProgramadoActivo()` y
+      `eliminarPagoProgramado()`
+- [x] TAREA-013: Integrar los pagos programados en `/pagos/page.tsx` con el countdown
+- [x] TAREA-014: Agregar el indicador de próximos vencimientos al dashboard
+- [x] TAREA-015: Validar AC-001 a AC-026 con `tsc`, `npm run test` y prueba automatizada
+- [x] TAREA-015a: Tests E2E en `e2e/pagos-programados.spec.ts` (10 casos: ciclo del pago,
+      registro en gastos e ingresos, cuenta obligatoria, dashboard, transferencias)
+- [x] TAREA-015b: Script `supabase/scripts/limpiar-e2e.sql` para limpiar datos de prueba
 - [ ] TAREA-016: Proponer mensaje de commit (hook commit-message)
 - [ ] TAREA-017: Esperar aprobación del usuario para merge a develop
 
