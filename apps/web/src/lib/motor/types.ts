@@ -41,6 +41,20 @@ export interface DatosPorCuenta {
   ingresos: number[];
   gastos: number[];
   pagosPagados: number[];
+  /**
+   * Transferencias donde esta cuenta es el ORIGEN. Se restan del saldo.
+   * Ej: sacar $500.000 de la Cuenta 1 para llevarlos a Efectivo.
+   *
+   * Opcional para no romper los datos existentes: equivale a lista vacía.
+   */
+  transferenciasSalientes?: number[];
+  /**
+   * Transferencias donde esta cuenta es el DESTINO. Se suman al saldo.
+   * Ej: los $500.000 que llegaron a Efectivo.
+   *
+   * Opcional para no romper los datos existentes: equivale a lista vacía.
+   */
+  transferenciasEntrantes?: number[];
 }
 
 /** Saldo calculado de una cuenta individual. */
@@ -51,6 +65,10 @@ export interface SaldoCuenta {
   totalIngresos: number;
   totalGastos: number;
   totalPagosPagados: number;
+  /** Total de transferencias saliendo de esta cuenta (se resta). */
+  totalTransferenciasSalientes: number;
+  /** Total de transferencias hacia esta cuenta (se suma). */
+  totalTransferenciasEntrantes: number;
   saldoActual: number;
 }
 

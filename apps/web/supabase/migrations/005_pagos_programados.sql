@@ -27,13 +27,21 @@ CREATE TABLE IF NOT EXISTS pagos_programados (
   valor DECIMAL(12,2) NOT NULL CHECK (valor > 0),
 
   -- ── Cada cuánto se repite ─────────────────────────────────────────────
-  -- 'Mensual'  → día 1 y día 16 del mes (dos vencimientos al mes)
-  -- 'Quincenal' → mismo criterio: día de vencimiento y día + 15
-  -- La definición de "quincenal" es por fechas de mes, NO por 15 días corridos.
-  -- Razón: un arriendo siempre vence en una fecha fija. Con 15 días corridos el
-  -- vencimiento se iría al 31, después al 15 de otro mes, y cada mes se movería.
+  -- 'Mensual'  → día de vencimiento cada mes
+  -- 'Quincenal' → dos vencimientos al mes: el día configurado y ese día + 15
+  -- 'Semanal'   → +7 días corridos
+  --
+  -- NO hay 'Diario'. Se evaluó y se descartó: con un ciclo de 1 día, la ventana
+  -- de alerta de 5 días no cabe dentro del ciclo. El pago caería en alerta de
+  -- forma permanente, incluso recién pagado, rompiendo la regla de que un pago
+  -- recién realizado nunca genera alerta. Si más adelante hace falta, se agrega
+  -- con la alerta desactivada para ciclos cortos.
+  --
+  -- "Quincenal" es por fechas de mes, NO por 15 días corridos. Razón: un arriendo
+  -- siempre vence en una fecha fija. Con 15 días corridos el vencimiento se iría
+  -- al 31, después al 15 de otro mes, y cada mes se movería.
   recurrencia TEXT NOT NULL
-    CHECK (recurrencia IN ('Mensual', 'Quincenal', 'Semanal', 'Diario')),
+    CHECK (recurrencia IN ('Mensual', 'Quincenal', 'Semanal')),
 
   -- ── A qué lado del historial va al concretarse ────────────────────────
   tipo TEXT NOT NULL CHECK (tipo IN ('Gasto', 'Ingreso')),

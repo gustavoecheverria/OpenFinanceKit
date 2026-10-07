@@ -1,6 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
 import { calcularIndicadores, rangoMes, resultadoVacio, calcularSaldosPorCuenta } from "./calculations";
 import type { DatosMotor, MotorResult, DatosPorCuenta, SaldosPorCuentaResult } from "./types";
+import {
+  hornearPagosProgramados,
+  filtrarVencimientosProximos,
+  type PagoProgramado,
+  type PagoProgramadoCrudo,
+} from "./programados";
+import { desdeISO, DIAS_ALERTA, type Recurrencia } from "./fechas";
 
 export type { MotorResult, DatosMotor, DatosPorCuenta, SaldoCuenta, SaldosPorCuentaResult } from "./types";
 export {
@@ -12,6 +19,33 @@ export {
   desplazarMes,
   etiquetaMes,
 } from "./calculations";
+export {
+  calcularProximaVencimiento,
+  calcularEstadoProgramado,
+  diasAlDia,
+  diasEnMes,
+  diasParaVencimiento,
+  diasEntre,
+  desdeISO,
+  aISO,
+  finGracia,
+  textoCuentaRegresiva,
+  DIAS_ALERTA,
+  DIAS_AL_DIA,
+} from "./fechas";
+// Re-exporta la lógica pura de pagos programados para los Server Components.
+//
+// Los Client Components NO deben importar de este archivo: este importa
+// supabase/server, que usa next/headers, y Next.js arrastraría eso al bundle
+// del cliente. Para los componentes cliente existen los módulos directos
+// "@/lib/motor/programados" y "@/lib/motor/fechas", que son puros.
+export {
+  hornearPagosProgramados,
+  filtrarVencimientosProximos,
+  type PagoProgramado,
+  type PagoProgramadoCrudo,
+} from "./programados";
+export type { Recurrencia, EstadoProgramado } from "./fechas";
 
 /**
  * Obtiene los datos crudos del Motor desde Supabase para el usuario y mes dados.
@@ -108,28 +142,45 @@ async function obtenerSaldosPorCuentaData(
     return [];
   }
 
-  // Para cada cuenta, obtener ingresos, gastos y pagos pagados
+  // Para cada cuenta, obtener ingresos, gastos, pagos pagados y transferencias
   const datosPorCuenta: DatosPorCuenta[] = await Promise.all(
     cuentas.map(async (cuenta) => {
-      const [{ data: ingresos }, { data: gastos }, { data: pagosPagados }] =
-        await Promise.all([
-          supabase
-            .from("ingresos")
-            .select("valor")
-            .eq("user_id", userId)
-            .eq("cuenta_id", cuenta.id),
-          supabase
-            .from("gastos")
-            .select("valor")
-            .eq("user_id", userId)
-            .eq("cuenta_id", cuenta.id),
-          supabase
-            .from("pagos")
-            .select("valor")
-            .eq("user_id", userId)
-            .eq("cuenta_id", cuenta.id)
-            .eq("estado", "Pagado"),
-        ]);
+      const [
+        { data: ingresos },
+        { data: gastos },
+        { data: pagosPagados },
+        { data: salientes },
+        { data: entrantes },
+      ] = await Promise.all([
+        supabase
+          .from("ingresos")
+          .select("valor")
+          .eq("user_id", userId)
+          .eq("cuenta_id", cuenta.id),
+        supabase
+          .from("gastos")
+          .select("valor")
+          .eq("user_id", userId)
+          .eq("cuenta_id", cuenta.id),
+        supabase
+          .from("pagos")
+          .select("valor")
+          .eq("user_id", userId)
+          .eq("cuenta_id", cuenta.id)
+          .eq("estado", "Pagado"),
+        // Transferencias donde esta cuenta es el ORIGEN: salen de ella
+        supabase
+          .from("transferencias")
+          .select("valor")
+          .eq("user_id", userId)
+          .eq("origen_id", cuenta.id),
+        // Transferencias donde esta cuenta es el DESTINO: llegan a ella
+        supabase
+          .from("transferencias")
+          .select("valor")
+          .eq("user_id", userId)
+          .eq("destino_id", cuenta.id),
+      ]);
 
       return {
         id: cuenta.id,
@@ -138,6 +189,8 @@ async function obtenerSaldosPorCuentaData(
         ingresos: extraer(ingresos, "valor"),
         gastos: extraer(gastos, "valor"),
         pagosPagados: extraer(pagosPagados, "valor"),
+        transferenciasSalientes: extraer(salientes, "valor"),
+        transferenciasEntrantes: extraer(entrantes, "valor"),
       };
     })
   );
@@ -250,4 +303,85 @@ export async function reasignarPagoACuenta(
   }
 
   return { success: true };
+}
+
+// ── Pagos programados ─────────────────────────────────────────────────────
+// SDD: .kiro/specs/feature-pagos-programados.md
+//
+// Un pago programado es una plantilla recurrente. El estado NO se persiste:
+// se calcula en cada lectura a partir de fecha_ultimo_pago, dia_vencimiento y
+// la recurrencia. Ver sección 5.5 del SDD.
+
+// NOTA: Todo el bloque de pagos programados que estaba acá (tipos,
+// hornearPagosProgramados, filtrarVencimientosProximos) se movió a
+// ./programados.ts para que los Client Components puedan importar los tipos y la
+// lógica pura SIN arrastrar supabase/server.ts (que usa next/headers) al bundle.
+// Ver el comentario al inicio del archivo.
+
+
+/**
+ * Obtiene los pagos programados del usuario autenticado, con su estado
+ * calculado.
+ *
+ * @param incluirInactivos si true, incluye los desactivados (para editar).
+ *                      Por defecto solo los activos, que son los que se pagan.
+ */
+export async function obtenerPagosProgramados(
+  incluirInactivos = false
+): Promise<PagoProgramado[]> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return [];
+
+  let query = supabase
+    .from("pagos_programados")
+    .select(
+      "id, concepto, valor, recurrencia, tipo, cuenta_id, fecha_inicio, " +
+        "dia_vencimiento, activo, fecha_ultimo_pago, cuentas(nombre)"
+    )
+    .eq("user_id", user.id);
+
+  if (!incluirInactivos) {
+    query = query.eq("activo", true);
+  }
+
+  const { data, error } = await query.order("dia_vencimiento");
+
+  if (error || !data) return [];
+
+  const crudos: PagoProgramadoCrudo[] = data.map((fila: any) => ({
+    id: fila.id,
+    concepto: fila.concepto,
+    valor: Number(fila.valor),
+    recurrencia: fila.recurrencia as Recurrencia,
+    tipo: fila.tipo as "Gasto" | "Ingreso",
+    cuenta_id: fila.cuenta_id,
+    fecha_inicio: fila.fecha_inicio,
+    dia_vencimiento: fila.dia_vencimiento,
+    activo: fila.activo,
+    fecha_ultimo_pago: fila.fecha_ultimo_pago,
+    cuenta_nombre: fila.cuentas?.nombre ?? "",
+  }));
+
+  return hornearPagosProgramados(crudos, new Date());
+}
+
+/**
+ * Pagos que entran en la ventana de alerta: vencen dentro de los próximos
+ * `dias` días y todavía no fueron marcados como pagados.
+ *
+ * No incluye los que están en período de gracia ("Al día"): el usuario acaba de
+ * pagarlos y no tiene sentido avisarle otra vez. Esa exclusión es el motivo de
+ * que esta función exista separada de obtenerPagosProgramados.
+ *
+ * @param dias ventana de anticipación. Por defecto DIAS_ALERTA (5).
+ */
+export async function obtenerVencimientosProximos(
+  dias: number = DIAS_ALERTA
+): Promise<PagoProgramado[]> {
+  const todos = await obtenerPagosProgramados(false);
+  return filtrarVencimientosProximos(todos, dias);
 }
