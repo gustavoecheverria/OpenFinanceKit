@@ -29,3 +29,7 @@ automation/reports/*.xlsx
 # Secrets
 *.env
 secrets/
+
+# Supabase CLI (contiene pooler-url con la connection string del proyecto)
+**/supabase/.temp/
+
