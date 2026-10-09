@@ -1,0 +1,39 @@
+-- OpenFinanceKit — Migración 008
+-- Versión: 0.4.0
+-- Fecha: 2026-10-07
+-- Descripción: Elimina la tabla `pagos` (pagos únicos). El módulo quedó
+--              obsoleto con la llegada de los pagos programados.
+--
+-- CONTEXTO:
+-- La tabla `pagos` modelaba un compromiso de una sola vez, pero:
+--
+-- 1. Nunca funcionó en la base real. La migración 002 (002_pagos_cuenta.sql),
+--    que agregaba `pagos.cuenta_id`, nunca se aplicó. El código intentaba
+--    insertar esa columna y Postgres lo rechazaba, así que el formulario siempre
+--    devolvía "No se pudo guardar el pago. Intenta de nuevo."
+--
+-- 2. Al marcar un pago como "Pagado" solo cambiaba el estado: no creaba
+--    ningún registro en `gastos` ni en `ingresos`. Es el mismo defecto que
+--    motivó el módulo de pagos programados.
+--
+-- 3. Es redundante: si algo ya se pagó, es un gasto. Si se va a pagar una vez
+--    y no se repite, se parece a un gasto pendiente.
+--
+-- DECISIÓN TOMADA POR EL USUARIO: eliminar el módulo por completo.
+--
+-- MIGRACIÓN DE DATOS:
+-- Los 5 pagos pendientes que el usuario tenía se convirtieron en pagos
+-- programados mensuales antes de correr esta migración (concepto, valor,
+-- cuenta Bancolombia Tavo y día de vencimiento originales). Ninguno estaba en
+-- estado "Pagado", así que ningún saldo registrado cambió.
+--
+-- SI NECESITÁS RECUPERAR DATOS: la tabla se dropea con CASCADE, así que los 5
+-- registros se fueron con ella. El respaldo quedó en el historial de esta
+-- conversación.
+
+DROP TABLE IF EXISTS pagos CASCADE;
+
+-- ── Verificación ──────────────────────────────────────────────────────────
+-- Debe devolver 0 filas.
+-- SELECT count(*) FROM information_schema.tables
+--   WHERE table_schema = 'public' AND table_name = 'pagos';

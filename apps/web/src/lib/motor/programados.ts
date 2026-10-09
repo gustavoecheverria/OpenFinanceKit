@@ -113,6 +113,10 @@ export interface PagoProgramadoCrudo {
   recurrencia: Recurrencia;
   tipo: "Gasto" | "Ingreso";
   cuenta_id: number;
+  /** Categoría donde se registra al marcar pagado. Elegida por el usuario. */
+  categoria_id: number;
+  /** Nombre de la categoría, para mostrarlo sin una query extra. */
+  categoria_nombre: string;
   fecha_inicio: string;
   dia_vencimiento: number;
   activo: boolean;

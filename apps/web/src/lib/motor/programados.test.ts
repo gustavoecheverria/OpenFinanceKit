@@ -34,6 +34,8 @@ function crudo(over: Partial<PagoProgramadoCrudo> = {}): PagoProgramadoCrudo {
     recurrencia: "Mensual",
     tipo: "Gasto",
     cuenta_id: 1,
+    categoria_id: 10,
+    categoria_nombre: "Arriendo",
     fecha_inicio: "2026-01-05",
     dia_vencimiento: 5,
     activo: true,

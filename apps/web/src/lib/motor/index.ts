@@ -7,7 +7,7 @@ import {
   type PagoProgramado,
   type PagoProgramadoCrudo,
 } from "./programados";
-import { desdeISO, DIAS_ALERTA, type Recurrencia } from "./fechas";
+import { desdeISO, DIAS_ALERTA, type Recurrencia, hoyDelUsuario } from "./fechas";
 
 export type { MotorResult, DatosMotor, DatosPorCuenta, SaldoCuenta, SaldosPorCuentaResult } from "./types";
 export {
@@ -30,6 +30,7 @@ export {
   aISO,
   finGracia,
   textoCuentaRegresiva,
+  hoyDelUsuario,
   DIAS_ALERTA,
   DIAS_AL_DIA,
 } from "./fechas";
@@ -64,18 +65,12 @@ async function obtenerDatosMotor(
     totalIngresos,
     totalGastos,
     saldosIniciales,
-    pagosPendientes,
-    pagosVencidos,
-    pagosPagados,
   ] = await Promise.all([
     supabase.from("ingresos").select("valor").eq("user_id", userId).gte("fecha", inicio).lt("fecha", fin),
     supabase.from("gastos").select("valor").eq("user_id", userId).gte("fecha", inicio).lt("fecha", fin),
     supabase.from("ingresos").select("valor").eq("user_id", userId),
     supabase.from("gastos").select("valor").eq("user_id", userId),
     supabase.from("cuentas").select("saldo_inicial").eq("user_id", userId),
-    supabase.from("pagos").select("valor").eq("user_id", userId).eq("estado", "Pendiente"),
-    supabase.from("pagos").select("valor").eq("user_id", userId).eq("estado", "Vencido"),
-    supabase.from("pagos").select("valor").eq("user_id", userId).eq("estado", "Pagado").not("cuenta_id", "is", null),
   ]);
 
   return {
@@ -84,9 +79,12 @@ async function obtenerDatosMotor(
     ingresosHist: extraer(totalIngresos.data, "valor"),
     gastosHist: extraer(totalGastos.data, "valor"),
     saldosIniciales: extraer(saldosIniciales.data, "saldo_inicial"),
-    pagosPendientes: extraer(pagosPendientes.data, "valor"),
-    pagosVencidos: extraer(pagosVencidos.data, "valor"),
-    pagosPagados: extraer(pagosPagados.data, "valor"),
+    // Los pagos programados NO entran en el saldo: al marcarse pagado generan
+    // un registro real en gastos o ingresos, y ese sí cuenta. Contarlos además
+    // descontaría de más. La tabla `pagos` (pagos únicos) ya no existe.
+    pagosPendientes: [],
+    pagosVencidos: [],
+    pagosPagados: [],
   };
 }
 
@@ -148,7 +146,6 @@ async function obtenerSaldosPorCuentaData(
       const [
         { data: ingresos },
         { data: gastos },
-        { data: pagosPagados },
         { data: salientes },
         { data: entrantes },
       ] = await Promise.all([
@@ -162,12 +159,6 @@ async function obtenerSaldosPorCuentaData(
           .select("valor")
           .eq("user_id", userId)
           .eq("cuenta_id", cuenta.id),
-        supabase
-          .from("pagos")
-          .select("valor")
-          .eq("user_id", userId)
-          .eq("cuenta_id", cuenta.id)
-          .eq("estado", "Pagado"),
         // Transferencias donde esta cuenta es el ORIGEN: salen de ella
         supabase
           .from("transferencias")
@@ -188,7 +179,10 @@ async function obtenerSaldosPorCuentaData(
         saldoInicial: Number(cuenta.saldo_inicial),
         ingresos: extraer(ingresos, "valor"),
         gastos: extraer(gastos, "valor"),
-        pagosPagados: extraer(pagosPagados, "valor"),
+        // Sin pagosPagados: la tabla `pagos` ya no existe. Los pagos programados no
+        // se restan acá porque al marcarse pagado generan un registro real en
+        // gastos o ingresos, y ese sí se descuenta.
+        pagosPagados: [],
         transferenciasSalientes: extraer(salientes, "valor"),
         transferenciasEntrantes: extraer(entrantes, "valor"),
       };
@@ -214,95 +208,6 @@ export async function obtenerSaldosPorCuenta(): Promise<SaldosPorCuentaResult> {
 
   const datosPorCuenta = await obtenerSaldosPorCuentaData(user.id);
   return calcularSaldosPorCuenta(datosPorCuenta);
-}
-
-/**
- * Obtiene los pagos del usuario que tienen cuenta_id = NULL.
- * Estos son pagos antiguos creados antes de la migración 002.
- * Están descontados del saldo global pero no de ninguna cuenta individual.
- */
-export async function obtenerPagosSinAsignar(): Promise<Array<{
-  id: number;
-  concepto: string;
-  fecha_vencimiento: string | null;
-  valor: number;
-  estado: string;
-}>> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return [];
-  }
-
-  const { data } = await supabase
-    .from("pagos")
-    .select("id, concepto, fecha_vencimiento, valor, estado")
-    .eq("user_id", user.id)
-    .is("cuenta_id", null)
-    .eq("estado", "Pagado")
-    .order("fecha_vencimiento", { ascending: false });
-
-  return data || [];
-}
-
-/**
- * Reasigna un pago a una cuenta específica.
- * Requiere que el usuario sea propietario del pago y la cuenta.
- * RN-004: Modificación de datos vía Server Action.
- */
-export async function reasignarPagoACuenta(
-  pagoId: number,
-  cuentaId: number
-): Promise<{ success: boolean; error?: string }> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { success: false, error: "No autenticado" };
-  }
-
-  // Validar que el pago pertenece al usuario y está sin asignar
-  const { data: pago, error: errorPago } = await supabase
-    .from("pagos")
-    .select("id, user_id, cuenta_id")
-    .eq("id", pagoId)
-    .eq("user_id", user.id)
-    .is("cuenta_id", null)
-    .single();
-
-  if (errorPago || !pago) {
-    return { success: false, error: "Pago no encontrado o ya está asignado" };
-  }
-
-  // Validar que la cuenta pertenece al usuario
-  const { data: cuenta, error: errorCuenta } = await supabase
-    .from("cuentas")
-    .select("id, user_id")
-    .eq("id", cuentaId)
-    .eq("user_id", user.id)
-    .single();
-
-  if (errorCuenta || !cuenta) {
-    return { success: false, error: "Cuenta no encontrada" };
-  }
-
-  // Reasignar el pago
-  const { error: errorUpdate } = await supabase
-    .from("pagos")
-    .update({ cuenta_id: cuentaId })
-    .eq("id", pagoId)
-    .eq("user_id", user.id);
-
-  if (errorUpdate) {
-    return { success: false, error: errorUpdate.message };
-  }
-
-  return { success: true };
 }
 
 // ── Pagos programados ─────────────────────────────────────────────────────
@@ -340,7 +245,8 @@ export async function obtenerPagosProgramados(
     .from("pagos_programados")
     .select(
       "id, concepto, valor, recurrencia, tipo, cuenta_id, fecha_inicio, " +
-        "dia_vencimiento, activo, fecha_ultimo_pago, cuentas(nombre)"
+        "dia_vencimiento, activo, fecha_ultimo_pago, cuentas(nombre), " +
+        "categorias(nombre)"
     )
     .eq("user_id", user.id);
 
@@ -359,6 +265,8 @@ export async function obtenerPagosProgramados(
     recurrencia: fila.recurrencia as Recurrencia,
     tipo: fila.tipo as "Gasto" | "Ingreso",
     cuenta_id: fila.cuenta_id,
+    categoria_id: fila.categoria_id,
+    categoria_nombre: fila.categorias?.nombre ?? "",
     fecha_inicio: fila.fecha_inicio,
     dia_vencimiento: fila.dia_vencimiento,
     activo: fila.activo,
@@ -366,7 +274,7 @@ export async function obtenerPagosProgramados(
     cuenta_nombre: fila.cuentas?.nombre ?? "",
   }));
 
-  return hornearPagosProgramados(crudos, new Date());
+  return hornearPagosProgramados(crudos, hoyDelUsuario());
 }
 
 /**

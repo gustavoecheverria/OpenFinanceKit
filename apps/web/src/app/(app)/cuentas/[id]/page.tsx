@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/layout/page-header";
-import { obtenerSaldosPorCuenta } from "@/lib/motor";
+import { obtenerSaldosPorCuenta, obtenerPagosProgramados } from "@/lib/motor";
 
 export default async function DetalleCuentaPage({
   params,
@@ -60,19 +60,15 @@ export default async function DetalleCuentaPage({
     .eq("cuenta_id", cuentaId)
     .order("fecha", { ascending: false });
 
-  // Obtener todos los pagos pagados de esta cuenta
-  const { data: pagos } = await supabase
-    .from("pagos")
-    .select("*")
-    .eq("user_id", user.id)
-    .eq("cuenta_id", cuentaId)
-    .eq("estado", "Pagado")
-    .order("fecha_vencimiento", { ascending: false });
-
   // Calcular totales
   const totalIngresos = ingresos?.reduce((sum, ing) => sum + Number(ing.valor || 0), 0) || 0;
   const totalGastos = gastos?.reduce((sum, gasto) => sum + Number(gasto.valor || 0), 0) || 0;
-  const totalPagosPagados = pagos?.reduce((sum, pago) => sum + Number(pago.valor || 0), 0) || 0;
+
+  // Pagos programados que salen de esta cuenta, con su estado ya calculado
+  const todosProgramados = await obtenerPagosProgramados();
+  const pagosProgramadosCuenta = todosProgramados.filter(
+    (p) => p.cuenta_id === cuentaId
+  );
 
   return (
     <>
@@ -126,7 +122,7 @@ export default async function DetalleCuentaPage({
         <div className="p-3 bg-[var(--muted)] rounded-lg border border-[var(--border)]">
           <p className="text-xs text-[var(--muted-foreground)] mb-1">Total Gastos + Pagos</p>
           <p className="text-lg font-bold text-[var(--destructive)]">
-            -${(totalGastos + totalPagosPagados).toLocaleString("es", {
+            -${totalGastos.toLocaleString("es", {
               minimumFractionDigits: 2,
             })}
           </p>
@@ -199,33 +195,34 @@ export default async function DetalleCuentaPage({
           )}
         </section>
 
-        {/* Pagos pagados */}
+        {/* Pagos programados que salen de esta cuenta */}
         <section>
-          <h2 className="text-sm font-semibold mb-2">Pagos Realizados ({pagos?.length || 0})</h2>
-          {pagos && pagos.length > 0 ? (
+          <h2 className="text-sm font-semibold mb-2">
+            Pagos programados ({pagosProgramadosCuenta.length})
+          </h2>
+          {pagosProgramadosCuenta.length > 0 ? (
             <ul className="space-y-2">
-              {pagos.map((pago) => (
+              {pagosProgramadosCuenta.map((p) => (
                 <li
-                  key={pago.id}
+                  key={p.id}
                   className="flex items-center justify-between px-3 py-2 bg-[var(--muted)] rounded-lg text-sm"
                 >
-                  <div>
-                    <span className="font-medium">{pago.concepto || "Pago"}</span>
+                  <div className="min-w-0">
+                    <span className="font-medium truncate">{p.concepto}</span>
                     <p className="text-xs text-[var(--muted-foreground)] mt-0.5">
-                      Realizado: {pago.fecha_vencimiento}
+                      {p.textoVencimiento}
+                      {p.tipo === "Gasto" ? " · va a gastos" : " · va a ingresos"}
                     </p>
                   </div>
-                  <span className="font-bold text-[var(--destructive)]">
-                    -${Number(pago.valor).toLocaleString("es", {
-                      minimumFractionDigits: 2,
-                    })}
+                  <span className="font-bold text-[var(--destructive)] whitespace-nowrap">
+                    -${p.valor.toLocaleString("es", { minimumFractionDigits: 2 })}
                   </span>
                 </li>
               ))}
             </ul>
           ) : (
             <p className="text-xs text-[var(--muted-foreground)]">
-              No hay pagos realizados en esta cuenta.
+              No hay pagos programados en esta cuenta.
             </p>
           )}
         </section>

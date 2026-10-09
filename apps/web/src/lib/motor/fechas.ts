@@ -332,6 +332,25 @@ function medianocheUTC(fecha: Date): Date {
 }
 
 /**
+ * El "hoy" del usuario, expresado como medianoche UTC.
+ *
+ * POR QUÉ NO SE USA new Date() directo en los puntos de entrada: en Colombia
+ * (UTC-5) a las 20:00 local ya es el día siguiente en UTC. Todo el módulo
+ * trabaja con fechas UTC, así que tomar el día UTC como "hoy" haría que el
+ * sistema creyera estar un día más adelante de lo que el usuario ve: un pago
+ * que vence hoy aparecería vencido, o el período de gracia se acortaría un día.
+ *
+ * Se lee el día en hora LOCAL y se reconstruye a medianoche UTC, que es el
+ * mismo día que el usuario tiene en su calendario.
+ */
+export function hoyDelUsuario(): Date {
+  const ahora = new Date();
+  return new Date(
+    Date.UTC(ahora.getFullYear(), ahora.getMonth(), ahora.getDate())
+  );
+}
+
+/**
  * Texto del countdown: "vence hoy", "vence en N días", "venció hace N días".
  * Función pura. Devuelve string porque el formato es parte de la regla de
  * negocio de la UI.

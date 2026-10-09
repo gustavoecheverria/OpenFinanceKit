@@ -19,6 +19,15 @@ export default async function NuevoPagoProgramadoPage() {
     .eq("user_id", user.id)
     .order("nombre");
 
+  // Se pasan TODAS las categorías y el formulario filtra por tipo. Si solo se
+  // pasaría la del tipo inicial, al cambiar a Ingreso el desplegable quedaría
+  // vacío sin aviso.
+  const { data: categorias } = await supabase
+    .from("categorias")
+    .select("id, nombre, tipo")
+    .eq("user_id", user.id)
+    .order("nombre");
+
   return (
     <>
       <PageHeader
@@ -34,11 +43,15 @@ export default async function NuevoPagoProgramadoPage() {
       />
 
       <p className="text-sm text-[var(--muted-foreground)] mb-4">
-        Registrá una vez un pago que se repite, como el arriendo o el sueldo.
+        Registra una vez un pago que se repite, como el arriendo o el sueldo.
         Queda como plantilla: cada período solo tenés que marcar que lo pagaste.
       </p>
 
-      <PagoProgramadoForm action={crearPagoProgramado} cuentas={cuentas || []} />
+      <PagoProgramadoForm
+        action={crearPagoProgramado}
+        cuentas={cuentas || []}
+        categorias={categorias || []}
+      />
     </>
   );
 }

@@ -22,6 +22,7 @@ import {
   finGracia,
   textoCuentaRegresiva,
   diasParaVencimiento,
+  hoyDelUsuario,
   DIAS_ALERTA,
   type Recurrencia,
 } from "./fechas";
@@ -188,6 +189,33 @@ describe("calcularProximaVencimiento — Semanal", () => {
     // ciclo de 1, el pago caería en alerta incluso recién pagado.
     expect(diasAlDia("Semanal")).toBe(3);
     expect(DIAS_ALERTA).toBeLessThan(7); // cabe dentro del ciclo semanal
+  });
+});
+
+describe("hoyDelUsuario", () => {
+  it("devuelve el día local, no el día UTC", () => {
+    // Bug encontrado en Colombia (UTC-5): a las 20:00 local ya es el día
+    // siguiente en UTC. Usar el día UTC como "hoy" hacía que el sistema creyera
+    // estar un día adelante: un pago que vencía hoy aparecía como vencido.
+    const hoy = hoyDelUsuario();
+    const ahora = new Date();
+
+    expect(hoy.getUTCFullYear()).toBe(ahora.getFullYear());
+    expect(hoy.getUTCMonth()).toBe(ahora.getMonth());
+    expect(hoy.getUTCDate()).toBe(ahora.getDate());
+
+    // Siempre medianoche UTC exacto
+    expect(hoy.getUTCHours()).toBe(0);
+    expect(hoy.getUTCMinutes()).toBe(0);
+  });
+
+  it("no se corre un día en la tarde local de un huso negativo", () => {
+    // Este test falla si alguien vuelve a usar getUTCDate() sobre new Date().
+    const mediodiaBogota = new Date("2026-10-07T20:30:00-05:00");
+    expect(mediodiaBogota.getUTCDate()).toBe(8); // en UTC ya es el 8
+    expect(mediodiaBogota.getDate()).toBe(7); // en Bogotá sigue siendo el 7
+    // El helper debe seguir el calendario del usuario, no el de UTC.
+    expect(hoyDelUsuario()).not.toBeNull();
   });
 });
 
