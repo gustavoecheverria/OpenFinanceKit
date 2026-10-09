@@ -46,7 +46,7 @@ export default async function TransferirPage() {
       />
 
       <p className="text-sm text-[var(--muted-foreground)] mb-4">
-        Mové plata entre tus cuentas. Por ejemplo, si retirás efectivo del
+        Mueve plata entre tus cuentas. Por ejemplo, si retiras efectivo del
         banco, transferilos a tu cuenta &quot;Efectivo&quot; para poder registrar
         los gastos que pagás con esa plata.
       </p>

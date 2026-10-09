@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { calcularMotor, mesActual, desplazarMes, etiquetaMes, obtenerSaldosPorCuenta, obtenerVencimientosProximos } from "@/lib/motor";
+import { calcularMotor, mesActual, desplazarMes, etiquetaMes, obtenerSaldosPorCuenta, obtenerVencimientosProximos, obtenerPagosProgramados } from "@/lib/motor";
 import { PageHeader } from "@/components/layout/page-header";
 import { MonthSelector } from "@/components/dashboard/month-selector";
 import { AccountBalanceList } from "@/components/dashboard/account-balance-list";
@@ -23,12 +23,19 @@ export default async function DashboardPage({
   // importante que tiene que ver.
   const vencimientosProximos = await obtenerVencimientosProximos();
 
+  // Total de los pagos programados aún no pagados, para el indicador
+  // "Pendiente por pagar". Antes venía de la tabla `pagos` (pagos únicos),
+  // que ya no existe.
+  const totalPendiente = (await obtenerPagosProgramados())
+    .filter((p) => p.estado !== "Al día")
+    .reduce((sum, p) => sum + p.valor, 0);
+
   // Sin actividad histórica = usuario nuevo (saldo, ingresos y gastos en cero)
   const sinActividad =
     motor.saldoActual === 0 &&
     motor.totalIngresosHist === 0 &&
     motor.totalGastosHist === 0 &&
-    motor.pendientePago === 0;
+    totalPendiente === 0;
 
   return (
     <>
@@ -60,7 +67,7 @@ export default async function DashboardPage({
         />
         <IndicatorCard
           label="Pendiente por pagar"
-          value={formatMoney(motor.pendientePago)}
+          value={formatMoney(totalPendiente)}
           variant="warning"
         />
         <IndicatorCard

@@ -13,7 +13,6 @@ import {
   addCuenta,
   updateCuenta,
   deleteCuenta,
-  cargarDatosEjemplo,
 } from "./actions";
 
 export default async function ConfigPage() {
@@ -47,21 +46,21 @@ export default async function ConfigPage() {
     <>
       <PageHeader title="Configuración" />
 
-      {/* Datos de ejemplo — solo si no hay nada configurado */}
+      {/* Usuario nuevo: guía los tres pasos sin imponer datos */}
       {sinDatos && (
-        <form action={cargarDatosEjemplo} className="mb-6">
-          <div className="p-4 rounded-lg border border-dashed border-[var(--border)] text-center">
-            <p className="text-sm text-[var(--muted-foreground)] mb-3">
-              ¿Primera vez? Carga datos de ejemplo para probar la app.
-            </p>
-            <button
-              type="submit"
-              className="px-4 py-2 text-sm rounded-lg bg-[var(--primary)] text-[var(--primary-foreground)] font-medium hover:opacity-90 transition-opacity"
-            >
-              Cargar datos de ejemplo
-            </button>
-          </div>
-        </form>
+        <div className="mb-6 p-4 rounded-lg border border-dashed border-[var(--border)]">
+          <p className="text-sm font-medium mb-1">Empecemos por lo básico</p>
+          <p className="text-sm text-[var(--muted-foreground)]">
+            Para usar la app necesitás al menos una categoría de gasto y una
+            cuenta con su saldo. Después vas a poder registrar movimientos y
+            pagos programados.
+          </p>
+          <ol className="text-xs text-[var(--muted-foreground)] mt-3 space-y-1 list-decimal list-inside">
+            <li>Crea una categoría de tipo Gasto</li>
+            <li>Crea una cuenta con el saldo que tienes hoy</li>
+            <li>Registra tu primer ingreso o gasto</li>
+          </ol>
+        </div>
       )}
 
       {/* Categorías */}

@@ -638,3 +638,37 @@ solo por su nombre, igual que hoy. Agregar `tipo = 'Efectivo' | 'Banco'` sería 
 obligaría a una migración de backfill sobre datos existentes sin ganancia funcional: la app no
 necesita distinguir tipos de cuenta, solo balances. Si más adelante aparecen bancos, tarjetas de
 crédito y otros con reglas distintas, ahí sí conviene agregar la columna.
+
+---
+
+## 11. Decisión: eliminación del módulo de pagos únicos
+
+**Fecha:** 2026-10-07 · **Autorizado por:** el usuario
+
+La tabla `pagos` (pagos únicos) se eliminó por completo: tabla en la base,
+páginas `/pagos/nuevo` y `/pagos/sin-asignar`, componentes y server actions.
+
+**Por qué:**
+
+1. **Estaba roto.** Al marcar un pago como "Pagado" solo cambiaba el estado: no
+   creaba ningún registro en `gastos`. Era exactamente el mismo defecto que
+   motivó este feature.
+2. **Nunca funcionó en la base real.** La migración `002_pagos_cuenta.sql`
+   nunca se aplicó, así que `pagos.cuenta_id` no existía. El insert fallaba
+   siempre con "No se pudo guardar el pago". Los E2E no lo detectaron porque
+   ningún test creaba pagos únicos.
+3. **Es redundante** con los pagos programados. Si algo ya se pagó, es un gasto.
+   Si se va a pagar una vez y no se repite, se parece a un gasto pendiente.
+
+**Migración de datos:** los 5 pagos que el usuario tenía se convirtieron en
+pagos programados mensuales, todos desde Bancolombia Tavo, conservando su día
+de vencimiento. Ninguno estaba en estado "Pagado", así que ningún saldo
+registrado cambió.
+
+**Efecto en el Motor:** `calcularIndicadores` ya no lee la tabla `pagos`. El
+indicador "Pendiente por pagar" del dashboard pasa a sumar los pagos programados
+en estado distinto de "Al día".
+
+**Efecto secundario a favor:** los pagos programados no se descuentan dos veces
+del saldo. Antes el Motor los contaba vía la tabla `pagos` y además generaban
+un registro en `gastos`.

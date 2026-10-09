@@ -66,6 +66,34 @@ chore(config): actualizar mcp.json con nuevo token
 - Nombres de variables, funciones y campos: **inglés o español consistente**
 - Comentarios en código: **español**
 
+### Tuteo en los textos de la interfaz
+
+Los textos que ve el usuario (labels, mensajes de error, guías, estados vacíos) usan
+**imperativo de tuteo, sin voseo**.
+
+| Correcto | Incorrecto |
+|----------|------------|
+| Crea una categoría | Creá una categoría |
+| Necesitas una cuenta | Necesitás una cuenta |
+| Selecciona el destino | Elegí primero el origen |
+| Registra tu primer gasto | Registrá tu primer gasto |
+| Vuelve a iniciar sesión | Volvé a iniciar sesión |
+
+Razón: la base del proyecto ya usa tuteo en todos sus textos
+("Vuelve a iniciar sesión", "Completa el concepto", "Selecciona una cuenta"). El voseo
+introducido en un módulo nuevo rompe la consistencia y hace que la app parezca escrita
+por dos personas distintas.
+
+Aplica a todo texto visible. Los comentarios de código pueden usar la forma que sea más
+clara, pero se recomienda la misma.
+
+**Cómo verificarlo antes de commitear:**
+
+```bash
+# No debería devolver nada
+grep -rnE '\b(Creá|Registrá|Necesitás|Elegí|Pagás|Tenés|Podés|Guardá|Marcá|Mové)' apps/web/src/
+```
+
 ## Versionado semántico
 
 ```

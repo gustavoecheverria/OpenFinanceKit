@@ -43,9 +43,9 @@ export function TransferirForm({
   if (cuentas.length < 2) {
     return (
       <div className="px-3 py-4 rounded-lg bg-[var(--muted)] text-sm">
-        <p className="font-medium">Necesitás al menos dos cuentas</p>
+        <p className="font-medium">Necesitas al menos dos cuentas</p>
         <p className="text-[var(--muted-foreground)] mt-1">
-          Para transferir saldo entre cuentas tenés que tener dos. Creá una
+          Para transferir saldo entre cuentas tienes que tener dos. Crea una
           más en Configuración.
         </p>
       </div>
@@ -123,7 +123,7 @@ export function TransferirForm({
           className="w-full px-3 py-2 border border-[var(--border)] rounded-lg bg-[var(--background)] disabled:opacity-50"
         >
           <option value="">
-            {origenId ? "Selecciona el destino..." : "Elegí primero el origen"}
+            {origenId ? "Selecciona el destino..." : "Elige primero el origen"}
           </option>
           {destinos.map((cuenta) => (
             <option key={cuenta.id} value={cuenta.id}>
