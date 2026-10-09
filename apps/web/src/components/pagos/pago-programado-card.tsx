@@ -93,6 +93,12 @@ export function PagoProgramadoCard({
             <span>
               {ETIQUETA_RECURRENCIA[pago.recurrencia] ?? pago.recurrencia}
             </span>
+            {pago.categoria_nombre && (
+              <>
+                <span aria-hidden="true">·</span>
+                <span className="truncate">{pago.categoria_nombre}</span>
+              </>
+            )}
             <span aria-hidden="true">·</span>
             <span>
               va a {pago.tipo === "Gasto" ? "gastos" : "ingresos"}

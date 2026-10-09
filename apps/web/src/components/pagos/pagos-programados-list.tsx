@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { PagoProgramadoCard } from "@/components/pagos/pago-programado-card";
 // Importa del módulo PURO, no de "@/lib/motor": este es un Client Component y
 // "@/lib/motor" arrastra supabase/server (next/headers) al bundle.
 import type { PagoProgramado } from "@/lib/motor/programados";
+import { initialFormState, type FormState } from "@/lib/form-state";
 
 /**
  * Lista de pagos programados con sus acciones.
@@ -13,27 +14,40 @@ import type { PagoProgramado } from "@/lib/motor/programados";
  * las acciones: marcar pagado o desactivar.
  *
  * IMPORTANTE — por qué las actions se pasan como props y no se importan:
- * llamar una server action desde un Client Component la arrastra al bundle del
- * cliente junto con sus dependencias (supabase/server.ts, que usa
- * next/headers) y Next.js tira "You're importing a component that needs
- * next/headers". El patrón correcto es <form action={serverAction}>, y como
- * este archivo es un Client Component, la acción llega por prop desde
- * `page.tsx`, que es un Server Component.
+ * importar una server action arrastra al bundle del cliente toda su cadena de
+ * dependencias. Se llegó a romper la app entera por eso (supabase/server usa
+ * next/headers). La acción llega por prop desde `page.tsx`, que es Server
+ * Component, y se invoca con useActionState en vez de con <form action>.
+ *
+ * Por qué useActionState y no <form action>: con <form action> no hay forma de
+ * saber cuándo terminó la action para cerrar la confirmación. Sin ese control,
+ * el modal quedaba abierto con el botón "Sí, lo pagué" activo, y el usuario
+ * podía disparar el registro varias veces.
  *
  * Verificar antes de marcar pagado: un clic accidental genera un gasto real en
  * la base. Por eso hay un paso de confirmación.
  */
 export function PagosProgramadosList({
   pagos,
-  onUsarPago,
+  onMarcarPagado,
   onDesactivar,
 }: {
   pagos: PagoProgramado[];
-  /** Server Action (id, formData) => Promise<void>, para <form action> */
-  onUsarPago: (id: number, formData: FormData) => Promise<void>;
+  /** Server Action (prev, formData) => Promise<FormState> */
+  onMarcarPagado: (
+    prev: FormState,
+    formData: FormData
+  ) => Promise<FormState>;
   onDesactivar: (id: number, activo: boolean) => Promise<void>;
 }) {
+  const [state, formAction] = useActionState(onMarcarPagado, initialFormState);
   const [confirmandoId, setConfirmandoId] = useState<number | null>(null);
+
+  // Cuando la action termina bien, se cierra la confirmación. Antes quedaba
+  // abierta con el botón activo.
+  useEffect(() => {
+    if (state.ok) setConfirmandoId(null);
+  }, [state.ok]);
 
   return (
     <div>
@@ -43,6 +57,15 @@ export function PagosProgramadosList({
           {pagos.length} activo{pagos.length === 1 ? "" : "s"}
         </span>
       </div>
+
+      {state.error && (
+        <div
+          role="alert"
+          className="mb-2 px-3 py-2 rounded-lg bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300 text-sm"
+        >
+          {state.error}
+        </div>
+      )}
 
       <ul className="space-y-2">
         {pagos.map((pago) => {
@@ -70,9 +93,8 @@ export function PagosProgramadosList({
                     {pago.tipo === "Gasto" ? " como gasto" : " como ingreso"}?
                   </p>
                   <div className="flex gap-2">
-                    {/* La Server Action se ejecuta vía <form action>, no
-                        importada en el bundle del cliente */}
-                    <form action={onUsarPago.bind(null, pago.id)}>
+                    <form action={formAction}>
+                      <input type="hidden" name="id" value={pago.id} />
                       <button
                         type="submit"
                         className="px-3 py-1.5 bg-[var(--primary)] text-[var(--primary-foreground)] rounded-lg text-sm font-medium hover:opacity-90"
@@ -81,6 +103,7 @@ export function PagosProgramadosList({
                       </button>
                     </form>
                     <button
+                      type="button"
                       onClick={() => setConfirmandoId(null)}
                       className="px-3 py-1.5 bg-[var(--muted)] text-[var(--foreground)] rounded-lg text-sm"
                     >

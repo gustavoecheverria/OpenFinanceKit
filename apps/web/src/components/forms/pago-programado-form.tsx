@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { SubmitButton } from "@/components/forms/submit-button";
 import { initialFormState, type FormState } from "@/lib/form-state";
@@ -12,6 +13,12 @@ import type { Recurrencia } from "@/lib/motor/fechas";
 interface Cuenta {
   id: number;
   nombre: string;
+}
+
+interface Categoria {
+  id: number;
+  nombre: string;
+  tipo: "Gasto" | "Ingreso";
 }
 
 const RECURRENCIAS: Recurrencia[] = ["Mensual", "Quincenal", "Semanal"];
@@ -35,9 +42,11 @@ const DESCRIPCION_RECURRENCIA: Record<Recurrencia, string> = {
 export function PagoProgramadoForm({
   action,
   cuentas,
+  categorias,
 }: {
   action: (prev: FormState, data: FormData) => Promise<FormState>;
   cuentas: Cuenta[];
+  categorias: Categoria[];
 }) {
   const [state, formAction] = useActionState(action, initialFormState);
   const router = useRouter();
@@ -46,6 +55,13 @@ export function PagoProgramadoForm({
   const [tipo, setTipo] = useState<"Gasto" | "Ingreso">("Gasto");
   const [recurrencia, setRecurrencia] = useState<Recurrencia>("Mensual");
   const [fechaInicio, setFechaInicio] = useState(today);
+
+  // Solo las categorías del tipo que eligió el pago. Si no hay ninguna, el
+  // select queda vacío y bloqueado: no se puede crear el pago programado sin
+  // categoría, porque al marcarse pagado genera un registro real que la
+  // necesita (categoria_id es NOT NULL en gastos e ingresos).
+  const categoriasDelTipo = categorias.filter((c) => c.tipo === tipo);
+  const sinCategorias = categoriasDelTipo.length === 0;
 
   useEffect(() => {
     if (state.ok) router.push("/pagos");
@@ -67,11 +83,40 @@ export function PagoProgramadoForm({
   if (cuentas.length === 0) {
     return (
       <div className="px-3 py-4 rounded-lg bg-[var(--muted)] text-sm">
-        <p className="font-medium">Necesitás al menos una cuenta</p>
+        <p className="font-medium">Necesitas al menos una cuenta</p>
         <p className="text-[var(--muted-foreground)] mt-1">
-          Los pagos programados siempre se asignan a una cuenta. Creá una en
-          Configuración para poder empezar.
+          Los pagos programados siempre se asignan a una cuenta. Crea una en{" "}
+          <Link
+            href="/config"
+            className="text-[var(--primary)] underline font-medium"
+          >
+            Configuración
+          </Link>{" "}
+          para poder empezar.
         </p>
+      </div>
+    );
+  }
+
+  // Usuario sin categorías del tipo necesario: no hay nada que elegir y el
+  // registro real lo va a necesitar. Se frena acá con una salida clara en vez
+  // de dejar crear un pago que fallaría al marcarlo pagado.
+  if (sinCategorias) {
+    return (
+      <div className="px-3 py-4 rounded-lg bg-[var(--muted)] text-sm">
+        <p className="font-medium">
+          Primero creá una categoría de {tipo === "Gasto" ? "gastos" : "ingresos"}
+        </p>
+        <p className="text-[var(--muted-foreground)] mt-1">
+          Cada pago programado se registra bajo una categoría cuando lo marcás
+          como pagado. Sin una categoría de este tipo no se puede crear.
+        </p>
+        <Link
+          href="/config"
+          className="inline-block mt-3 px-3 py-1.5 bg-[var(--primary)] text-[var(--primary-foreground)] rounded-lg text-sm font-medium hover:opacity-90"
+        >
+          Crear categoría
+        </Link>
       </div>
     );
   }
@@ -220,6 +265,30 @@ export function PagoProgramadoForm({
         mes tiene menos días, vence el último día de ese mes.
       </p>
 
+      {/* Categoría: obligatoria, filtrada por tipo */}
+      <div>
+        <label htmlFor="categoria_id" className="block text-sm font-medium mb-1">
+          Categoría
+        </label>
+        <select
+          id="categoria_id"
+          name="categoria_id"
+          required
+          className="w-full px-3 py-2 border border-[var(--border)] rounded-lg bg-[var(--background)]"
+        >
+          <option value="">Selecciona una categoría...</option>
+          {categoriasDelTipo.map((cat) => (
+            <option key={cat.id} value={cat.id}>
+              {cat.nombre}
+            </option>
+          ))}
+        </select>
+        <p className="text-xs text-[var(--muted-foreground)] mt-1">
+          Es la categoría donde va a quedar registrado cuando lo marques como
+          pagado.
+        </p>
+      </div>
+
       {/* Cuenta: obligatoria */}
       <div>
         <label htmlFor="cuenta_id" className="block text-sm font-medium mb-1">
@@ -239,7 +308,7 @@ export function PagoProgramadoForm({
           ))}
         </select>
         <p className="text-xs text-[var(--muted-foreground)] mt-1">
-          &quot;Efectivo&quot; es una cuenta más. Si retirás plata del banco para
+          &quot;Efectivo&quot; es una cuenta más. Si retiras plata del banco para
           tener efectivo, transferila primero desde Configuración.
         </p>
       </div>
