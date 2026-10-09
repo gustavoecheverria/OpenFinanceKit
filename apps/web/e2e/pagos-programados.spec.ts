@@ -16,39 +16,186 @@ import { test, expect } from "@playwright/test";
 
 const run = Date.now().toString().slice(-6);
 
-/** Crea una categoría y una cuenta con saldo, y devuelve sus nombres. */
-async function crearCuentaConSaldo(
-  page: import("@playwright/test").Page,
-  nombre: string,
-  saldo: string
-) {
+/**
+ * Borra todos los datos del usuario de prueba.
+ *
+ * El setup global lo hace una vez por corrida, pero dentro de una misma corrida
+ * los tests se acumulan: este archivo necesita partir de cero en casos concretos
+ * (por ejemplo, un test que verifica qué pasa sin categorías de un tipo).
+ *
+ * Usa la API REST de Supabase con el token de sesión que ya está en el
+ * navegador, así que respeta el RLS: solo borra los datos del usuario de prueba.
+ */
+async function vaciarUsuario(page: import("@playwright/test").Page): Promise<void> {
+  await page.goto("/dashboard");
+  await page.waitForLoadState("networkidle");
+
+  // process.env no existe dentro del navegador: se leen acá y se pasan.
+  const proyecto = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!proyecto || !anonKey) throw new Error("Faltan las variables de Supabase");
+
+  const borrado = await page.evaluate(
+    async ({ url, key }: { url: string; key: string }) => {
+      // El token de sesión vive en la cookie de @supabase/ssr
+      const nombre = `sb-${new URL(url).hostname.split(".")[0]}-auth-token`;
+      const crudo = decodeURIComponent(document.cookie)
+        .split(";")
+        .map((c) => c.trim())
+        .find((c) => c.startsWith(nombre));
+      if (!crudo) return "sin cookie de sesión";
+
+      const token = crudo.slice(nombre.length + 1).replace(/^base64-/, "");
+      const sesion = JSON.parse(atob(token));
+
+      const tablas = [
+        "gastos",
+        "ingresos",
+        "pagos_programados",
+        "transferencias",
+        "categorias",
+        "cuentas",
+      ];
+      for (const tabla of tablas) {
+        const r = await fetch(
+          `${url}/rest/v1/${tabla}?user_id=eq.${sesion.user.id}`,
+          {
+            method: "DELETE",
+            headers: { apikey: key, Authorization: `Bearer ${sesion.access_token}` },
+          }
+        );
+        if (!r.ok) return `${tabla}: ${r.status} ${await r.text()}`;
+      }
+      return "ok";
+    },
+    { url: proyecto, key: anonKey }
+  );
+
+  if (borrado !== "ok") throw new Error(`No se pudo limpiar: ${borrado}`);
+}
+
+/**
+ * Prepara al usuario E2E como si acabara de registrarse.
+ *
+ * El usuario de prueba arranca VACÍO a propósito: los tests de E2E borran sus
+ * datos en cada corrida (ver el módulo de este archivo). Esto obliga a que cada
+ * test cree lo que necesita, que es exactamente el flujo de un usuario nuevo y
+ * deja ver si la app funciona sin datos previos.
+ *
+ * Crea las categorías y cuentas faltantes. Es idempotente: si ya existen, no
+ * duplica nada.
+ */
+async function prepararUsuarioNuevo(
+  page: import("@playwright/test").Page
+): Promise<void> {
   await page.goto("/config");
 
-  // El nombre de la categoría lleva un sufijo distinto al de la cuenta, para
-  // que un locator por texto no matchee la fila equivocada.
-  const catNombre = `CatDe${nombre}`;
-
+  // ── Categorías: al menos una de cada tipo ──────────────────────────
   const formCat = page.locator("form").filter({
     has: page.locator('select[name="tipo"]'),
   });
-  await formCat.locator('input[name="nombre"]').fill(catNombre);
-  await formCat.locator('select[name="tipo"]').selectOption("Gasto");
-  await formCat.locator('button[type="submit"]').click();
-  // Busca dentro del li: los selectores por texto pueden matchear la categoría
-  // o la cuenta si los nombres se parecen.
-  await expect(page.locator("li").filter({ hasText: catNombre })).toBeVisible({
-    timeout: 15_000,
-  });
 
+  for (const [nombre, tipo] of [
+    ["Arriendo", "Gasto"],
+    ["Alimentación", "Gasto"],
+    ["Sueldo", "Ingreso"],
+  ] as const) {
+    if (await page.locator("li", { hasText: nombre }).count()) continue;
+    await formCat.locator('input[name="nombre"]').fill(nombre);
+    await formCat.locator('select[name="tipo"]').selectOption(tipo);
+    await formCat.locator('button[type="submit"]').click();
+    await expect(page.locator("li", { hasText: nombre })).toBeVisible({
+      timeout: 20_000,
+    });
+  }
+
+  // ── Cuentas: Efectivo y Banco, con saldo ───────────────────────────
   const formCta = page.locator("form").filter({
     has: page.locator('input[name="saldo_inicial"]'),
   });
-  await formCta.locator('input[name="nombre"]').fill(nombre);
-  await formCta.locator('input[name="saldo_inicial"]').fill(saldo);
-  await formCta.locator('button[type="submit"]').click();
-  await expect(page.locator("li").filter({ hasText: nombre })).toBeVisible({
-    timeout: 15_000,
+
+  for (const [nombre, saldo] of [
+    ["Efectivo", "500000"],
+    ["Banco", "2000000"],
+  ] as const) {
+    if (await page.locator("li", { hasText: nombre }).count()) continue;
+    await formCta.locator('input[name="nombre"]').fill(nombre);
+    await formCta.locator('input[name="saldo_inicial"]').fill(saldo);
+    await formCta.locator('button[type="submit"]').click();
+    await expect(page.locator("li", { hasText: nombre })).toBeVisible({
+      timeout: 20_000,
+    });
+  }
+}
+
+/**
+ * Crea un pago programado llenando el formulario real, como un usuario.
+ * Elige la categoría indicada, que debe existir de un tipo compatible.
+ */
+async function crearPagoProgramado(
+  page: import("@playwright/test").Page,
+  datos: {
+    valor: string;
+    concepto: string;
+    categoria: string;
+    cuenta?: string;
+    tipo?: "Gasto" | "Ingreso";
+    recurrencia?: string;
+    diaVencimiento?: string;
+  }
+) {
+  await page.goto("/pagos/programado/nuevo");
+  await page.locator('input[name="valor"]').fill(datos.valor);
+  await page.locator('input[name="concepto"]').fill(datos.concepto);
+
+  if (datos.tipo === "Ingreso") {
+    await page.locator('input[name="tipo"][value="Ingreso"]').check();
+  }
+  if (datos.recurrencia) {
+    await page.locator('select[name="recurrencia"]').selectOption(datos.recurrencia);
+  }
+  if (datos.diaVencimiento) {
+    await page.locator('input[name="dia_vencimiento"]').fill(datos.diaVencimiento);
+  }
+
+  await page.locator('select[name="categoria_id"]').selectOption({ label: datos.categoria });
+  await page.locator('select[name="cuenta_id"]').selectOption({ label: datos.cuenta ?? "Banco" });
+
+  await page.getByRole("button", { name: "Crear pago programado" }).click();
+  await expect(page).toHaveURL(/\/pagos$/, { timeout: 20_000 });
+}
+
+/** Devuelve una cuenta con saldo, creándola si el usuario no la tiene. */
+async function obtenerCuentaTrabajo(
+  page: import("@playwright/test").Page,
+  nombre: string,
+  saldo: string
+): Promise<string> {
+  await page.goto("/config");
+  const fila = page.locator("li").filter({ hasText: "Inicial:" }).filter({ hasText: nombre });
+  if (await fila.count()) return nombre;
+
+  const form = page.locator("form").filter({
+    has: page.locator('input[name="saldo_inicial"]'),
   });
+  await form.locator('input[name="nombre"]').fill(nombre);
+  await form.locator('input[name="saldo_inicial"]').fill(saldo);
+  await form.locator('button[type="submit"]').click();
+  await expect(fila).toBeVisible({ timeout: 20_000 });
+  return nombre;
+}
+
+/** Lee el saldo actual de una cuenta desde la fila de /config. */
+async function saldoActual(
+  page: import("@playwright/test").Page,
+  nombre: string
+): Promise<number> {
+  const fila = page.locator("li").filter({ hasText: "Inicial:" }).filter({ hasText: nombre });
+  const texto = (await fila.textContent()) ?? "";
+  const m = texto.match(/Actual:\s*\$?\s*([\d.,]+)/);
+  if (!m) throw new Error(`No se pudo leer el saldo de ${nombre}: "${texto}"`);
+  // "1.350.000,00" → 1350000.00
+  return Number(m[1].replace(/\./g, "").replace(",", "."));
 }
 
 /**
@@ -69,86 +216,169 @@ async function verificarTarjeta(
 }
 
 test.describe("Pagos programados", () => {
-  test("crea un pago programado mensual y aparece con countdown", async ({ page }) => {
-    const cuenta = `CtaProg-${run}`;
-    await crearCuentaConSaldo(page, cuenta, "1000000");
+  test("un usuario nuevo ve la guía inicial en Configuración", async ({ page }) => {
+    // AC-029: primer vistazo de alguien que recién ingresa. No se le imponen
+    // datos de ejemplo (se quitó ese botón), se le explica qué hacer.
+    await vaciarUsuario(page);
+    await page.goto("/config");
+    await expect(page.getByText("Empecemos por lo básico")).toBeVisible();
+    await expect(page.getByText(/al menos una categoría de gasto/i)).toBeVisible();
 
-    // ── Crear el pago programado ────────────────────────────────────
+    // Y no debe haber ningún botón de datos de ejemplo
+    await expect(
+      page.getByRole("button", { name: /datos de ejemplo/i })
+    ).toHaveCount(0);
+  });
+
+  test("crear un pago programado exige una categoría elegida por el usuario", async ({ page }) => {
+    // AC-027: la categoría se elige explícitamente. Antes la tomaba sola (la
+    // más antigua del tipo) y todo caía en "Gastos Hormiga".
+    await vaciarUsuario(page);
+    await prepararUsuarioNuevo(page);
+
     await page.goto("/pagos/programado/nuevo");
     await page.locator('input[name="valor"]').fill("350000");
-    await page.locator('input[name="concepto"]').fill(`Arriendo-${run}`);
+    await page.locator('input[name="concepto"]').fill("Arriendo mensual");
 
-    // Tipo: Gasto (por defecto) y recurrencia Mensual (por defecto)
-    await expect(page.locator('input[name="tipo"][value="Gasto"]')).toBeChecked();
-    await expect(page.locator('select[name="recurrencia"]')).toHaveValue("Mensual");
+    const selCategoria = page.locator('select[name="categoria_id"]');
+    // Solo ofrece categorías de Gasto, no las de Ingreso
+    const opciones = await selCategoria.locator("option").allTextContents();
+    expect(opciones).toContain("Arriendo");
+    expect(opciones).not.toContain("Sueldo"); // es de Ingreso
 
-    await page.locator('select[name="cuenta_id"]').selectOption({ label: cuenta });
+    await selCategoria.selectOption({ label: "Arriendo" });
+    await page.locator('select[name="cuenta_id"]').selectOption({ label: "Banco" });
     await page.getByRole("button", { name: "Crear pago programado" }).click();
+    await expect(page).toHaveURL(/\/pagos$/, { timeout: 20_000 });
 
-    // Navega a /pagos
-    await expect(page).toHaveURL(/\/pagos$/);
+    // La tarjeta muestra la categoría elegida
+    await verificarTarjeta(page, "Arriendo mensual", /Arriendo/);
+  });
 
-    // ── Aparece en la lista de programados ─────────────────────────
-    const tarjeta = page.locator("li", { hasText: `Arriendo-${run}` });
+  test("sin categorías del tipo no se puede crear el pago programado", async ({ page }) => {
+    // AC-030: un usuario que solo tiene categorías de Gasto no puede crear un
+    // pago de tipo Ingreso hasta crear una de ese tipo. Se frena con un mensaje
+    // claro, no con un error al marcarlo pagado.
+    //
+    // NO usa prepararUsuarioNuevo: ese helper crea también categorías de
+    // Ingreso, que es justo lo que este test necesita que no exista.
+    //
+    // Limpia los datos del usuario antes de armar su estado. El setup global
+    // los borra una vez por corrida, pero los tests anteriores de este archivo
+    // ya crean categorías de Ingreso, y este necesita no tener ninguna.
+    await vaciarUsuario(page);
+    await page.goto("/config");
+    const formCat = page.locator("form").filter({
+      has: page.locator('select[name="tipo"]'),
+    });
+    await formCat.locator('input[name="nombre"]').fill("Alimentación");
+    await formCat.locator('select[name="tipo"]').selectOption("Gasto");
+    await formCat.locator('button[type="submit"]').click();
+    await expect(page.locator("li", { hasText: "Alimentación" })).toBeVisible();
+
+    await obtenerCuentaTrabajo(page, "Banco", "1000000");
+
+    await page.goto("/pagos/programado/nuevo");
+
+    // Con categorías de Gasto, el formulario completo se muestra: el tipo
+    // inicial es Gasto y hay dónde elegir categoría.
+    await expect(page.locator('select[name="categoria_id"]')).toBeVisible();
+
+    // Al cambiar a Ingreso, que no tiene ninguna categoría, el formulario se
+    // frena con un mensaje que explica qué falta.
+    // Se hace click en la etiqueta que envuelve al radio, como haría el usuario.
+    // check() directo falla porque el input está oculto tras el estilo
+    // accent-primary del tema.
+    await page.locator("label", { hasText: "Ingresos" }).first().click();
+    await expect(
+      page.getByText(/Primero creá una categoría de ingresos/i)
+    ).toBeVisible();
+    await expect(page.locator('select[name="categoria_id"]')).toHaveCount(0);
+    await expect(
+      page.getByRole("button", { name: "Crear pago programado" })
+    ).toHaveCount(0);
+
+    // Y hay un enlace directo a donde puede crearla
+    await page.getByRole("link", { name: "Crear categoría" }).click();
+    await expect(page).toHaveURL(/\/config$/);
+  });
+
+  test("crea un pago programado mensual y aparece con countdown", async ({ page }) => {
+    await prepararUsuarioNuevo(page);
+    const concepto = `Arriendo-${run}`;
+    await crearPagoProgramado(page, {
+      valor: "350000",
+      concepto,
+      categoria: "Arriendo",
+    });
+
+    const tarjeta = page.locator("li").filter({ hasText: concepto });
     await expect(tarjeta).toBeVisible();
-
-    // Muestra el monto, la cuenta y la recurrencia
     await expect(tarjeta).toContainText("350.000");
-    await expect(tarjeta).toContainText(cuenta);
+    await expect(tarjeta).toContainText("Banco");
     await expect(tarjeta).toContainText("Mensual");
-
-    // Muestra a qué lado del historial va
+    await expect(tarjeta).toContainText("Arriendo");
     await expect(tarjeta).toContainText("gastos");
-
-    // Tiene countdown y estado
     await expect(tarjeta).toContainText(/vence (hoy|mañana|en \d+ días)/);
     await expect(tarjeta).toContainText(/Pendiente|Alerta|Al día/);
+  });
+
+  test("la confirmación se cierra al marcar pagado y no permite clics repetidos", async ({
+    page,
+  }) => {
+    // Bug reportado por el usuario: el modal de confirmación quedaba abierto
+    // con el botón "Sí, lo pagué" activo, permitiendo registrar el mismo pago
+    // varias veces.
+    await prepararUsuarioNuevo(page);
+    const concepto = `Modal-${run}`;
+    await crearPagoProgramado(page, {
+      valor: "55500",
+      concepto,
+      categoria: "Alimentación",
+    });
+
+    const tarjeta = page.locator("li").filter({ hasText: concepto });
+    await tarjeta.getByRole("button", { name: "Marcar pagado" }).click();
+    await expect(page.getByText(/¿Confirmás que pagaste/)).toBeVisible();
+
+    await page.getByRole("button", { name: "Sí, lo pagué" }).click();
+
+    await expect(page.getByText(/¿Confirmás que pagaste/)).toHaveCount(0, {
+      timeout: 20_000,
+    });
+    await verificarTarjeta(page, concepto, /Al día/);
   });
 
   test("el pago programado muestra el estado Al día tras marcarlo pagado", async ({
     page,
   }) => {
-    const cuenta = `CtaAlDia-${run}`;
+    await prepararUsuarioNuevo(page);
     const concepto = `PagoAlDia-${run}`;
-    await crearCuentaConSaldo(page, cuenta, "1000000");
+    await crearPagoProgramado(page, {
+      valor: "120000",
+      concepto,
+      categoria: "Alimentación",
+    });
 
-    await page.goto("/pagos/programado/nuevo");
-    await page.locator('input[name="valor"]').fill("120000");
-    await page.locator('input[name="concepto"]').fill(concepto);
-    await page.locator('select[name="cuenta_id"]').selectOption({ label: cuenta });
-    await page.getByRole("button", { name: "Crear pago programado" }).click();
-    await expect(page).toHaveURL(/\/pagos$/);
-
-    const tarjeta = page.locator("li", { hasText: concepto });
-    await expect(tarjeta).toBeVisible();
-
-    // ── Marcar pagado: pide confirmación ────────────────────────────
+    const tarjeta = page.locator("li").filter({ hasText: concepto });
     await tarjeta.getByRole("button", { name: "Marcar pagado" }).click();
-    const confirmacion = page.getByText(/¿Confirmás que pagaste/);
-    await expect(confirmacion).toBeVisible();
-
     await page.getByRole("button", { name: "Sí, lo pagué" }).click();
 
-    // ── AC-011: queda "Al día", no "Pendiente" ─────────────────────
     await verificarTarjeta(page, concepto, /Al día/);
-
-    // El countdown volvió a contar hacia el próximo período
     await verificarTarjeta(page, concepto, /vence en \d+ días/);
   });
 
-  test("marcar pagado registra el movimiento en gastos", async ({ page }) => {
-    const cuenta = `CtaMov-${run}`;
+  test("marcar pagado registra el movimiento en la categoría elegida", async ({ page }) => {
+    // AC-027: el registro real debe quedar bajo la categoría que eligió el
+    // usuario, no bajo la primera del tipo.
+    await prepararUsuarioNuevo(page);
     const concepto = `MovUnico-${run}`;
-    await crearCuentaConSaldo(page, cuenta, "1000000");
+    await crearPagoProgramado(page, {
+      valor: "77700",
+      concepto,
+      categoria: "Alimentación",
+    });
 
-    await page.goto("/pagos/programado/nuevo");
-    await page.locator('input[name="valor"]').fill("77700");
-    await page.locator('input[name="concepto"]').fill(concepto);
-    await page.locator('select[name="cuenta_id"]').selectOption({ label: cuenta });
-    await page.getByRole("button", { name: "Crear pago programado" }).click();
-    await expect(page).toHaveURL(/\/pagos$/);
-
-    // Marcar pagado
     await page
       .locator("li", { hasText: concepto })
       .getByRole("button", { name: "Marcar pagado" })
@@ -156,35 +386,28 @@ test.describe("Pagos programados", () => {
     await page.getByRole("button", { name: "Sí, lo pagué" }).click();
     await verificarTarjeta(page, concepto, /Al día/);
 
-    // ── El registro real debe estar en /gastos ─────────────────────
+    // Aparece en /gastos con esa categoría
     await page.goto("/gastos");
-    const fila = page.locator("li", { hasText: concepto });
+    const fila = page.locator("li").filter({ hasText: concepto });
     await expect(fila).toBeVisible();
     await expect(fila).toContainText("77.700");
+    await expect(fila).toContainText("Alimentación");
   });
 
   test("un pago programado de tipo Ingreso va al historial de ingresos", async ({
     page,
   }) => {
-    const cuenta = `CtaSueldo-${run}`;
+    await prepararUsuarioNuevo(page);
     const concepto = `Sueldo-${run}`;
-    await crearCuentaConSaldo(page, cuenta, "500000");
+    await crearPagoProgramado(page, {
+      valor: "1200000",
+      concepto,
+      categoria: "Sueldo",
+      tipo: "Ingreso",
+    });
 
-    await page.goto("/pagos/programado/nuevo");
-    await page.locator('input[name="valor"]').fill("1200000");
-    await page.locator('input[name="concepto"]').fill(concepto);
-
-    // Elegir tipo Ingreso
-    await page.locator('input[name="tipo"][value="Ingreso"]').check();
-    await page.locator('select[name="cuenta_id"]').selectOption({ label: cuenta });
-    await page.getByRole("button", { name: "Crear pago programado" }).click();
-    await expect(page).toHaveURL(/\/pagos$/);
-
-    // La tarjeta dice que va a ingresos
-    const tarjeta = page.locator("li", { hasText: concepto });
+    const tarjeta = page.locator("li").filter({ hasText: concepto });
     await expect(tarjeta).toContainText("ingresos");
-
-    // Marcar pagado y verificar en /ingresos
     await tarjeta.getByRole("button", { name: "Marcar pagado" }).click();
     await page.getByRole("button", { name: "Sí, lo pagué" }).click();
     await verificarTarjeta(page, concepto, /Al día/);
@@ -194,14 +417,14 @@ test.describe("Pagos programados", () => {
   });
 
   test("la cuenta es obligatoria: no deja crear sin ella", async ({ page }) => {
+    await prepararUsuarioNuevo(page);
     await page.goto("/pagos/programado/nuevo");
     await page.locator('input[name="valor"]').fill("50000");
     await page.locator('input[name="concepto"]').fill(`SinCta-${run}`);
+    await page.locator('select[name="categoria_id"]').selectOption({ label: "Arriendo" });
 
-    // Sin cuenta, el navegador bloquea el submit por validación HTML
     const select = page.locator('select[name="cuenta_id"]');
     await expect(select).toHaveValue("");
-
     const valid = await select.evaluate(
       (el: HTMLSelectElement) => el.required && el.value === ""
     );
@@ -209,58 +432,142 @@ test.describe("Pagos programados", () => {
   });
 
   test("el dashboard muestra los vencimientos próximos", async ({ page }) => {
-    const cuenta = `CtaDash-${run}`;
+    await prepararUsuarioNuevo(page);
     const concepto = `Vence-${run}`;
-    await crearCuentaConSaldo(page, cuenta, "1000000");
-
-    await page.goto("/pagos/programado/nuevo");
-    await page.locator('input[name="valor"]').fill("90000");
-    await page.locator('input[name="concepto"]').fill(concepto);
-    await page.locator('select[name="cuenta_id"]').selectOption({ label: cuenta });
-    // Vence hoy: día del mes actual → entra en la ventana de alerta
     const hoy = new Date();
-    const diaHoy = hoy.getDate();
-    await page.locator('input[name="dia_vencimiento"]').fill(String(diaHoy));
-    await page.locator('input[name="fecha_inicio"]').fill(
-      new Date(Date.UTC(hoy.getUTCFullYear(), hoy.getUTCMonth(), diaHoy))
-        .toISOString()
-        .slice(0, 10)
-    );
-    await page.getByRole("button", { name: "Crear pago programado" }).click();
-    await expect(page).toHaveURL(/\/pagos$/);
-
-    // En /pagos debe estar en alerta o vencido (vence hoy o ya pasó)
-    const tarjeta = page.locator("li", { hasText: concepto });
-    await expect(tarjeta).toBeVisible();
-
-    // El dashboard debe mostrarlo en la sección de vencimientos
-    await page.goto("/dashboard");
-    const seccion = page.getByRole("heading", {
-      name: /Próximos vencimientos|Pagos por vencer/,
+    const diaHoy = String(hoy.getDate());
+    await crearPagoProgramado(page, {
+      valor: "90000",
+      concepto,
+      categoria: "Alimentación",
+      diaVencimiento: diaHoy,
     });
-    await expect(seccion).toBeVisible();
-    await expect(page.locator("li", { hasText: concepto })).toBeVisible();
+
+    await page.goto("/dashboard");
+    await expect(page.getByText("Próximos vencimientos")).toBeVisible({
+      timeout: 20_000,
+    });
+    await expect(
+      page.locator("li").filter({ hasText: concepto })
+    ).toContainText(/vence hoy/, { timeout: 20_000 });
+  });
+
+  test("una categoría usada solo por pagos programados no se puede borrar, y el mensaje lo dice", async ({
+    page,
+  }) => {
+    // Bug reportado por el usuario: "Gastos Hormiga" no se podía eliminar con el
+    // mensaje "tiene movimientos asociados. Elimina esos ingresos o gastos",
+    // pero la categoría no tenía ninguno. El bloqueo real eran 4 pagos
+    // programados, que el mensaje no mencionaba y el usuario no asociaba con
+    // "movimientos".
+    await vaciarUsuario(page);
+    await prepararUsuarioNuevo(page);
+
+    await crearPagoProgramado(page, {
+      valor: "45000",
+      concepto: `CatBloqueada-${run}`,
+      categoria: "Alimentación",
+    });
+
+    // Intentar eliminar esa categoría
+    await page.goto("/config");
+    await page
+      .locator("li", { hasText: "Alimentación" })
+      .getByRole("button", { name: "Eliminar Alimentación" })
+      .click();
+
+    // El mensaje debe nombrar la fuente real del bloqueo
+    await expect(
+      page.getByText(/pagos programados que la usan/i)
+    ).toBeVisible({ timeout: 15_000 });
+
+    // Y la categoría sigue ahí
+    await expect(page.locator("li", { hasText: "Alimentación" })).toBeVisible();
+  });
+
+  test("una cuenta usada solo por pagos programados no se puede borrar, y el mensaje lo dice", async ({
+    page,
+  }) => {
+    // Mismo bug que el de categorías: el mensaje acusaba "ingresos o gastos"
+    // cuando lo único que bloqueaba el borrado eran los pagos programados.
+    await vaciarUsuario(page);
+    await prepararUsuarioNuevo(page);
+
+    await crearPagoProgramado(page, {
+      valor: "75000",
+      concepto: `CtaBloqueada-${run}`,
+      categoria: "Alimentación",
+      cuenta: "Banco",
+    });
+
+    await page.goto("/config");
+    await page
+      .locator("li", { hasText: "Inicial:" })
+      .filter({ hasText: "Banco" })
+      .getByRole("button", { name: "Eliminar Banco" })
+      .click();
+
+    // El mensaje nombra los pagos programados, no "movimientos"
+    await expect(
+      page.getByText(/pago programado.*asociado|pago programado.*asociados/i)
+    ).toBeVisible({ timeout: 15_000 });
+
+    // Y la cuenta sigue ahí
+    await expect(
+      page.locator("li").filter({ hasText: "Inicial:" }).filter({ hasText: "Banco" })
+    ).toBeVisible();
+  });
+
+  test("desactivar un pago lo saca de la lista sin borrarlo", async ({ page }) => {
+    // AC-028: desactivar, nunca eliminar. El registro se conserva.
+    await prepararUsuarioNuevo(page);
+    const concepto = `Desactivar-${run}`;
+    await crearPagoProgramado(page, {
+      valor: "33000",
+      concepto,
+      categoria: "Alimentación",
+    });
+
+    await page
+      .locator("li", { hasText: concepto })
+      .getByRole("button", { name: `Desactivar pago programado ${concepto}` })
+      .click();
+
+    // Desaparece de la lista
+    await expect(page.locator("li").filter({ hasText: concepto })).toHaveCount(0, {
+      timeout: 20_000,
+    });
   });
 });
 
 test.describe("Transferencias entre cuentas", () => {
-  // El usuario de prueba acumula cuentas de corridas anteriores, así que cada
-  // test crea dos más. Los selects llegan a tener 30+ opciones y la página
-  // necesita más que los 30s por defecto de Playwright.
-  test.slow();
-
   test("transfiere saldo sin alterar el saldo global", async ({ page }) => {
-    const origen = `CtaOrigen-${run}`;
-    const destino = `CtaDestino-${run}`;
+    // Dos cuentas de trabajo fijas: ver obtenerCuentaTrabajo.
+    const origen = "E2E-Origen";
+    const destino = "E2E-Destino";
+    await obtenerCuentaTrabajo(page, origen, "500000");
+    await obtenerCuentaTrabajo(page, destino, "100000");
 
-    // Dos cuentas con saldos conocidos
-    await crearCuentaConSaldo(page, origen, "500000");
-    await crearCuentaConSaldo(page, destino, "100000");
+    // Saldos antes de transferir
+    const saldoAntes = async (nombre: string) => {
+      const fila = page
+        .locator("li")
+        .filter({ hasText: "Inicial:" })
+        .filter({ hasText: nombre });
+      const texto = (await fila.textContent()) ?? "";
+      const m = texto.match(/Actual:\s*\$?\s*([\d.]+)/);
+      return m ? Number(m[1].replace(/\./g, "").replace(",", ".")) : NaN;
+    };
+
+    await page.goto("/config");
+    const origenAntes = await saldoAntes(origen);
+    const destinoAntes = await saldoAntes(destino);
 
     await page.goto("/cuentas/transferir");
 
     // ── Registrar la transferencia ─────────────────────────────────
-    await page.locator('input[name="valor"]').fill("200000");
+    const valor = 200000;
+    await page.locator('input[name="valor"]').fill(String(valor));
     await page.locator('select[name="origen_id"]').selectOption({ label: origen });
     // El select de destino arranca deshabilitado hasta que hay origen.
     // Sin esperar a que se habilite, selectOption no dispara el onChange y la
@@ -273,37 +580,21 @@ test.describe("Transferencias entre cuentas", () => {
     // Tras el éxito navega a /config
     await expect(page).toHaveURL(/\/config$/, { timeout: 20_000 });
 
-    // ── AC-021: el saldo se movió, no se creó ni se destruyó ───────
-    // Origen: 500.000 - 200.000 = 300.000
-    // Destino: 100.000 + 200.000 = 300.000
-    // La fila de cuenta muestra "Inicial: $X" y "Actual: $Y". Se busca el saldo
-// con tolerancia al separador de miles, porque toLocaleString("es") puede
-// renderizar "300.000,00" o "300000,00" según el runtime.
-const SALDO_300K = /Actual:\s*\$?\s*300[.\s]?000/;
+    // ── AC-021: el saldo se movió de una cuenta a la otra ──────────
+    // Se compara contra los valores previos en vez de usar números fijos: la
+    // cuenta de trabajo se reutiliza entre corridas y arrastra movimientos.
+    const origenDespues = await saldoAntes(origen);
+    const destinoDespues = await saldoAntes(destino);
 
-// La categoría se llama "CatDe<nombre-cuenta>", así que un filtro por el
-// nombre de la cuenta matchea dos <li>. La fila de cuenta es la que tiene
-// el texto "Inicial:", y es la última de las dos.
-const filaOrigen = page
-    .locator("li")
-    .filter({ hasText: origen })
-    .filter({ hasText: "Inicial:" })
-    .last();
-  await expect(filaOrigen).toContainText(SALDO_300K, { timeout: 20_000 });
-
-  const filaDestino = page
-    .locator("li")
-    .filter({ hasText: destino })
-    .filter({ hasText: "Inicial:" })
-    .last();
-  await expect(filaDestino).toContainText(SALDO_300K, { timeout: 20_000 });
+    expect(origenDespues).toBeCloseTo(origenAntes - valor, -1);
+    expect(destinoDespues).toBeCloseTo(destinoAntes + valor, -1);
   });
 
   test("el destino excluye la cuenta de origen", async ({ page }) => {
-    const origen = `CtaExcl-${run}`;
-    const destino = `CtaOther-${run}`;
-    await crearCuentaConSaldo(page, origen, "300000");
-    await crearCuentaConSaldo(page, destino, "0");
+    const origen = "E2E-Origen";
+    const destino = "E2E-Destino";
+    await obtenerCuentaTrabajo(page, origen, "300000");
+    await obtenerCuentaTrabajo(page, destino, "0");
 
     await page.goto("/cuentas/transferir");
 
@@ -324,10 +615,10 @@ const filaOrigen = page
   });
 
   test("rechaza transferir más que el saldo disponible", async ({ page }) => {
-    const origen = `CtaPoca-${run}`;
-    const destino = `CtaRica-${run}`;
-    await crearCuentaConSaldo(page, origen, "10000");
-    await crearCuentaConSaldo(page, destino, "0");
+    const origen = "E2E-Poca";
+    const destino = "E2E-Destino";
+    await obtenerCuentaTrabajo(page, origen, "10000");
+    await obtenerCuentaTrabajo(page, destino, "0");
 
     await page.goto("/cuentas/transferir");
     await page.locator('input[name="valor"]').fill("999999");

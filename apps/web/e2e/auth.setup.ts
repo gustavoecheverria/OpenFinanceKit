@@ -88,23 +88,23 @@ setup("autenticar usuario de prueba", async ({ page }) => {
     timeout: 15_000,
   });
 
-  // 5. Limpiar los pagos programados de corridas anteriores.
+  // 5. Dejar al usuario de prueba COMPLETAMENTE VACÍO.
   //
-  // Sin esto, cada corrida suma plantillas hasta que /pagos tarda demasiado y
-  // los tests se caen por timeout, con resultados que alternan entre corridas.
-  // Solo se borran pagos programados: no tocan cuentas ni categorías, que las
-  // necesitan los tests de config-crud.
-  const { data: progsLimpios } = await admin
-    .from("pagos_programados")
-    .select("id, concepto")
-    .eq("user_id", data.user!.id)
-    .like("concepto", "%-%");
-
-  if (progsLimpios?.length) {
-    await admin
-      .from("pagos_programados")
-      .delete()
-      .in("id", progsLimpios.map((p: { id: number }) => p.id));
+  // Cada corrida arranca como un usuario recién registrado. Los tests crean lo
+  // que necesitan desde la UI, que es el flujo real de un usuario nuevo.
+  //
+  // Antes se limpiaban solo los pagos programados y quedaban 30+ cuentas y
+  // categorías acumuladas: /config tardaba 15s en renderizar y los tests se
+  // caían por timeout con resultados alternados entre corridas.
+  const { data: usuarios } = await admin.auth.admin.listUsers();
+  const uid = usuarios?.users.find((u) => u.email === TEST_EMAIL)?.id;
+  if (uid) {
+    await admin.from("gastos").delete().eq("user_id", uid);
+    await admin.from("ingresos").delete().eq("user_id", uid);
+    await admin.from("pagos_programados").delete().eq("user_id", uid);
+    await admin.from("transferencias").delete().eq("user_id", uid);
+    await admin.from("categorias").delete().eq("user_id", uid);
+    await admin.from("cuentas").delete().eq("user_id", uid);
   }
 
   // 6. Guardar el estado de autenticación

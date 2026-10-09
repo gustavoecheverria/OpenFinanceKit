@@ -1,6 +1,65 @@
 import { test, expect } from "@playwright/test";
 
 /**
+ * Borra todos los datos del usuario de prueba.
+ *
+ * El setup global lo hace una vez por corrida, pero dentro de una misma corrida
+ * los tests se acumulan: este archivo necesita partir de cero en casos concretos
+ * (por ejemplo, un test que verifica qué pasa sin categorías de un tipo).
+ *
+ * Usa la API REST de Supabase con el token de sesión que ya está en el
+ * navegador, así que respeta el RLS: solo borra los datos del usuario de prueba.
+ */
+async function vaciarUsuario(page: import("@playwright/test").Page): Promise<void> {
+  await page.goto("/dashboard");
+  await page.waitForLoadState("networkidle");
+
+  // process.env no existe dentro del navegador: se leen acá y se pasan.
+  const proyecto = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!proyecto || !anonKey) throw new Error("Faltan las variables de Supabase");
+
+  const borrado = await page.evaluate(
+    async ({ url, key }: { url: string; key: string }) => {
+      // El token de sesión vive en la cookie de @supabase/ssr
+      const nombre = `sb-${new URL(url).hostname.split(".")[0]}-auth-token`;
+      const crudo = decodeURIComponent(document.cookie)
+        .split(";")
+        .map((c) => c.trim())
+        .find((c) => c.startsWith(nombre));
+      if (!crudo) return "sin cookie de sesión";
+
+      const token = crudo.slice(nombre.length + 1).replace(/^base64-/, "");
+      const sesion = JSON.parse(atob(token));
+
+      const tablas = [
+        "gastos",
+        "ingresos",
+        "pagos_programados",
+        "transferencias",
+        "categorias",
+        "cuentas",
+      ];
+      for (const tabla of tablas) {
+        const r = await fetch(
+          `${url}/rest/v1/${tabla}?user_id=eq.${sesion.user.id}`,
+          {
+            method: "DELETE",
+            headers: { apikey: key, Authorization: `Bearer ${sesion.access_token}` },
+          }
+        );
+        if (!r.ok) return `${tabla}: ${r.status} ${await r.text()}`;
+      }
+      return "ok";
+    },
+    { url: proyecto, key: anonKey }
+  );
+
+  if (borrado !== "ok") throw new Error(`No se pudo limpiar: ${borrado}`);
+}
+
+
+/**
  * Test E2E del flujo principal de OFK Web.
  *
  * Genera evidencia paso a paso:
@@ -33,6 +92,11 @@ test.describe("Flujo principal — config → captura → dashboard", () => {
   test("configurar, registrar y verificar el flujo completo", async ({
     page,
   }) => {
+    // Parte de cero: este test crea sus propias categorías y cuenta, y los
+    // selectores las buscan por label. Si quedaran de corridas anteriores, el
+    // label sería ambiguo.
+    await vaciarUsuario(page);
+
     // ── PASO 1: Ir a Configuración ────────────────────────────────────
     await page.goto("/config");
     await expect(
