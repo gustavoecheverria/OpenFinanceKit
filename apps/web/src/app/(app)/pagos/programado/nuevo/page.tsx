@@ -44,7 +44,7 @@ export default async function NuevoPagoProgramadoPage() {
 
       <p className="text-sm text-[var(--muted-foreground)] mb-4">
         Registra una vez un pago que se repite, como el arriendo o el sueldo.
-        Queda como plantilla: cada período solo tenés que marcar que lo pagaste.
+        Queda como plantilla: cada período solo tienes que marcar que lo pagaste.
       </p>
 
       <PagoProgramadoForm

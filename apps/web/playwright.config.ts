@@ -15,6 +15,13 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: 1,
 
+  // El default de Playwright es 5s por aserción. Contra el dev server, donde
+  // Next compila cada ruta en frío y revalida, eso produce flakes: el mismo
+  // test pasa y falla corrido seguido sin que cambie nada de la app. Subir el
+  // default corrige la clase de problema, en vez de subir timeouts test por
+  // test conforme van apareciendo.
+  expect: { timeout: 15_000 },
+
   // Reportes: HTML navegable + salida en consola. El HTML queda en qa/reports.
   reporter: [
     ["html", { outputFolder: "../../qa/reports/playwright", open: "never" }],

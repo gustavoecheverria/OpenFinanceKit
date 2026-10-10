@@ -89,6 +89,10 @@ const DESC_INGRESO = `ingreso-e2e-${run}`;
 const DESC_GASTO = `gasto-e2e-${run}`;
 
 test.describe("Flujo principal — config → captura → dashboard", () => {
+      // El default de Playwright son 30s. Este test encadena muchas navegaciones
+    // contra el dev server (Next compila en frío), y se pasaban de ese límite
+    // sin que hubiera ningún fallo de la app.
+    test.setTimeout(90_000);
   test("configurar, registrar y verificar el flujo completo", async ({
     page,
   }) => {
@@ -165,7 +169,7 @@ test.describe("Flujo principal — config → captura → dashboard", () => {
       path: "../../qa/evidence/steps/07-formulario-ingreso-llenado.png",
     });
     await page.getByRole("button", { name: "Guardar ingreso" }).click();
-    await expect(page).toHaveURL(/\/ingresos$/);
+    await expect(page).toHaveURL(/\/ingresos$/, { timeout: 20_000 });
     const filaIngreso = page.locator("li", { hasText: DESC_INGRESO });
     await expect(filaIngreso).toBeVisible();
     await expect(filaIngreso).toContainText(/3\.?500/);
@@ -187,7 +191,7 @@ test.describe("Flujo principal — config → captura → dashboard", () => {
       path: "../../qa/evidence/steps/09-formulario-gasto-llenado.png",
     });
     await page.getByRole("button", { name: "Guardar gasto" }).click();
-    await expect(page).toHaveURL(/\/gastos$/);
+    await expect(page).toHaveURL(/\/gastos$/, { timeout: 20_000 });
     const filaGasto = page.locator("li", { hasText: DESC_GASTO });
     await expect(filaGasto).toBeVisible();
     await expect(filaGasto).toContainText(/120/);

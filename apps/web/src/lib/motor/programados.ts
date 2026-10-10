@@ -56,7 +56,7 @@ function diasDelMes(anio: number, mes: number): number {
  *
  * A diferencia de `calcularProximaVencimiento`, que calcula el siguiente a un
  * pago ya realizado, este devuelve el día de vencimiento del mes de referencia
- * si todavía no pasó. Razón: un pago que creás hoy con vencimiento hoy tiene que
+ * si todavía no pasó. Razón: un pago que creas hoy con vencimiento hoy tiene que
  * aparecer venciendo hoy, no dentro de un mes.
  *
  * Para el día 31 en meses cortos usa el último día del mes.

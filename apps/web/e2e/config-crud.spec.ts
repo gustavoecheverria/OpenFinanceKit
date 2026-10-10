@@ -167,7 +167,7 @@ test.describe("Configuración — CRUD de categorías y cuentas", () => {
     await page.locator('select[name="categoria_id"]').selectOption({ label: catNombre });
     await page.locator('select[name="cuenta_id"]').selectOption({ label: ctaNombre });
     await page.getByRole("button", { name: "Guardar gasto" }).click();
-    await expect(page).toHaveURL(/\/gastos$/);
+    await expect(page).toHaveURL(/\/gastos$/, { timeout: 20_000 });
 
     // Intentar eliminar la cuenta con movimientos → debe mostrar mensaje
     await page.goto("/config");

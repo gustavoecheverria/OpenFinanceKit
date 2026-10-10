@@ -242,7 +242,7 @@ export async function marcarPagoProgramadoPagado(
  * Activa o desactiva un pago programado.
  *
  * Desactivar NO borra: la plantilla se conserva con su fecha_ultimo_pago, así
- * que si la reactivás sigue el mismo ciclo.
+ * que si la reactivas sigue el mismo ciclo.
  */
 export async function togglePagoProgramadoActivo(
   id: number,
@@ -265,13 +265,55 @@ export async function togglePagoProgramadoActivo(
   revalidatePath("/dashboard");
 }
 
-// NO existe eliminarPagoProgramado, y es intencional.
-//
-// Decisión del usuario (2026-10-08): un pago programado nunca se borra, se
-// desactiva. Desactivar lo saca de la lista pero conserva el registro y su
-// fecha_ultimo_pago, así que el historial no se pierde y reactivarlo retoma
-// el ciclo donde estaba.
-//
-// Borrar la fila rompería esa garantía: los registros ya generados en gastos o
-// ingresos seguirían existiendo sin la plantilla que los originó, y la lista
-// de pagos no explicaría de dónde salieron.
+/**
+ * Elimina definitivamente un pago programado.
+ *
+ * Distinción importante (decisión del usuario, 2026-10-10):
+ *
+ * - DESACTIVAR es una pausa. El pago deja de aparecer y de bloquear el
+ *   borrado de su cuenta, pero se conserva con su fecha_ultimo_pago, así que
+ *   al reactivarlo retoma el ciclo donde estaba.
+ * - ELIMINAR es terminar. Se usa cuando el pago dejó de existir, por ejemplo
+ *   un servicio público que cancelaste.
+ *
+ * Por eso solo se permite eliminar un pago que YA ESTÁ DESACTIVADO: si estuviera
+ * activo, el camino es desactivar primero. Así no se borra por accidente un pago
+ * que el usuario todavía necesita.
+ *
+ * Lo que NO se pierde: los gastos e ingresos ya registrados se conservan. No hay
+ * llave foránea desde gastos/ingresos hacia pagos_programados, así que borrar la
+ * plantilla no toca el historial. Solo se pierde la plantilla en sí.
+ */
+export async function eliminarPagoProgramado(id: number): Promise<void> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return;
+
+  // Guard: solo se borra lo que ya está desactivado.
+  const { data: pago } = await supabase
+    .from("pagos_programados")
+    .select("id, activo")
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .single();
+
+  if (!pago) return;
+
+  if (pago.activo) {
+    // Situación anómala: la UI solo ofrece eliminar sobre inactivos.
+    return;
+  }
+
+  await supabase
+    .from("pagos_programados")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  revalidatePath("/pagos");
+  revalidatePath("/dashboard");
+  revalidatePath("/config");
+}

@@ -48,7 +48,7 @@ export default async function TransferirPage() {
       <p className="text-sm text-[var(--muted-foreground)] mb-4">
         Mueve plata entre tus cuentas. Por ejemplo, si retiras efectivo del
         banco, transferilos a tu cuenta &quot;Efectivo&quot; para poder registrar
-        los gastos que pagás con esa plata.
+        los gastos que pagas con esa plata.
       </p>
 
       <TransferirForm action={transferirEntreCuentas} cuentas={cuentas} />

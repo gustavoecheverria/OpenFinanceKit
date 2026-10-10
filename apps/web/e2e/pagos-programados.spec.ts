@@ -291,7 +291,7 @@ test.describe("Pagos programados", () => {
     // accent-primary del tema.
     await page.locator("label", { hasText: "Ingresos" }).first().click();
     await expect(
-      page.getByText(/Primero creá una categoría de ingresos/i)
+      page.getByText(/Primero crea una categoría de ingresos/i)
     ).toBeVisible();
     await expect(page.locator('select[name="categoria_id"]')).toHaveCount(0);
     await expect(
@@ -300,7 +300,7 @@ test.describe("Pagos programados", () => {
 
     // Y hay un enlace directo a donde puede crearla
     await page.getByRole("link", { name: "Crear categoría" }).click();
-    await expect(page).toHaveURL(/\/config$/);
+    await expect(page).toHaveURL(/\/config$/, { timeout: 20_000 });
   });
 
   test("crea un pago programado mensual y aparece con countdown", async ({ page }) => {
@@ -541,6 +541,10 @@ test.describe("Pagos programados", () => {
 });
 
 test.describe("Transferencias entre cuentas", () => {
+      // El default de Playwright son 30s. Este test encadena muchas navegaciones
+    // contra el dev server (Next compila en frío), y se pasaban de ese límite
+    // sin que hubiera ningún fallo de la app.
+    test.setTimeout(90_000);
   test("transfiere saldo sin alterar el saldo global", async ({ page }) => {
     // Dos cuentas de trabajo fijas: ver obtenerCuentaTrabajo.
     const origen = "E2E-Origen";
@@ -614,6 +618,10 @@ test.describe("Transferencias entre cuentas", () => {
     expect(opcionesDestino).not.toContain(origen);
   });
 
+      // El default de Playwright son 30s. Este test encadena muchas navegaciones
+    // contra el dev server (Next compila en frío), y se pasaban de ese límite
+    // sin que hubiera ningún fallo de la app.
+    test.setTimeout(90_000);
   test("rechaza transferir más que el saldo disponible", async ({ page }) => {
     const origen = "E2E-Poca";
     const destino = "E2E-Destino";
@@ -633,6 +641,107 @@ test.describe("Transferencias entre cuentas", () => {
       timeout: 15_000,
     });
     // No debe navegar
-    await expect(page).toHaveURL(/\/cuentas\/transferir/);
+    await expect(page).toHaveURL(/\/cuentas\/transferir/, { timeout: 20_000 });
+  });
+});
+
+test.describe("Desactivar, reactivar y terminar un pago programado", () => {
+      // El default de Playwright son 30s. Este test encadena muchas navegaciones
+    // contra el dev server (Next compila en frío), y se pasaban de ese límite
+    // sin que hubiera ningún fallo de la app.
+    test.setTimeout(90_000);
+  test("un pago desactivado sigue visible y se puede reactivar", async ({ page }) => {
+    // Antes un pago desactivado desaparecía para siempre. El usuario lo pausaba
+    // por error y no tenía cómo recuperarlo.
+    await vaciarUsuario(page);
+    await prepararUsuarioNuevo(page);
+    await crearPagoProgramado(page, {
+      concepto: "Servicio público",
+      valor: "85000",
+      categoria: "Arriendo",
+    });
+
+    // Desactivar
+    await page.getByRole("button", { name: "Desactivar" }).first().click();
+    await expect(page.getByText(/0 activos/)).toBeVisible({ timeout: 20_000 });
+
+    // Queda accesible, no escondido
+    await page.getByRole("button", { name: /Ver 1 pago desactivado/ }).click();
+    const tarjeta = page.locator("li").filter({ hasText: "Servicio público" });
+    await expect(tarjeta).toBeVisible();
+    await expect(tarjeta).toContainText(/Día|día/);
+
+    // Y se reactiva
+    await page.getByRole("button", { name: "Reactivar" }).click();
+    await expect(page.getByText(/1 activo/)).toBeVisible({ timeout: 20_000 });
+  });
+
+      // El default de Playwright son 30s. Este test encadena muchas navegaciones
+    // contra el dev server (Next compila en frío), y se pasaban de ese límite
+    // sin que hubiera ningún fallo de la app.
+    test.setTimeout(90_000);
+  test("un pago desactivado se elimina y con eso la cuenta queda libre", async ({ page }) => {
+    // Este es el caso quereported el usuario: desactivó los pagos, no pudo
+    // borrar la cuenta y no tenía salida. Aquí se cierra el ciclo.
+    await vaciarUsuario(page);
+    await prepararUsuarioNuevo(page);
+    await crearPagoProgramado(page, {
+      concepto: "Cable",
+      valor: "70000",
+      categoria: "Arriendo",
+    });
+
+    // Desactivar
+    await page.getByRole("button", { name: "Desactivar" }).first().click();
+    await expect(page.getByText(/0 activos/)).toBeVisible({ timeout: 20_000 });
+
+    // Ahora la cuenta sigue bloqueada, pero el mensaje debe decir qué hacer
+    // de verdad: eliminar el pago, no "desactivar" algo que ya está desactivado.
+    await page.goto("/config");
+    await page.getByRole("button", { name: /^Eliminar Banco$/ }).click();
+    await expect(
+      page.getByText(/ya están desactivados/i)
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(
+      page.getByText(/sección de desactivados y elimínalos/i)
+    ).toBeVisible();
+
+    // Eliminar el pago desactivado
+    await page.goto("/pagos");
+    await page.getByRole("button", { name: /Ver 1 pago desactivado/ }).click();
+    await page.getByRole("button", { name: "Eliminar" }).click();
+
+    // La confirmación aclara que el historial se conserva
+    await expect(page.getByText(/se conservan/i)).toBeVisible();
+    await page.getByRole("button", { name: "Sí, eliminar" }).click();
+
+    // Desapareció del todo
+    await expect(page.getByText(/0 activos/)).toBeVisible({ timeout: 20_000 });
+    await expect(
+      page.getByRole("button", { name: /Ver 1 pago desactivado/ })
+    ).toHaveCount(0);
+
+    // Y ahora la cuenta sí se puede eliminar
+    await page.goto("/config");
+    await page.getByRole("button", { name: /^Eliminar Banco$/ }).click();
+    await expect(page.getByText(/^Configuración$/)).toBeVisible();
+    await expect(page.locator("li").filter({ hasText: "Banco" })).toHaveCount(0);
+  });
+
+  test("no se puede eliminar un pago que sigue activo", async ({ page }) => {
+    // Desactivar es una pausa; borrar es terminar. El orden importa: si se
+    // pudiera borrar un pago activo, el usuario perdería la plantilla sin
+    // pasar por la pausa.
+    await vaciarUsuario(page);
+    await prepararUsuarioNuevo(page);
+    await crearPagoProgramado(page, {
+      concepto: "Universidad",
+      valor: "900000",
+      categoria: "Arriendo",
+    });
+
+    // Mientras está activo no hay botón de eliminar en su tarjeta
+    const tarjeta = page.locator("li").filter({ hasText: "Universidad" });
+    await expect(tarjeta.getByRole("button", { name: "Eliminar" })).toHaveCount(0);
   });
 });

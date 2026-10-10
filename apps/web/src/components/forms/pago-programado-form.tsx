@@ -105,10 +105,10 @@ export function PagoProgramadoForm({
     return (
       <div className="px-3 py-4 rounded-lg bg-[var(--muted)] text-sm">
         <p className="font-medium">
-          Primero creá una categoría de {tipo === "Gasto" ? "gastos" : "ingresos"}
+          Primero crea una categoría de {tipo === "Gasto" ? "gastos" : "ingresos"}
         </p>
         <p className="text-[var(--muted-foreground)] mt-1">
-          Cada pago programado se registra bajo una categoría cuando lo marcás
+          Cada pago programado se registra bajo una categoría cuando lo marcas
           como pagado. Sin una categoría de este tipo no se puede crear.
         </p>
         <Link
@@ -261,7 +261,7 @@ export function PagoProgramadoForm({
         </div>
       </div>
       <p className="text-xs text-[var(--muted-foreground)] -mt-2">
-        El día del mes se usa para todas las repeticiones. Si elegís 31 y un
+        El día del mes se usa para todas las repeticiones. Si eliges 31 y un
         mes tiene menos días, vence el último día de ese mes.
       </p>
 

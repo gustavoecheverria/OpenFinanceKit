@@ -90,8 +90,10 @@ clara, pero se recomienda la misma.
 **Cómo verificarlo antes de commitear:**
 
 ```bash
-# No debería devolver nada
-grep -rnE '\b(Creá|Registrá|Necesitás|Elegí|Pagás|Tenés|Podés|Guardá|Marcá|Mové)' apps/web/src/
+# No debería devolver nada.
+# -i para no perder las formas en minúscula (tenés, marcás, pagás).
+# \b al final para no confundir "creá" dentro de "creándola", que es correcto.
+grep -rniE '\b(creá|registrá|desactivá|necesitás|elegí|marcá|mové|guardá|revisá|buscá|ingresá|pagás|tenés|podés|hacé|tocá|poné|usá|ajustá|salí|transferí|arrancá|reactivá|retirás|registrás|marcás|pedís|querés|sabés|dejás|entrás|seguís|creás|elegís|reactivás)\b' apps/web/src/
 ```
 
 ## Versionado semántico

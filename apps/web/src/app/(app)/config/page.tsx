@@ -51,7 +51,7 @@ export default async function ConfigPage() {
         <div className="mb-6 p-4 rounded-lg border border-dashed border-[var(--border)]">
           <p className="text-sm font-medium mb-1">Empecemos por lo básico</p>
           <p className="text-sm text-[var(--muted-foreground)]">
-            Para usar la app necesitás al menos una categoría de gasto y una
+            Para usar la app necesitas al menos una categoría de gasto y una
             cuenta con su saldo. Después vas a poder registrar movimientos y
             pagos programados.
           </p>
