@@ -1,7 +1,9 @@
 import Link from "next/link";
-import { calcularMotor, mesActual, desplazarMes, etiquetaMes } from "@/lib/motor";
+import { calcularMotor, mesActual, desplazarMes, etiquetaMes, obtenerSaldosPorCuenta, obtenerVencimientosProximos, obtenerPagosProgramados } from "@/lib/motor";
 import { PageHeader } from "@/components/layout/page-header";
 import { MonthSelector } from "@/components/dashboard/month-selector";
+import { AccountBalanceList } from "@/components/dashboard/account-balance-list";
+import { ProximosVencimientos } from "@/components/dashboard/proximos-vencimientos";
 
 export default async function DashboardPage({
   searchParams,
@@ -14,13 +16,26 @@ export default async function DashboardPage({
   const mes = /^\d{4}-\d{2}$/.test(params.mes ?? "") ? params.mes! : hoy;
 
   const motor = await calcularMotor(mes);
+  const saldosPorCuenta = await obtenerSaldosPorCuenta();
+
+  // Pagos programados que entran en la ventana de alerta (5 días por defecto).
+  // Incluye los vencidos: si el usuario dejó pasar un pago, es lo más
+  // importante que tiene que ver.
+  const vencimientosProximos = await obtenerVencimientosProximos();
+
+  // Total de los pagos programados aún no pagados, para el indicador
+  // "Pendiente por pagar". Antes venía de la tabla `pagos` (pagos únicos),
+  // que ya no existe.
+  const totalPendiente = (await obtenerPagosProgramados())
+    .filter((p) => p.estado !== "Al día")
+    .reduce((sum, p) => sum + p.valor, 0);
 
   // Sin actividad histórica = usuario nuevo (saldo, ingresos y gastos en cero)
   const sinActividad =
     motor.saldoActual === 0 &&
     motor.totalIngresosHist === 0 &&
     motor.totalGastosHist === 0 &&
-    motor.pendientePago === 0;
+    totalPendiente === 0;
 
   return (
     <>
@@ -52,7 +67,7 @@ export default async function DashboardPage({
         />
         <IndicatorCard
           label="Pendiente por pagar"
-          value={formatMoney(motor.pendientePago)}
+          value={formatMoney(totalPendiente)}
           variant="warning"
         />
         <IndicatorCard
@@ -66,6 +81,12 @@ export default async function DashboardPage({
           variant="default"
         />
       </div>
+
+      {/* Saldos por cuenta */}
+      <AccountBalanceList cuentas={saldosPorCuenta.cuentas} />
+
+      {/* Pagos programados por vencer */}
+      <ProximosVencimientos pagos={vencimientosProximos} />
 
       {/* Empty state: sin actividad histórica, guiar al usuario */}
       {sinActividad && (

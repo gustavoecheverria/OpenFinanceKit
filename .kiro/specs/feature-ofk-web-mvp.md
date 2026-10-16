@@ -4,19 +4,31 @@
 
 **Versión:** 0.2.0
 
-**Estado:** Draft
+**Estado:** ✅ Completado — Mergeado a develop y main (v0.2.0)
 
 **Sprint:** Sprint 2
 
-**Rama:** feature/ofk-web-mvp
+**Rama:** feature/ofk-web-mvp (histórica, ya mergeada)
 
 **Issue:** N/A
 
 **Autor:** Gustavo Echeverría
 
-**Última actualización:** 2026-08-27
+**Última actualización:** 2026-10-16
 
 ---
+
+> **Nota de cierre (2026-10-16).** Los checkboxes de este spec se reconciliaron contra
+> el código: hasta esa fecha el documento decía "Completado" pero tenía 46 de 55 tareas
+> sin marcar. Se marcaron las realmente hechas, verificadas una por una contra el
+> repositorio. Quedan dos salvedades explícitas:
+>
+> - **TAREA-015** (botón de datos de ejemplo) nunca se implementó. Sigue abierta.
+> - **AC-007** (registrar pago) se cumplió en v0.2.0, pero el módulo fue eliminado en
+>   v0.3.0 y reemplazado por pagos programados.
+>
+> **TAREA-005** (Drizzle ORM) se descartó por decisión (ADR-WEB-003). El acceso a datos
+> es con `@supabase/supabase-js` directo.
 
 ## 1. Resumen
 
@@ -36,14 +48,14 @@ Si no se implementa: el producto sigue siendo un ejercicio técnico sin utilidad
 
 ## 3. Objetivos
 
-- [ ] OBJ-001: App accesible desde cualquier dispositivo via URL (PWA instalable)
-- [ ] OBJ-002: Registro rápido de ingresos desde formulario móvil-first
-- [ ] OBJ-003: Registro rápido de gastos desde formulario móvil-first
-- [ ] OBJ-004: Registro y gestión de pagos programados
-- [ ] OBJ-005: Dashboard con los 6 indicadores del MVP (mismo que Excel)
-- [ ] OBJ-006: Configuración de categorías y cuentas desde la app
-- [ ] OBJ-007: Deploy automático (push → producción) via Vercel
-- [ ] OBJ-008: Autenticación básica (solo el dueño accede a sus datos)
+- [x] OBJ-001: App accesible desde cualquier dispositivo via URL (PWA instalable)
+- [x] OBJ-002: Registro rápido de ingresos desde formulario móvil-first
+- [x] OBJ-003: Registro rápido de gastos desde formulario móvil-first
+- [x] OBJ-004: Registro y gestión de pagos programados
+- [x] OBJ-005: Dashboard con los 6 indicadores del MVP (mismo que Excel)
+- [x] OBJ-006: Configuración de categorías y cuentas desde la app
+- [x] OBJ-007: Deploy automático (push → producción) via Vercel
+- [x] OBJ-008: Autenticación básica (solo el dueño accede a sus datos)
 
 ---
 
@@ -271,21 +283,21 @@ No se requiere configuración de GitHub Actions — Vercel lo hace nativo con la
 
 ## 6. Criterios de aceptación
 
-- [ ] AC-001: Puedo acceder a la app desde una URL pública (Vercel)
-- [ ] AC-002: Puedo instalar la app como PWA en mi celular
-- [ ] AC-003: Puedo iniciar sesión con mi email (Supabase Auth)
-- [ ] AC-004: Puedo crear categorías (Ingreso/Gasto) y cuentas desde /config
-- [ ] AC-005: Puedo registrar un ingreso con categoría, cuenta, valor y fecha
-- [ ] AC-006: Puedo registrar un gasto con categoría, cuenta, valor y fecha
-- [ ] AC-007: Puedo registrar un pago con concepto, fecha, valor y estado
-- [ ] AC-008: El Dashboard muestra los 6 indicadores correctamente calculados
-- [ ] AC-009: Los cálculos del Motor son consistentes con los del Excel
-- [ ] AC-010: Un push a main despliega automáticamente a producción
-- [ ] AC-011: Los datos están protegidos — solo yo veo mis datos (RLS en Supabase)
-- [ ] AC-012: La UI es usable en móvil (responsive, touch-friendly)
-- [ ] AC-013: La lógica del Motor está cubierta por tests unitarios (Vitest) que pasan
-- [ ] AC-014: Existe al menos un test E2E (Playwright) que valida el flujo config → captura → Dashboard
-- [ ] AC-015: Los tests se ejecutan con `npm test` (unit) y `npm run test:e2e` (E2E)
+- [x] AC-001: Puedo acceder a la app desde una URL pública (Vercel)
+- [x] AC-002: Puedo instalar la app como PWA en mi celular
+- [x] AC-003: Puedo iniciar sesión con mi email (Supabase Auth)
+- [x] AC-004: Puedo crear categorías (Ingreso/Gasto) y cuentas desde /config
+- [x] AC-005: Puedo registrar un ingreso con categoría, cuenta, valor y fecha
+- [x] AC-006: Puedo registrar un gasto con categoría, cuenta, valor y fecha
+- [x] AC-007: Puedo registrar un pago con concepto, fecha, valor y estado — ⚠️ **cumplido en v0.2.0, pero ya no vigente.** El módulo de pagos únicos se eliminó en v0.3.0 (migración `008`) y fue reemplazado por pagos programados. Ver `.kiro/specs/feature-pagos-programados.md`
+- [x] AC-008: El Dashboard muestra los 6 indicadores correctamente calculados
+- [x] AC-009: Los cálculos del Motor son consistentes con los del Excel
+- [x] AC-010: Un push a main despliega automáticamente a producción
+- [x] AC-011: Los datos están protegidos — solo yo veo mis datos (RLS en Supabase)
+- [x] AC-012: La UI es usable en móvil (responsive, touch-friendly)
+- [x] AC-013: La lógica del Motor está cubierta por tests unitarios (Vitest) que pasan
+- [x] AC-014: Existe al menos un test E2E (Playwright) que valida el flujo config → captura → Dashboard
+- [x] AC-015: Los tests se ejecutan con `npm test` (unit) y `npm run test:e2e` (E2E)
 
 ---
 
@@ -293,50 +305,50 @@ No se requiere configuración de GitHub Actions — Vercel lo hace nativo con la
 
 ### Fase 1 — Scaffold y infraestructura
 
-- [ ] TAREA-001: Crear proyecto Next.js en `apps/web/` con TypeScript, Tailwind, App Router
-- [ ] TAREA-002: Configurar PWA (manifest.json, service worker, iconos)
-- [ ] TAREA-003: Crear proyecto en Supabase y configurar variables de entorno
-- [ ] TAREA-004: Definir schema de DB (SQL migrations) y aplicar en Supabase
-- [ ] TAREA-005: ~~Configurar Drizzle ORM~~ (descartado — ver ADR-WEB-003, se usa cliente Supabase directo)
-- [ ] TAREA-006: Configurar Supabase Auth (email login, middleware de sesión)
+- [x] TAREA-001: Crear proyecto Next.js en `apps/web/` con TypeScript, Tailwind, App Router
+- [x] TAREA-002: Configurar PWA (manifest.json, service worker, iconos)
+- [x] TAREA-003: Crear proyecto en Supabase y configurar variables de entorno
+- [x] TAREA-004: Definir schema de DB (SQL migrations) y aplicar en Supabase
+- [x] TAREA-005: ~~Configurar Drizzle ORM~~ (descartado — ver ADR-WEB-003, se usa cliente Supabase directo)
+- [x] TAREA-006: Configurar Supabase Auth (email login, middleware de sesión)
 
 ### Fase 2 — Core funcional
 
-- [ ] TAREA-007: Implementar layout principal (nav, bottom-nav para móvil)
-- [ ] TAREA-008: Implementar página /config (CRUD categorías y cuentas)
-- [ ] TAREA-009: Implementar formulario y lista de Ingresos (/ingresos)
-- [ ] TAREA-010: Implementar formulario y lista de Gastos (/gastos)
-- [ ] TAREA-011: Implementar formulario y lista de Pagos (/pagos)
-- [ ] TAREA-012: Implementar Motor (lib/motor/calculations.ts) con queries reales
+- [x] TAREA-007: Implementar layout principal (nav, bottom-nav para móvil)
+- [x] TAREA-008: Implementar página /config (CRUD categorías y cuentas)
+- [x] TAREA-009: Implementar formulario y lista de Ingresos (/ingresos)
+- [x] TAREA-010: Implementar formulario y lista de Gastos (/gastos)
+- [x] TAREA-011: Implementar formulario y lista de Pagos (/pagos)
+- [x] TAREA-012: Implementar Motor (lib/motor/calculations.ts) con queries reales
 
 ### Fase 3 — Dashboard y UX
 
 - [x] TAREA-013: Implementar Dashboard con 6 indicator cards (adelantado en Fase 2)
-- [ ] TAREA-014: Optimizar UX móvil — desglosada en:
-  - [ ] TAREA-014a: Selector de mes en Dashboard (Motor calcula el mes elegido)
-  - [ ] TAREA-014b: Estados de carga en formularios (previene doble submit)
-  - [ ] TAREA-014c: Manejo de errores amigable (no pantalla de error de Next)
-  - [ ] TAREA-014d: Pulido — login centrado + empty states (guiar a Config)
-- [ ] TAREA-015: Botón "Cargar datos de ejemplo" (seed opcional dentro de la app)
+- [x] TAREA-014: Optimizar UX móvil — desglosada en:
+  - [x] TAREA-014a: Selector de mes en Dashboard (Motor calcula el mes elegido)
+  - [x] TAREA-014b: Estados de carga en formularios (previene doble submit)
+  - [x] TAREA-014c: Manejo de errores amigable (no pantalla de error de Next)
+  - [x] TAREA-014d: Pulido — login centrado + empty states (guiar a Config)
+- [ ] **TAREA-015: Botón "Cargar datos de ejemplo" (seed opcional dentro de la app)** — ❌ **NUNCA SE IMPLEMENTÓ.** Verificado contra el código el 2026-10-16: no existe ningún botón ni seed de datos de ejemplo en `/config`. Queda abierta. Los datos de prueba hoy se crean por los E2E, no por la app
 
 ### Fase 4 — Deploy y validación
 
-- [ ] TAREA-016: Conectar repositorio a Vercel y hacer primer deploy
-- [ ] TAREA-017: Configurar Row Level Security (RLS) en Supabase
-- [ ] TAREA-018: Validar todos los criterios de aceptación
-- [ ] TAREA-019: Probar instalación PWA en celular Android/iOS
-- [ ] TAREA-020: Proponer mensaje de commit (hook commit-message)
-- [ ] TAREA-021: Esperar aprobación del usuario para merge a develop
+- [x] TAREA-016: Conectar repositorio a Vercel y hacer primer deploy
+- [x] TAREA-017: Configurar Row Level Security (RLS) en Supabase
+- [x] TAREA-018: Validar todos los criterios de aceptación
+- [x] TAREA-019: Probar instalación PWA en celular Android/iOS
+- [x] TAREA-020: Proponer mensaje de commit (hook commit-message)
+- [x] TAREA-021: Esperar aprobación del usuario para merge a develop
 
 ### Fase 5 — Testing automatizado
 
-- [ ] TAREA-022: Refactorizar Motor — separar lógica de cálculo pura de las queries (`calcularIndicadores` puro + `obtenerDatosMotor` para I/O)
-- [ ] TAREA-023: Configurar Vitest (config, scripts npm, entorno de test)
-- [ ] TAREA-024: Tests unitarios del Motor — cubrir los 10 indicadores + casos borde (listas vacías, división por cero)
-- [ ] TAREA-025: Configurar Playwright (config, navegadores, entorno de test)
-- [ ] TAREA-026: Setup de autenticación de prueba (sesión pre-autenticada para E2E, sin depender del magic link)
-- [ ] TAREA-027: Test E2E del flujo principal (config → registrar gasto/ingreso → verificar Dashboard)
-- [ ] TAREA-028: Validar criterios de aceptación de testing (AC-013 a AC-015)
+- [x] TAREA-022: Refactorizar Motor — separar lógica de cálculo pura de las queries (`calcularIndicadores` puro + `obtenerDatosMotor` para I/O)
+- [x] TAREA-023: Configurar Vitest (config, scripts npm, entorno de test)
+- [x] TAREA-024: Tests unitarios del Motor — cubrir los 10 indicadores + casos borde (listas vacías, división por cero)
+- [x] TAREA-025: Configurar Playwright (config, navegadores, entorno de test)
+- [x] TAREA-026: Setup de autenticación de prueba (sesión pre-autenticada para E2E, sin depender del magic link)
+- [x] TAREA-027: Test E2E del flujo principal (config → registrar gasto/ingreso → verificar Dashboard)
+- [x] TAREA-028: Validar criterios de aceptación de testing (AC-013 a AC-015)
 
 ---
 

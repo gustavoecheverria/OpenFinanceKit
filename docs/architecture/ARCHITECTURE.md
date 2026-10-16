@@ -1,196 +1,218 @@
 # OpenFinanceKit
 
 **Documento:** Arquitectura del Sistema
-
-**Versión:** 0.1.0
-
-**Estado:** Draft
-
-**Sprint:** Sprint 1
-
+**Versión:** 0.3.0
+**Estado:** Vigente
+**Release descrito:** v0.3.0 (pendiente de publicar)
 **Autor:** Gustavo Echeverría
-
-**Última actualización:** 2026-08-03
-
----
-
-
-## Visión General
-
-OpenFinanceKit es un Sistema de Gestión Financiera diseñado para ser modular, escalable y extensible. Su objetivo principal es proporcionar una plataforma integral que permita a las organizaciones gestionar sus operaciones financieras de forma centralizada, incluyendo contabilidad, facturación, presupuestos, reportes y conciliaciones bancarias.
-
-El sistema está concebido como una arquitectura por capas con separación clara de responsabilidades, lo que permite evolucionar cada componente de forma independiente. La arquitectura prioriza:
-
-- **Modularidad**: Cada dominio financiero opera como un módulo independiente.
-- **Extensibilidad**: Nuevos módulos pueden agregarse sin afectar los existentes.
-- **Trazabilidad**: Toda operación financiera queda registrada con auditoría completa.
-- **Integridad de datos**: Las transacciones financieras mantienen consistencia ACID.
+**Última actualización:** 2026-10-16
 
 ---
 
-## Principios de Diseño
-
-Los siguientes principios guían las decisiones arquitectónicas del sistema:
-
-### 1. Separación de Capas
-
-El sistema se organiza en capas bien definidas (presentación, aplicación, dominio, infraestructura) donde cada capa tiene responsabilidades específicas y se comunica únicamente con las capas adyacentes.
-
-### 2. Diseño Orientado al Dominio (DDD)
-
-El modelo de datos y la lógica de negocio reflejan los conceptos del dominio financiero. Las entidades, agregados y servicios de dominio se modelan siguiendo el lenguaje ubicuo del negocio.
-
-### 3. Principio de Responsabilidad Única
-
-Cada módulo y componente tiene una única razón para cambiar. Los módulos de contabilidad, facturación y presupuestos son independientes entre sí.
-
-### 4. Configuración sobre Convención
-
-Las reglas de negocio financieras varían entre organizaciones. El sistema favorece la configuración parametrizable sobre el código hard-coded.
-
-### 5. Auditoría por Defecto
-
-Toda mutación de datos financieros genera un registro de auditoría inmutable. No se permite la eliminación física de registros contables.
-
-### 6. Seguridad en Profundidad
-
-La autenticación, autorización y cifrado se aplican en múltiples capas del sistema, no solo en el perímetro.
+> **Nota de revisión.** Hasta el 2026-10-16 este documento describía una arquitectura
+> empresarial de microservicios: API Gateway, orquestador de servicios, colas de
+> mensajes, caché y módulos de contabilidad/facturación/presupuestos. **Nada de eso
+> existe en el código.** Es una sola aplicación Next.js contra una base PostgreSQL.
+>
+> Lo de abajo describe la arquitectura que realmente hay, verificada contra
+> `apps/web/src/` y `apps/web/supabase/migrations/`.
+>
+> La visión de microservicios queda en el [anexo](#anexo-visión-no-implementada).
 
 ---
 
-## Componentes
+## Visión general
 
-El sistema se estructura en los siguientes componentes principales:
+OpenFinanceKit es una aplicación web monolítica con las cálculos financieros aislados en
+un módulo puro. Un solo repositorio, un solo deploy, una sola base de datos.
 
-```mermaid
-graph TB
-    subgraph Capa de Presentación
-        UI[Interfaz de Usuario]
-        API_GW[API Gateway]
-    end
+La arquitectura es deliberadamente simple:
 
-    subgraph Capa de Aplicación
-        AUTH[Autenticación y Autorización]
-        ORCH[Orquestador de Servicios]
-    end
-
-    subgraph Capa de Dominio
-        CONT[Módulo de Contabilidad]
-        FACT[Módulo de Facturación]
-        PRES[Módulo de Presupuestos]
-        CONC[Módulo de Conciliación]
-        REP[Módulo de Reportes]
-    end
-
-    subgraph Capa de Infraestructura
-        DB[(Base de Datos)]
-        CACHE[Caché]
-        QUEUE[Cola de Mensajes]
-        STORAGE[Almacenamiento de Archivos]
-    end
-
-    UI --> API_GW
-    API_GW --> AUTH
-    AUTH --> ORCH
-    ORCH --> CONT
-    ORCH --> FACT
-    ORCH --> PRES
-    ORCH --> CONC
-    ORCH --> REP
-    CONT --> DB
-    FACT --> DB
-    PRES --> DB
-    CONC --> DB
-    REP --> DB
-    CONT --> QUEUE
-    FACT --> STORAGE
-    REP --> CACHE
+```
+Navegador (PWA)
+     ↓  HTTPS
+Vercel — Next.js 15 (App Router)
+     ├── Rutas y Server Components     (src/app/)
+     ├── Server Actions                (actions.ts de cada módulo)
+     ├── Motor — cálculos puros        (src/lib/motor/)   ← sin I/O
+     └── Cliente Supabase              (src/lib/supabase/)
+                ↓
+          Supabase (PostgreSQL + Auth)
 ```
 
-### Descripción de Componentes
+---
 
-| Componente | Responsabilidad |
-|-----------|----------------|
-| **Interfaz de Usuario** | Capa de presentación web/móvil para interacción del usuario final |
-| **API Gateway** | Punto de entrada único para todas las peticiones, manejo de rate limiting y routing |
-| **Autenticación y Autorización** | Gestión de identidad, tokens, roles y permisos |
-| **Orquestador de Servicios** | Coordinación de operaciones que involucran múltiples módulos |
-| **Módulo de Contabilidad** | Plan de cuentas, asientos contables, libro mayor, balances |
-| **Módulo de Facturación** | Emisión, recepción y gestión del ciclo de vida de facturas |
-| **Módulo de Presupuestos** | Creación, seguimiento y control presupuestario |
-| **Módulo de Conciliación** | Conciliación bancaria automática y manual |
-| **Módulo de Reportes** | Generación de estados financieros y reportes personalizados |
-| **Base de Datos** | Persistencia principal con soporte transaccional ACID |
-| **Caché** | Almacenamiento en memoria para consultas frecuentes de reportes |
-| **Cola de Mensajes** | Procesamiento asíncrono de operaciones no críticas en tiempo |
-| **Almacenamiento de Archivos** | Gestión de documentos adjuntos (PDFs, XMLs de facturas) |
+## Capas
+
+### 1. Presentación — `src/app/` y `src/components/`
+
+Next.js App Router. Los componentes de servidor son el valor por defecto; los de cliente
+se marcan con `"use client"` y solo se usan donde hace falta estado o interactividad.
+
+| Ruta | Qué hace |
+|------|----------|
+| `(app)/dashboard/` | Los 6 indicadores y los saldos por cuenta |
+| `(app)/ingresos/` | Alta y listado |
+| `(app)/gastos/` | Alta, listado y filtros |
+| `(app)/pagos/` | Pagos programados y próximos vencimientos |
+| `(app)/pagos/programado/nuevo/` | Formulario de pago programado |
+| `(app)/cuentas/[id]/` | Detalle de una cuenta |
+| `(app)/cuentas/transferir/` | Transferencia entre cuentas |
+| `(app)/config/` | Categorías y cuentas |
+| `login/`, `auth/callback/` | Autenticación |
+
+El grupo `(app)` son las páginas protegidas: exigen sesión.
+
+### 2. Aplicación — Server Actions
+
+Cada módulo tiene su `actions.ts` con `"use server"` al inicio.
+Las Server Actions son la única vía de escritura hacia la base de datos.
+
+Son también donde vive la validación de negocio que necesita leer el estado actual, como
+el saldo suficiente antes de una transferencia: eso no se puede expresar como un
+`CHECK` de la base porque depende de un cálculo.
+
+### 3. Motor — `src/lib/motor/`
+
+**La regla más importante del proyecto: aquí y en ningún más hay cálculos.**
+
+| Archivo | Responsabilidad |
+|---------|-----------------|
+| `calculations.ts` | Los indicadores del dashboard y los saldos por cuenta |
+| `fechas.ts` | Fechas de vencimiento y cálculo de estados |
+| `programados.ts` | Armado de pagos programados: vencimientos, estados, cuenta regresiva |
+| `types.ts` | Tipos compartidos entre las dos capas |
+| `index.ts` | Capa de I/O: lee de Supabase y llama a las funciones puras |
+
+**El Motor es puro.** Sin I/O, sin Supabase, sin `next/headers`. Por eso `index.ts` está
+separado del resto: si un Client Component importara de `index.ts`, arrastraría
+`next/headers` al bundle del navegador y Next.js fallaría al build. Los componentes
+cliente importan solo de `programados.ts` y `types.ts`.
+
+Esa pureza es lo que permite testear los cálculos sin base de datos: 102 tests unitarios
+corren en 2,5 segundos.
+
+**Cuando cambia un cálculo, sus tests se actualizan en el mismo commit.** El Motor es la
+superficie más frágil del proyecto: un cambio acá cambia lo que el usuario ve sin que
+ninguna otra prueba lo detecte.
+
+### 4. Datos — `src/lib/supabase/`
+
+| Archivo | Propósito |
+|---------|-----------|
+| `client.ts` | Cliente de navegador |
+| `server.ts` | Cliente de servidor, con cookies de sesión |
+| `middleware.ts` | Helpers de sesión para el middleware de Next |
+
+**No hay ORM.** El acceso es directo con `@supabase/supabase-js`. Se evaluó Drizzle y se
+descartó (ver ADR-WEB-003 en `docs/decisions/DECISIONS.md`).
+
+### 5. Seguridad
+
+| Capa | Mecanismo |
+|------|-----------|
+| Sesión | Supabase Auth: magic link y Google OAuth |
+| Refresh de sesión | `src/middleware.ts`, en cada request |
+| Aislamiento de datos | **Row Level Security en la base**, no en el código |
+| Variables | `.env.local`, nunca en el repo |
+
+El aislamiento vive en PostgreSQL: todas las tablas tienen `user_id` y las cuatro
+políticas de RLS sobre `auth.uid() = user_id` (ADR-WEB-004). Es imposible filtrar datos
+ajenos por olvidar un filtro en el código.
 
 ---
 
-## Modelo de Datos
+## Despliegue
 
-El modelo de datos del sistema está documentado en detalle en el diccionario de datos del proyecto.
+| Rama | Ambiente | Trigger |
+|------|----------|---------|
+| `main` | Producción | Push a `main` |
+| `develop` | UAT | Push a `develop` |
 
-👉 **Referencia completa**: [DATA_DICTIONARY.md](./DATA_DICTIONARY.md)
+Vercel detecta los pushes y despliega. No hay pasos manuales, ni pipelines propios, ni
+servidores.
 
-### Resumen de Entidades Principales
-
-El modelo de datos se organiza alrededor de las siguientes entidades centrales del dominio financiero:
-
-- **Cuentas Contables** — Plan de cuentas jerárquico (activo, pasivo, patrimonio, ingresos, gastos)
-- **Asientos Contables** — Registros de movimientos con partida doble
-- **Facturas** — Documentos comerciales emitidos y recibidos
-- **Presupuestos** — Asignaciones presupuestarias por período y centro de costo
-- **Transacciones Bancarias** — Movimientos importados desde entidades financieras
-- **Usuarios y Roles** — Modelo de permisos y acceso al sistema
-
-Las relaciones, atributos detallados y restricciones de integridad se encuentran en el diccionario de datos referenciado arriba.
+> ⚠️ **No hay CI.** `.github/workflows/` está vacío: ni lint ni tests corren
+> automáticamente antes de un merge. Vercel construye, pero no corre la suite de
+> Playwright. Es la brecha más conocida del proyecto.
 
 ---
 
-## Integraciones
+## Modelo de datos
 
-El sistema contempla las siguientes integraciones con servicios externos:
+Seis tablas, todas con RLS: `categorias`, `cuentas`, `ingresos`, `gastos`,
+`pagos_programados`, `transferencias`.
 
-### Integraciones Planificadas
+👉 **Referencia completa**: [`DATA_DICTIONARY.md`](../DATA_DICTIONARY.md)
 
-| Integración | Propósito | Prioridad |
-|------------|-----------|-----------|
-| Servicios bancarios (Open Banking) | Importación automática de movimientos bancarios | Alta |
-| Facturación electrónica (SAT/SII/AFIP) | Emisión y validación de facturas fiscales | Alta |
-| Pasarelas de pago | Procesamiento de cobros y pagos | Media |
-| Servicios de tipo de cambio | Actualización de tasas de cambio para multi-moneda | Media |
-| Almacenamiento en la nube | Respaldo y almacenamiento de documentos | Media |
-| Servicios de notificación | Alertas por email, SMS y push | Baja |
-| ERP externos | Sincronización con sistemas empresariales existentes | Baja |
-
-### Patrones de Integración
-
-- **APIs REST/GraphQL**: Para integraciones síncronas de lectura/escritura.
-- **Webhooks**: Para recibir notificaciones de eventos externos en tiempo real.
-- **Procesamiento por lotes**: Para conciliaciones y sincronizaciones masivas.
-- **Circuit Breaker**: Para manejo de fallos en servicios externos con degradación elegante.
+Para el esquema heredado que existió en v0.2.0 y se eliminó en v0.3.0, ver la sección de
+tablas eliminadas de ese mismo documento.
 
 ---
 
-## Decisiones Pendientes
+## Migraciones
 
-Las siguientes decisiones tecnológicas se tomarán en sprints futuros (Sprint 2+), una vez que los requisitos funcionales estén más definidos:
+SQL plano, aplicado a mano desde el Supabase Dashboard. Sin CLI de Supabase, sin
+migraciones automáticas.
 
-| Decisión | Opciones en Consideración | Sprint Estimado |
-|----------|--------------------------|-----------------|
-| Lenguaje backend | Por definir | Sprint 2 |
-| Framework frontend | Por definir | Sprint 2 |
-| Base de datos principal | Por definir (relacional vs. mixta) | Sprint 2 |
-| Estrategia de autenticación | Por definir (OAuth2, JWT, etc.) | Sprint 2 |
-| Infraestructura de despliegue | Por definir (cloud, on-premise, híbrida) | Sprint 3 |
-| Herramienta de CI/CD | Por definir | Sprint 3 |
-| Motor de caché | Por definir | Sprint 3 |
-| Sistema de colas | Por definir | Sprint 3 |
-| Estrategia de monitoreo | Por definir (APM, logging, alertas) | Sprint 4 |
-
-> **Nota**: Las decisiones tecnológicas se registrarán formalmente como ADRs en el archivo [DECISIONS.md](./DECISIONS.md) a medida que se tomen.
+👉 **Cómo aplicarlas**: [`apps/web/supabase/migrations/README.md`](../../apps/web/supabase/migrations/README.md)
 
 ---
 
-*Última actualización: Sprint 1 — Scaffolding inicial del proyecto*
+## Testing
+
+| Tipo | Herramienta | Cubre |
+|------|-------------|-------|
+| Unitario | Vitest | El Motor: cálculos, fechas, estados (102 tests) |
+| E2E | Playwright | Flujos completos partiendo de un usuario vacío (27 tests) |
+
+Los E2E corren en modo serial (`workers: 1`, `fullyParallel: false`) porque comparten
+estado de base de datos. Guardan video, traza y screenshots de cada test en
+`qa/evidence/`.
+
+---
+
+## Estructura del código
+
+```
+apps/web/src/
+├── app/                    ← Rutas (App Router)
+│   ├── (app)/              ← Protegidas
+│   ├── auth/callback/
+│   └── login/
+├── components/             ← account, config, dashboard, forms,
+│                             gastos, ingresos, layout, pagos
+├── lib/
+│   ├── motor/              ← Cálculos puros + tests
+│   └── supabase/           ← Clientes y middleware
+├── middleware.ts           ← Refresh de sesión
+└── ...
+```
+
+---
+
+## Anexo: visión no implementada
+
+La investigación de agosto de 2026 Exploró una arquitectura empresarial. **Ninguno de
+estos componentes existe:**
+
+| Componente | Estado |
+|------------|--------|
+| API Gateway | ❌ No implementado |
+| Orquestador de servicios | ❌ No implementado |
+| Cola de mensajes | ❌ No implementado |
+| Caché distribuida | ❌ No implementado |
+| Almacenamiento de objetos | ❌ No implementado |
+| Microservicios por dominio | ❌ No implementado |
+| Open Banking | ❌ No implementado |
+| Facturación electrónica | ❌ No implementado |
+| API REST o GraphQL pública | ❌ No implementado |
+
+**Por qué no se va a hacer así:** el producto es un gestor de finanzas personales. No hay
+carga que justifique separar servicios ni un equipo que los mantenga. La complejidad de
+microservicios se paga entera y sin el beneficio correspondiente. Si alguna vez hace
+falta, la capa del Motor ya está aislada y es el punto natural de extracción.
+
+---
+
+*Documento verificado contra el código el 2026-10-16.*

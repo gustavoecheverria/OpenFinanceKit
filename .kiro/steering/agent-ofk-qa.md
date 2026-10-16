@@ -81,7 +81,7 @@ Revisar el código/entrega contra cada caso de prueba:
 - [ ] El manejo de errores es adecuado
 - [ ] La UI es accesible (labels, aria, keyboard nav)
 - [ ] Mobile-first: funciona en viewport pequeño
-- [ ] Las queries usan Drizzle ORM correctamente
+- [ ] Las queries usan el cliente de Supabase correctamente y respetan el RLS
 - [ ] Server Components donde corresponde
 - [ ] No hay lógica de negocio en componentes de captura
 
@@ -167,7 +167,7 @@ Cuando la feature lo amerite, proponer tests automatizados:
 
 **Tests de integración (Vitest):**
 - Server Actions con mock de DB
-- Queries de Drizzle
+- Queries de Supabase (con datos de prueba reales, no mocks)
 
 **Tests E2E (Playwright):**
 - Flujos de usuario completos

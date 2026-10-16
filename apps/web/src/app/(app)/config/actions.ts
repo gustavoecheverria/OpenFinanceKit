@@ -79,12 +79,29 @@ export async function deleteCategoria(id: number): Promise<{ error: string | nul
     .eq("user_id", user.id);
 
   if (error) {
-    // Error de integridad: la categoría tiene ingresos/gastos asociados
+    // Error de integridad: la categoría está referenciada por algo.
+    //
+    // Antes el mensaje decía "ingresos o gastos" nomás, y mentía: el caso
+    // habitual era una categoría usada solo por pagos programados, que el
+    // usuario noassociaba con "movimientos". Se nombra la fuente real.
     if (esErrorDeReferencia(error)) {
+      const { count: enProgramados } = await supabase
+        .from("pagos_programados")
+        .select("id", { count: "exact", head: true })
+        .eq("categoria_id", id);
+
+      if (enProgramados && enProgramados > 0) {
+        return {
+          error:
+            "No puedes eliminar esta categoría porque hay pagos programados que la usan. " +
+            "Desactiva o cambia la categoría en Pagos.",
+        };
+      }
+
       return {
         error:
           "No puedes eliminar esta categoría porque tiene movimientos asociados. Elimina primero esos ingresos o gastos.",
-      };
+        };
     }
     return { error: "No se pudo eliminar la categoría. Intenta de nuevo." };
   }
@@ -167,18 +184,117 @@ export async function deleteCuenta(id: number): Promise<{ error: string | null }
     .eq("user_id", user.id);
 
   if (error) {
-    // Error de integridad: la cuenta tiene ingresos/gastos asociados
+    // Error de integridad: la cuenta está referenciada por algo.
+    // El mensaje anterior solo mencionaba ingresos y gastos, y mentía cuando
+    // lo único que la bloqueaba eran pagos programados o transferencias.
     if (esErrorDeReferencia(error)) {
-      return {
-        error:
-          "No puedes eliminar esta cuenta porque tiene movimientos asociados. Elimina primero esos ingresos o gastos.",
-      };
+      const usos = await contarUsosDeCuenta(supabase, id);
+      return { error: mensajeCuentaBloqueada(usos) };
     }
     return { error: "No se pudo eliminar la cuenta. Intenta de nuevo." };
   }
 
   revalidatePath("/config");
   return { error: null };
+}
+
+/**
+ * Cuenta qué registros referencian una cuenta, para explicar por qué no se
+ * puede eliminar. El error de FK de Postgres no dice cuál fue la causa, y un
+ * mensaje genérico hacía pensar al usuario que tenía gastos o ingresos cuando
+ * lo único que bloqueaba eran pagos programados o transferencias.
+ */
+async function contarUsosDeCuenta(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  cuentaId: number
+): Promise<{
+  gastos: number;
+  ingresos: number;
+  programadosActivos: number;
+  programadosInactivos: number;
+  transferencias: number;
+}> {
+  const [gastos, ingresos, activos, inactivos, transferencias] = await Promise.all([
+    supabase.from("gastos").select("id", { count: "exact", head: true }).eq("cuenta_id", cuentaId),
+    supabase.from("ingresos").select("id", { count: "exact", head: true }).eq("cuenta_id", cuentaId),
+    supabase
+      .from("pagos_programados")
+      .select("id", { count: "exact", head: true })
+      .eq("cuenta_id", cuentaId)
+      .eq("activo", true),
+    supabase
+      .from("pagos_programados")
+      .select("id", { count: "exact", head: true })
+      .eq("cuenta_id", cuentaId)
+      .eq("activo", false),
+    supabase
+      .from("transferencias")
+      .select("id", { count: "exact", head: true })
+      .or(`origen_id.eq.${cuentaId},destino_id.eq.${cuentaId}`),
+  ]);
+
+  return {
+    gastos: gastos.count ?? 0,
+    ingresos: ingresos.count ?? 0,
+    programadosActivos: activos.count ?? 0,
+    programadosInactivos: inactivos.count ?? 0,
+    transferencias: transferencias.count ?? 0,
+  };
+}
+
+/** Arma el mensaje según qué está bloqueando el borrado. */
+function mensajeCuentaBloqueada(usos: {
+  gastos: number;
+  ingresos: number;
+  programadosActivos: number;
+  programadosInactivos: number;
+  transferencias: number;
+}): string {
+  const partes: string[] = [];
+  if (usos.programadosActivos > 0 || usos.programadosInactivos > 0) {
+    const total = usos.programadosActivos + usos.programadosInactivos;
+    partes.push(
+      `${total} pago${total === 1 ? "" : "s"} programado${total === 1 ? "" : "s"}`
+    );
+  }
+  if (usos.transferencias > 0) {
+    partes.push(`${usos.transferencias} transferencia${usos.transferencias === 1 ? "" : "s"}`);
+  }
+  if (usos.ingresos > 0) {
+    partes.push(`${usos.ingresos} ingreso${usos.ingresos === 1 ? "" : "s"}`);
+  }
+  if (usos.gastos > 0) {
+    partes.push(`${usos.gastos} gasto${usos.gastos === 1 ? "" : "s"}`);
+  }
+
+  if (partes.length === 0) return "No se pudo eliminar la cuenta. Intenta de nuevo.";
+
+  const lista = partes.join(", ");
+
+  // El consejo depende de si los pagos programados ya están pausados o no.
+  //
+  // Antes el mensaje decía siempre "desactiva los pagos programados", incluso
+  // cuando ya estaban desactivados. Eso mandaba al usuario a un callejón sin
+  // salida: hacia un estado que ya tenía, sin indicarle el siguiente paso real.
+  // Con los pagos desactivados, un activo se desactiva y uno pausado se elimina.
+  let consejo: string;
+  if (usos.programadosActivos > 0 && usos.programadosInactivos > 0) {
+    consejo =
+      "En Pagos, desactiva los que aún están activos o elimina los que ya " +
+      "desactivaste, y vuelve a intentar.";
+  } else if (usos.programadosActivos > 0) {
+    consejo =
+      "En Pagos, desactiva esos pagos programados y vuelve a intentar.";
+  } else if (usos.programadosInactivos > 0) {
+    consejo =
+      "Esos pagos ya están desactivados, pero siguen referenciando la cuenta. " +
+      "En Pagos, abre la sección de desactivados y elimínalos. Los gastos e " +
+      "ingresos que ya registraste se conservan.";
+  } else {
+    consejo = "Mueve esos movimientos a otra cuenta antes de eliminarla.";
+  }
+
+  return `No se puede eliminar esta cuenta porque tiene ${lista} asociados. ${consejo}`;
 }
 
 /**
@@ -267,12 +383,19 @@ export async function cargarDatosEjemplo() {
     });
   }
 
-  // Pagos de ejemplo (mismos estados del Excel)
-  await supabase.from("pagos").insert([
-    { concepto: "Internet", fecha_vencimiento: hoy, valor: 45, estado: "Pendiente", user_id: user.id },
-    { concepto: "Seguro", fecha_vencimiento: hoy, valor: 120, estado: "Pendiente", user_id: user.id },
-    { concepto: "Gimnasio", fecha_vencimiento: hoy, valor: 35, estado: "Vencido", user_id: user.id },
-  ]);
+  // Pago programado de ejemplo. Antes el seed insertaba tres pagos únicos
+  // (Internet, Seguro, Gimnasio) en la tabla `pagos`, que ya no existe. Ahora
+  // el concepto equivalente es una plantilla recurrente.
+  await supabase.from("pagos_programados").insert({
+    concepto: "Internet",
+    valor: 45,
+    recurrencia: "Mensual",
+    tipo: "Gasto",
+    cuenta_id: ctaEfectivo,
+    fecha_inicio: hoy,
+    dia_vencimiento: new Date(hoy).getDate(),
+    user_id: user.id,
+  });
 
   revalidatePath("/config");
   revalidatePath("/dashboard");

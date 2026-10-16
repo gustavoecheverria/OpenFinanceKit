@@ -1,7 +1,12 @@
--- OpenFinanceKit — Initial Schema
--- Version: 0.2.0
--- Date: 2026-08-27
--- Description: Creates all tables for OFK Web MVP
+-- OpenFinanceKit — Migración 001
+-- Release: v0.2.0 (publicada)
+-- Fecha: 2026-08-27
+-- Descripción: Crea todas las tablas del MVP de OFK Web.
+--
+-- NOTA: la tabla `pagos` que se crea aquí fue eliminada por la migración 008
+-- (v0.3.0). Este archivo se conserva intacto por trazabilidad de una base que
+-- ya tiene aplicados los cambios. Ver ../README.md para el estado de cada
+-- migración.
 
 -- ============================================================
 -- CATEGORÍAS (datos maestros)

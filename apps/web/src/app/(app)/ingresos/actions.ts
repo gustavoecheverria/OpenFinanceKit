@@ -69,3 +69,52 @@ export async function deleteIngreso(id: number) {
   revalidatePath("/ingresos");
   revalidatePath("/dashboard");
 }
+
+export async function updateIngreso(
+  _prevState: FormState,
+  formData: FormData
+): Promise<FormState> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Tu sesión expiró. Vuelve a iniciar sesión." };
+
+  const id = parseInt(formData.get("id") as string);
+  const fecha = formData.get("fecha") as string;
+  const categoriaId = parseInt(formData.get("categoria_id") as string);
+  const cuentaId = parseInt(formData.get("cuenta_id") as string);
+  const valor = parseFloat(formData.get("valor") as string);
+  const descripcionRaw = (formData.get("descripcion") as string)?.trim() || null;
+  const descripcion =
+    descripcionRaw && descripcionRaw.length > MAX_DESCRIPCION
+      ? descripcionRaw.slice(0, MAX_DESCRIPCION)
+      : descripcionRaw;
+
+  if (!fecha || isNaN(categoriaId) || isNaN(cuentaId)) {
+    return { error: "Completa la categoría, la cuenta y la fecha." };
+  }
+  if (!esFechaValida(fecha)) {
+    return { error: "La fecha no es válida." };
+  }
+  if (isNaN(valor) || valor <= 0) {
+    return { error: "El valor debe ser mayor que cero." };
+  }
+
+  const { error } = await supabase
+    .from("ingresos")
+    .update({
+      fecha,
+      categoria_id: categoriaId,
+      cuenta_id: cuentaId,
+      valor,
+      descripcion,
+    })
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) return { error: "No se pudo actualizar el ingreso. Intenta de nuevo." };
+
+  revalidatePath("/ingresos");
+  revalidatePath("/dashboard");
+  revalidatePath(`/cuentas/${cuentaId}`);
+  return { error: null, ok: true };
+}

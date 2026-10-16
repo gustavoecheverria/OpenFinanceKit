@@ -1,254 +1,193 @@
 # OpenFinanceKit
 
 **Documento:** Reglas de Negocio
-
-**Versión:** 0.1.0
-
-**Estado:** Draft
-
-**Sprint:** Sprint 1
-
+**Versión:** 0.3.0
+**Estado:** Vigente
+**Release descrito:** v0.3.0 (pendiente de publicar)
 **Autor:** Gustavo Echeverría
-
-**Última actualización:** 2026-08-03
+**Última actualización:** 2026-10-16
 
 ---
 
+> **Nota de revisión.** Hasta el 2026-10-16 este documento describía reglas de
+> contabilidad empresarial (partida doble, facturación, presupuestos, conciliación
+> bancaria) que **este proyecto nunca implementó**. Era visión, no producto. Lo que
+> sigue son las reglas que el código de `apps/web/` aplica de verdad. La visión de ERP
+> está al final, en el [Anexo](#anexo-visión-no-implementada).
+
+---
 
 ## Dominio
 
-### Definición del Dominio
+OpenFinanceKit gestiona **finanzas personales**: cuentas, categorías y los movimientos
+de dinero entre ellas.
 
-OpenFinanceKit opera dentro del dominio de **gestión financiera empresarial**, abarcando las áreas de contabilidad, facturación, presupuestos, tesorería y reportes financieros. El sistema gestiona el ciclo completo de vida de las transacciones financieras, desde su registro hasta su conciliación y reporte.
+No hay contabilidad, no hay facturación, no hay impuestos. El objetivo es que una
+persona mire su pantalla y sepa cuánto tiene, de dónde y a qué se va.
 
-### Alcance del Dominio
+### Conceptos del dominio
 
-| Área | Descripción |
-|------|-------------|
-| Contabilidad | Registro de asientos contables bajo partida doble |
-| Facturación | Emisión, recepción y gestión de facturas |
-| Presupuestos | Planificación, asignación y control presupuestario |
-| Tesorería | Gestión de flujos de caja y cuentas bancarias |
-| Reportes | Generación de estados financieros y reportes gerenciales |
-
-### Principios del Dominio
-
-- Todo movimiento financiero debe ser trazable y auditable.
-- El sistema debe cumplir con las Normas Internacionales de Información Financiera (NIIF/IFRS).
-- La integridad de los datos financieros es prioritaria sobre la disponibilidad.
-- Los períodos contables definen los límites temporales de las operaciones.
+| Concepto | Qué es |
+|----------|--------|
+| **Cuenta** | Dónde está el dinero. "Efectivo" es una cuenta más de la lista |
+| **Categoría** | Para qué es el dinero. Cada una es de tipo Ingreso o Gasto |
+| **Ingreso / Gasto** | Un movimiento real de dinero que el usuario registró |
+| **Pago programado** | Una plantilla que se renueva sola. No es un movimiento hasta que se paga |
+| **Transferencia** | Mover saldo de una cuenta a otra. No crea ni destruye dinero |
 
 ---
 
-## Entidades
+## Reglas de arquitectura
 
-### Entidades Principales
+Estas son las reglas más importantes del proyecto. Violarlas rompe la app.
 
-| Entidad | Descripción | Identificador |
-|---------|-------------|---------------|
-| Cuenta Contable | Clasificación del plan de cuentas | Código contable (ej: 1.1.01.001) |
-| Asiento Contable | Registro de movimientos bajo partida doble | ID secuencial por período |
-| Factura | Documento comercial de compra o venta | Número de factura + serie |
-| Presupuesto | Plan de asignación de recursos financieros | ID + período fiscal |
-| Transacción | Movimiento individual de fondos | ID único (UUID) |
-| Período Contable | Intervalo temporal para agrupación de operaciones | Año-Mes |
-| Centro de Costo | Unidad organizacional para asignación de gastos | Código jerárquico |
-| Tercero | Cliente, proveedor o entidad relacionada | NIF/RUC/RFC |
+| ID | Regla |
+|----|-------|
+| **RN-001** | Configuración es la única fuente de datos maestros. Nada se captura sin una categoría y una cuenta existentes |
+| **RN-002** | El Motor es el único lugar donde hay cálculos. Las páginas solo guardan y muestran |
+| **RN-003** | El Dashboard solo visualiza. Nunca almacena información propia |
+| **RN-004** | Las pantallas de captura (Ingresos, Gastos, Pagos, Transferencias) solo almacenan datos |
+| **RN-005** | Los desplegables obtienen sus valores desde Configuración |
+| **RN-006** | Las tablas admiten nuevas filas sin necesidad de cambiar fórmulas ni código |
 
-### Relaciones entre Entidades
-
-- Un **Asiento Contable** contiene dos o más **líneas de asiento** (débitos y créditos).
-- Una **Factura** genera uno o más **Asientos Contables**.
-- Un **Presupuesto** se asigna a uno o más **Centros de Costo**.
-- Una **Transacción** pertenece a exactamente un **Período Contable**.
-- Un **Tercero** puede estar asociado a múltiples **Facturas** como emisor o receptor.
+El Motor vive en `apps/web/src/lib/motor/` y es **puro**: sin I/O, sin Supabase, sin
+`next/headers`. Por eso se puede testear sin base de datos.
 
 ---
 
-## Reglas
+## Reglas de cuentas y categorías
 
-### Reglas de Contabilidad
+| ID | Regla |
+|----|-------|
+| RN-CUE-001 | `saldo_inicial` no puede ser negativo |
+| RN-CUE-002 | "Efectivo" no es un caso especial: es una fila de `cuentas` con su propio saldo |
+| RN-CUE-003 | No se puede borrar una cuenta que tenga ingresos, gastos, transferencias o pagos programados asociados. La base lo bloquea (`ON DELETE RESTRICT`) y la app avisa |
+| RN-CAT-001 | Cada categoría es de un solo tipo: Ingreso o Gasto. No hay subcategorías |
+| RN-CAT-002 | No se puede borrar una categoría en uso |
 
-| ID | Regla | Categoría |
-|----|-------|-----------|
-| RN-CONT-001 | Todo asiento contable debe cumplir la partida doble: la suma de débitos debe ser igual a la suma de créditos | Integridad |
-| RN-CONT-002 | No se permite registrar asientos en períodos contables cerrados | Temporal |
-| RN-CONT-003 | Las cuentas contables deben seguir la estructura jerárquica del plan de cuentas vigente | Estructura |
-| RN-CONT-004 | Un asiento contable debe tener al menos dos líneas (una de débito y una de crédito) | Estructura |
-| RN-CONT-005 | Los asientos de ajuste deben estar marcados con el tipo "AJUSTE" y requieren aprobación de un contador autorizado | Autorización |
-| RN-CONT-006 | Las cuentas de resultado (ingresos y gastos) se cierran al final de cada período fiscal | Temporal |
+---
 
-### Reglas de Facturación
+## Reglas de movimientos
 
-| ID | Regla | Categoría |
-|----|-------|-----------|
-| RN-FACT-001 | Toda factura emitida debe tener un número secuencial único dentro de su serie | Unicidad |
-| RN-FACT-002 | Una factura no puede ser eliminada después de su emisión; solo puede anularse generando una nota de crédito | Inmutabilidad |
-| RN-FACT-003 | El monto total de la factura debe ser igual a la suma de los ítems más impuestos aplicables | Cálculo |
-| RN-FACT-004 | Las facturas vencidas por más de 30 días deben generar una alerta de cobranza | Gestión |
-| RN-FACT-005 | Una factura debe estar asociada a un tercero válido registrado en el sistema | Referencial |
+| ID | Regla |
+|----|-------|
+| RN-MOV-001 | `valor` siempre mayor que cero |
+| RN-MOV-002 | `fecha` es una fecha de negocio: sin hora ni zona horaria. El día que registra el usuario es el día que cuenta |
+| RN-MOV-003 | Todo movimiento pertenece a una cuenta y a una categoría. Ambas obligatorias |
+| RN-MOV-004 | La suma de los saldos de todas las cuentas siempre cuadra con el saldo global |
 
-### Reglas de Presupuesto
+---
 
-| ID | Regla | Categoría |
-|----|-------|-----------|
-| RN-PRES-001 | No se permite registrar gastos que excedan el presupuesto asignado al centro de costo sin aprobación de nivel superior | Control |
-| RN-PRES-002 | Las transferencias entre partidas presupuestarias deben mantener el total del presupuesto global sin cambios | Equilibrio |
-| RN-PRES-003 | El presupuesto debe estar aprobado antes del inicio del período fiscal al que corresponde | Temporal |
-| RN-PRES-004 | Las modificaciones presupuestarias superiores al 10% del monto original requieren aprobación del directorio | Autorización |
+## Reglas de transferencias
 
-### Reglas de Tesorería
+| ID | Regla |
+|----|-------|
+| RN-TRANS-001 | Una transferencia **no altera el saldo global**. Solo redistribuye entre cuentas |
+| RN-TRANS-002 | No se puede transferir a la misma cuenta: sería un bucle sin efecto. La base lo bloquea |
+| RN-TRANS-003 | El valor debe ser mayor que cero |
+| RN-TRANS-004 | La cuenta de origen debe tener saldo suficiente. **Se valida en la server action, no en la base**, porque requiere leer el saldo actual, que es un cálculo y no un dato de la fila |
+| RN-TRANS-005 | No se puede borrar una cuenta con transferencias registradas. El historial debe quedar consistente |
 
-| ID | Regla | Categoría |
-|----|-------|-----------|
-| RN-TES-001 | Todo pago debe estar respaldado por un documento fuente (factura, contrato, orden de compra) | Trazabilidad |
-| RN-TES-002 | Los pagos superiores a un monto umbral (configurable) requieren doble autorización | Seguridad |
-| RN-TES-003 | La conciliación bancaria debe realizarse antes del cierre de cada período contable | Temporal |
-| RN-TES-004 | No se permite el saldo negativo en cuentas bancarias sin una línea de crédito aprobada | Restricción |
+---
+
+## Reglas de pagos programados
+
+Estas son las reglas del módulo más reciente. Todas están implementadas y cubiertas por
+tests en `src/lib/motor/programados.test.ts` y `fechas.test.ts`.
+
+### Qué es un pago programado
+
+Una **plantilla recurrente**, no un movimiento. El usuario la registra una vez (arriendo,
+sueldo, cuota) y cada período marca "pagado". Ahí recién se genera el movimiento real
+en `gastos` o `ingresos`.
+
+La diferencia con un movimiento es la razón de ser del módulo: antes, marcar un pago
+como pagado solo cambiaba una etiqueta de estado, sin crear nada en el historial.
+
+| ID | Regla |
+|----|-------|
+| RN-PAG-001 | La cuenta de origen es **obligatoria**. No puede ser nula |
+| RN-PAG-002 | La categoría es **obligatoria** y la elige el usuario al crear. No se asigna sola |
+| RN-PAG-003 | Si el usuario no tiene ninguna categoría del tipo, el formulario lo obliga a crear una antes de continuar |
+| RN-PAG-004 | El tipo (`Gasto` / `Ingreso`) determina a qué lado del historial va el movimiento cuando se paga |
+| RN-PAG-005 | Marcar "pagado" genera el registro real en `gastos` o `ingresos` con la categoría elegida, y renueva el vencimiento al siguiente período |
+
+### Recurrencia
+
+| ID | Regla |
+|----|-------|
+| RN-REC-001 | Solo existen tres recurrencias: `Mensual`, `Quincenal`, `Semanal` |
+| RN-REC-002 | **No existe la recurrencia diaria.** Con un ciclo de 1 día, la ventana de alerta de 5 días no cabe dentro del ciclo y el pago caería en alerta permanentemente, incluso recién pagado |
+| RN-REC-003 | "Quincenal" es por **fechas de mes**, no 15 días corridos: vence el día configurado y ese día + 15. Con días corridos un arriendo del 31 se movería al 15 y cambiaría de fecha cada mes |
+| RN-REC-004 | `dia_vencimiento` va de 1 a 31. Para el día 31 en meses cortos se usa el último día del mes |
+
+### Estado
+
+| ID | Regla |
+|----|-------|
+| RN-EST-001 | El estado **no se guarda en la base**. Se calcula en cada render a partir de `fecha_ultimo_pago`, `dia_vencimiento`, `recurrencia` y hoy |
+| RN-EST-002 | Los estados posibles son: Al día, Pendiente, Alerta, Vencido |
+| RN-EST-003 | La ventana de alerta es de **5 días** antes del vencimiento |
+| RN-EST-004 | Un pago recién pagado nunca genera alerta. Está en período de gracia |
+| RN-EST-005 | Todo el cálculo es a nivel de **día**, no de instante. Un pago que vence hoy no puede aparecer como vencido por la hora del servidor |
+| RN-EST-006 | Si el pago nunca se pagó y `fecha_inicio` ya pasó, el vencimiento mostrado es el **próximo**, no el atraso histórico más lejano |
+
+RN-EST-001 es la razón por la que no hay jobs programados en el proyecto: la plantilla
+se renueva sola porque solo hay fechas, no un estado que vence.
+
+### Baja
+
+| ID | Regla |
+|----|-------|
+| RN-BAJ-001 | Un pago programado **no se borra**. Se desactiva con `activo = FALSE` |
+| RN-BAJ-002 | Desactivar conserva el registro y su historial, solo deja de aparecer en la lista |
+| RN-BAJ-003 | Un pago desactivado se puede reactivar |
+| RN-BAJ-004 | No se puede borrar una cuenta o categoría con pagos programados activos asociados |
 
 ---
 
 ## Validaciones
 
-### Validaciones de Datos de Entrada
-
-| ID | Campo/Entidad | Validación | Tipo |
-|----|---------------|-----------|------|
-| VAL-001 | Monto de transacción | Debe ser un número positivo con máximo 2 decimales | Formato |
-| VAL-002 | Fecha de transacción | No puede ser una fecha futura para operaciones normales | Lógica |
-| VAL-003 | Código de cuenta | Debe existir en el plan de cuentas activo | Referencial |
-| VAL-004 | NIF/RUC del tercero | Debe cumplir el formato y dígito verificador del país configurado | Formato |
-| VAL-005 | Número de factura | Debe ser único dentro de la serie y seguir el formato alfanumérico configurado | Unicidad |
-| VAL-006 | Período contable | Debe estar en estado "abierto" para aceptar nuevas transacciones | Estado |
-| VAL-007 | Moneda | Debe ser un código ISO 4217 válido y estar habilitada en el sistema | Catálogo |
-| VAL-008 | Tipo de cambio | Debe ser positivo y no exceder un umbral de variación del 5% respecto al día anterior | Rango |
-
-### Validaciones de Integridad
-
-| ID | Contexto | Validación |
-|----|----------|-----------|
-| VAL-INT-001 | Asiento contable | Suma de débitos == Suma de créditos (diferencia máxima permitida: 0.00) |
-| VAL-INT-002 | Cierre de período | Todas las transacciones del período deben estar conciliadas |
-| VAL-INT-003 | Balance general | Activos == Pasivos + Patrimonio (ecuación contable fundamental) |
-| VAL-INT-004 | Factura | Subtotal + Impuestos == Total (sin tolerancia de redondeo superior a 0.01) |
-
-### Validaciones de Estado
-
-| ID | Entidad | Transiciones Permitidas |
-|----|---------|------------------------|
-| VAL-EST-001 | Factura | Borrador → Emitida → Pagada / Anulada |
-| VAL-EST-002 | Asiento | Borrador → Registrado → Aprobado / Rechazado |
-| VAL-EST-003 | Presupuesto | Borrador → En Revisión → Aprobado → Vigente → Cerrado |
-| VAL-EST-004 | Período Contable | Abierto → En Cierre → Cerrado |
+| ID | Campo | Validación |
+|----|-------|-----------|
+| VAL-001 | `valor` (todas las tablas de monto) | Número positivo, máximo 2 decimales |
+| VAL-002 | `fecha` | Se permite fecha futura en pagos programados; en ingresos y gastos es la fecha en que ocurrió el movimiento |
+| VAL-003 | `categoria_id` / `cuenta_id` | Debe existir y pertenecer al usuario |
+| VAL-004 | `concepto` (pago programado) | Entre 1 y 255 caracteres |
+| VAL-005 | `concepto` (transferencia) | Máximo 255 caracteres, opcional |
+| VAL-006 | `tipo` (categoría) | Exactamente `'Ingreso'` o `'Gasto'` |
+| VAL-007 | `recurrencia` | Solo los tres valores permitidos |
+| VAL-008 | Transferencia | Origen distinto del destino, con saldo suficiente |
 
 ---
 
-## Flujos
+## Reglas de UI
 
-### Flujo 1: Registro de Asiento Contable
+| ID | Regla |
+|----|-------|
+| RN-UI-001 | Mobile-first. Todo se usa con una mano, en pantalla chica |
+| RN-UI-002 | Los textos de la interfaz usan **tuteo, nunca voseo** |
+| RN-UI-003 | Cada mensaje dice la verdad: si una acción hace algo distinto de lo que el texto promete, el texto está mal |
 
-```
-┌─────────────┐     ┌──────────────┐     ┌───────────────┐     ┌─────────────┐
-│  Crear      │────▶│  Validar     │────▶│  Registrar    │────▶│  Aprobar    │
-│  Borrador   │     │  Partida     │     │  Asiento      │     │  Asiento    │
-│             │     │  Doble       │     │               │     │             │
-└─────────────┘     └──────────────┘     └───────────────┘     └─────────────┘
-                          │                                           │
-                          ▼                                           ▼
-                    ┌──────────────┐                          ┌─────────────┐
-                    │  Rechazar    │                          │  Contabilizar│
-                    │  (error en   │                          │  en Mayor   │
-                    │  cuadre)     │                          │             │
-                    └──────────────┘                          └─────────────┘
-```
-
-**Pasos:**
-1. El usuario crea un asiento en estado borrador con las líneas de débito y crédito.
-2. El sistema valida que la suma de débitos sea igual a la suma de créditos (RN-CONT-001).
-3. El sistema valida que el período contable esté abierto (RN-CONT-002).
-4. El sistema registra el asiento con un número secuencial.
-5. Un contador autorizado aprueba el asiento.
-6. El asiento se refleja en el libro mayor.
-
-### Flujo 2: Ciclo de Vida de Factura
-
-```
-┌─────────────┐     ┌──────────────┐     ┌───────────────┐     ┌─────────────┐
-│  Crear      │────▶│  Validar     │────▶│  Emitir       │────▶│  Registrar  │
-│  Factura    │     │  Datos       │     │  Factura      │     │  Cobro/Pago │
-│             │     │              │     │               │     │             │
-└─────────────┘     └──────────────┘     └───────────────┘     └─────────────┘
-                          │                     │                      │
-                          ▼                     ▼                      ▼
-                    ┌──────────────┐     ┌───────────────┐     ┌─────────────┐
-                    │  Corregir    │     │  Anular       │     │  Cerrar     │
-                    │  Errores     │     │  (Nota de     │     │  Factura    │
-                    │              │     │   Crédito)    │     │             │
-                    └──────────────┘     └───────────────┘     └─────────────┘
-```
-
-**Pasos:**
-1. El usuario crea una factura con datos del tercero e ítems.
-2. El sistema valida datos obligatorios, cálculos y existencia del tercero (RN-FACT-003, RN-FACT-005).
-3. La factura se emite con número secuencial único (RN-FACT-001).
-4. Se genera automáticamente el asiento contable correspondiente.
-5. Al recibir el pago, se registra y la factura pasa a estado "Pagada".
-6. Si se requiere anulación, se genera nota de crédito (RN-FACT-002).
-
-### Flujo 3: Control Presupuestario
-
-```
-┌─────────────┐     ┌──────────────┐     ┌───────────────┐     ┌─────────────┐
-│  Solicitar  │────▶│  Verificar   │────▶│  Autorizar    │────▶│  Ejecutar   │
-│  Gasto      │     │  Disponible  │     │  Gasto        │     │  Gasto      │
-│             │     │              │     │               │     │             │
-└─────────────┘     └──────────────┘     └───────────────┘     └─────────────┘
-                          │                     │
-                          ▼                     ▼
-                    ┌──────────────┐     ┌───────────────┐
-                    │  Rechazar    │     │  Escalar      │
-                    │  (sin saldo) │     │  Aprobación   │
-                    │              │     │  (excede %)   │
-                    └──────────────┘     └───────────────┘
-```
-
-**Pasos:**
-1. Un responsable de centro de costo solicita un gasto.
-2. El sistema verifica disponibilidad presupuestaria en la partida correspondiente.
-3. Si hay saldo disponible, se autoriza el gasto (según nivel de monto).
-4. Si el gasto excede el presupuesto, se aplica RN-PRES-001 (requiere aprobación superior).
-5. Si la modificación supera el 10%, se escala al directorio (RN-PRES-004).
-6. El gasto ejecutado se descuenta del presupuesto disponible.
-
-### Flujo 4: Conciliación Bancaria
-
-```
-┌─────────────┐     ┌──────────────┐     ┌───────────────┐     ┌─────────────┐
-│  Importar   │────▶│  Comparar    │────▶│  Conciliar    │────▶│  Generar    │
-│  Extracto   │     │  Movimientos │     │  Partidas     │     │  Reporte    │
-│  Bancario   │     │              │     │               │     │             │
-└─────────────┘     └──────────────┘     └───────────────┘     └─────────────┘
-                          │                     │
-                          ▼                     ▼
-                    ┌──────────────┐     ┌───────────────┐
-                    │  Marcar      │     │  Registrar    │
-                    │  Discrepancia│     │  Ajustes      │
-                    │              │     │               │
-                    └──────────────┘     └───────────────┘
-```
-
-**Pasos:**
-1. Se importa el extracto bancario (archivo o conexión directa).
-2. El sistema compara los movimientos del banco con los registros internos.
-3. Las partidas coincidentes se concilian automáticamente.
-4. Las discrepancias se marcan para revisión manual.
-5. Se registran ajustes contables si es necesario (RN-CONT-005).
-6. Se genera un reporte de conciliación para el cierre del período (RN-TES-003).
+RN-UI-002 y RN-UI-003 están porque se incumplieron en la práctica. El comando para
+verificar RN-UI-002 está en `.kiro/skills/ofk-conventions.md`.
 
 ---
 
-## Notas Adicionales
+## Anexo: visión no implementada
 
-- Las reglas de negocio se revisan al inicio de cada sprint para reflejar cambios regulatorios.
-- Los montos umbrales y porcentajes son configurables por organización.
-- El sistema debe mantener un log de auditoría de todas las operaciones financieras.
+La investigación de agosto de 2026 exploró un OFK empresarial. **Nada de esto existe
+en el código.** Se documenta solo para preservar el contexto.
+
+| Área | Estado |
+|------|--------|
+| Contabilidad bajo partida doble (`asiento_contable`, `linea_asiento`) | ❌ No implementada |
+| Facturación (`factura`, `linea_factura`, `tercero`) | ❌ No implementada |
+| Presupuestos (`presupuesto`, `centro_costo`) | ❌ No implementada |
+| Períodos contables con cierre | ❌ No implementada |
+| Conciliación bancaria | ❌ No implementada |
+| Umbrales de doble autorización | ❌ No implementada |
+| Normas IFRS | ❌ Fuera del alcance |
+
+Retomar esa visión no es una evolución incremental: cambia el modelo de datos entero,
+el Motor y la arquitectura. Es un proyecto aparte.

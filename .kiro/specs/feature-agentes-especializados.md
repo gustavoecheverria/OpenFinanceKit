@@ -4,7 +4,7 @@
 
 **Versión:** 0.1.0
 
-**Estado:** Aprobado
+**Estado:** Completado
 
 **Sprint:** Sprint 1
 
@@ -131,8 +131,8 @@ Todos los agentes deben respetar las 6 reglas de negocio del MVP.
 - [x] TAREA-006: Reconvertir `.kiro/steering/agent-ofk-engineer.md` en coordinador
 - [x] TAREA-007: Validar consistencia entre los 4 archivos
 - [x] TAREA-008: Presentar al usuario para aprobación
-- [ ] TAREA-009: Proponer mensaje de commit (hook commit-message)
-- [ ] TAREA-010: Esperar aprobación del usuario para merge a develop
+- [x] TAREA-009: Proponer mensaje de commit (hook commit-message)
+- [x] TAREA-010: Esperar aprobación del usuario para merge a develop
 
 ---
 

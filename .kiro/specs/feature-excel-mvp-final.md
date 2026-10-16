@@ -4,19 +4,38 @@
 
 **Versión:** 0.1.0
 
-**Estado:** Draft
+**Estado:** 📦 **ARCHIVADO — no se va a implementar.** El Excel quedó como referencia histórica cuando OFK Web lo superó
 
-**Sprint:** Sprint 1
+**Sprint:** Sprint 1 (cerrado)
 
-**Rama:** feature/excel-mvp-final
+**Rama:** feature/excel-mvp-final (nunca mergeada como trabajo activo)
 
 **Issue:** N/A
 
 **Autor:** Gustavo Echeverría
 
-**Última actualización:** 2026-08-03
+**Última actualización:** 2026-10-16
 
 ---
+
+> ## ⛔ Spec archivado — no implementes nada de esto
+>
+> **Por qué:** en agosto 2026 el plan era terminar el MVP **en Excel**. Desde septiembre
+> el producto es una web (`apps/web/`), que ya cubre todos los puntos de este documento:
+> el Motor, el Dashboard de 6 indicadores, los pagos y las validaciones existen y están
+> testeados en código.
+>
+> El archivo `product/excel/OpenFinanceKit.xlsx` se conserva como **referencia
+> histórica** del diseño original. No se modifica ni se desarrolla más.
+>
+> **Si necesitas retomar el Excel,** primero confirma con el usuario: el alcance real
+> cambió por completo desde que se escribió este spec.
+>
+> La especificación equivalente y vigente está en
+> [`docs/BUSINESS_RULES.md`](../../docs/BUSINESS_RULES.md) y en los SDDs de la web.
+>
+> **Lo de abajo se conserva sin modificar como registro histórico. Ninguna tarea ni
+> criterio de aceptación está vigente.**
 
 ## 1. Resumen
 

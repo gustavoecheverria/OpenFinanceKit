@@ -66,6 +66,36 @@ chore(config): actualizar mcp.json con nuevo token
 - Nombres de variables, funciones y campos: **inglés o español consistente**
 - Comentarios en código: **español**
 
+### Tuteo en los textos de la interfaz
+
+Los textos que ve el usuario (labels, mensajes de error, guías, estados vacíos) usan
+**imperativo de tuteo, sin voseo**.
+
+| Correcto | Incorrecto |
+|----------|------------|
+| Crea una categoría | Creá una categoría |
+| Necesitas una cuenta | Necesitás una cuenta |
+| Selecciona el destino | Elegí primero el origen |
+| Registra tu primer gasto | Registrá tu primer gasto |
+| Vuelve a iniciar sesión | Volvé a iniciar sesión |
+
+Razón: la base del proyecto ya usa tuteo en todos sus textos
+("Vuelve a iniciar sesión", "Completa el concepto", "Selecciona una cuenta"). El voseo
+introducido en un módulo nuevo rompe la consistencia y hace que la app parezca escrita
+por dos personas distintas.
+
+Aplica a todo texto visible. Los comentarios de código pueden usar la forma que sea más
+clara, pero se recomienda la misma.
+
+**Cómo verificarlo antes de commitear:**
+
+```bash
+# No debería devolver nada.
+# -i para no perder las formas en minúscula (tenés, marcás, pagás).
+# \b al final para no confundir "creá" dentro de "creándola", que es correcto.
+grep -rniE '\b(creá|registrá|desactivá|necesitás|elegí|marcá|mové|guardá|revisá|buscá|ingresá|pagás|tenés|podés|hacé|tocá|poné|usá|ajustá|salí|transferí|arrancá|reactivá|retirás|registrás|marcás|pedís|querés|sabés|dejás|entrás|seguís|creás|elegís|reactivás)\b' apps/web/src/
+```
+
 ## Versionado semántico
 
 ```
@@ -75,20 +105,72 @@ v MAJOR . MINOR . PATCH
   └─────────────────── Cambios incompatibles en arquitectura
 ```
 
-Versión actual: `v0.1.0`
+| | Versión | Rama |
+|---|---------|------|
+| Última publicada | `v0.2.0` | `main` |
+| En desarrollo | `v0.3.0` | `develop` |
+| Tags existentes | `v0.1.0` | — |
+
+> v0.2.0 se liberó sin tag. Al liberar v0.3.0 hay que crear el tag y backtaguear v0.2.0.
+
+### Regla de las cabeceras de migración
+
+El campo `Release:` de una migración dice **en qué versión se publica**, no que ya se
+haya publicado:
+
+```sql
+-- Release: v0.3.0 (pendiente)    ← está en develop, no en producción
+-- Release: v0.2.0 (publicada)    ← ya está en main
+```
+
+Nunca se inventa un número de versión. Si no se sabe en qué release va un cambio, se
+documenta como tal en vez de ponerle un número.
+
+## Documentación siempre al día
+
+**Si el código cambia, el documento que lo describe cambia en el mismo commit.** No es un
+extra ni un "después me encargo".
+
+| Cambiaste… | Actualiza también |
+|------------|-------------------|
+| Una tabla, columna o restricción | `docs/DATA_DICTIONARY.md` + `apps/web/supabase/migrations/README.md` |
+| Una regla del dominio | `docs/BUSINESS_RULES.md` |
+| Un módulo o una ruta | `docs/PROJECT_STATUS.md` + `README.md` |
+| El comportamiento de una feature | El SDD, marcando los checkboxes cumplidos |
+| El stack | `README.md` + `.kiro/steering/project.md` |
+| Una versión | `docs/changelog/CHANGELOG.md` + `package.json` + tag de git |
+
+> **Si el código y la documentación se contradicen, el código gana.** Y entonces hay que
+> arreglar la documentación en el mismo commit.
+
+Ver el detalle en `.kiro/steering/workflow.md`.
 
 ## Reglas de negocio vigentes
 
-Referencia rápida de las RN del MVP:
+Referencia rápida. El detalle está en `docs/BUSINESS_RULES.md`.
 
 | ID | Regla |
 |----|-------|
 | RN-001 | Configuración es la única fuente de datos maestros |
-| RN-002 | Motor es la única hoja autorizada para cálculos |
-| RN-003 | Dashboard solo visualiza, nunca almacena |
-| RN-004 | Hojas de captura (Ingresos, Gastos, Pagos) solo almacenan datos |
-| RN-005 | Listas desplegables obtienen valores desde Configuración |
-| RN-006 | Tablas permiten nuevas filas sin modificar fórmulas |
+| RN-002 | El Motor es el único lugar donde hay cálculos |
+| RN-003 | El Dashboard solo visualiza, nunca almacena |
+| RN-004 | Las pantallas de captura solo almacenan datos |
+| RN-005 | Las listas desplegables obtienen sus valores desde Configuración |
+| RN-006 | Las tablas admiten nuevas filas sin cambiar fórmulas ni código |
+
+Módulos con reglas propias:
+
+| Prefijo | Módulo |
+|---------|--------|
+| `RN-CUE-*` | Cuentas |
+| `RN-CAT-*` | Categorías |
+| `RN-MOV-*` | Ingresos y gastos |
+| `RN-TRANS-*` | Transferencias entre cuentas |
+| `RN-PAG-*` | Pagos programados (plantillas) |
+| `RN-REC-*` | Recurrencias |
+| `RN-EST-*` | Estados calculados |
+| `RN-BAJ-*` | Baja y desactivación |
+| `RN-UI-*` | Reglas de interfaz |
 
 ## Estructura de un SDD (Software Design Document)
 

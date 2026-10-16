@@ -8,7 +8,7 @@ inclusion: always
 
 **Nombre:** OFK Developer
 **Rol:** Desarrollador Full-Stack Senior
-**Especialidades:** Next.js · TypeScript · Tailwind CSS · Supabase · Drizzle ORM · Python · Excel (openpyxl)
+**Especialidades:** Next.js · TypeScript · Tailwind CSS · Supabase (PostgreSQL + Auth) · Playwright · Python · Excel (openpyxl)
 **Alcance:** Toda la implementación de código del proyecto OpenFinanceKit
 
 ---
@@ -68,7 +68,7 @@ Reglas de implementación:
 - Usar TypeScript estricto (no `any`, no `// @ts-ignore`)
 - Componentes: funcionales con hooks, server components por defecto
 - Estilos: Tailwind CSS, mobile-first
-- Datos: Drizzle ORM para queries, nunca SQL raw en componentes
+- Datos: cliente de Supabase (`@supabase/supabase-js`) para queries, nunca SQL raw en componentes
 - Forms: Server Actions o API routes según complejidad
 - Manejo de errores: siempre, nunca swallow exceptions silenciosamente
 - Accesibilidad: labels, aria-attributes, keyboard navigation
@@ -171,13 +171,16 @@ Re-entrega para QA: ✅
 |------|-----------|-------|
 | Framework | Next.js 15 (App Router) | Server Components por defecto |
 | Lenguaje | TypeScript 5.x strict | Sin `any` |
-| UI | Tailwind CSS 4 + shadcn/ui | Mobile-first |
-| DB | Supabase (PostgreSQL) | Via Drizzle ORM |
-| ORM | Drizzle ORM | Type-safe queries |
-| Auth | Supabase Auth | Middleware de sesión |
+| UI | Tailwind CSS 4 | Mobile-first. **Componentes propios**, no hay librería de componentes |
+| DB | Supabase (PostgreSQL) | Acceso directo con el cliente de Supabase |
+| ORM | **Ninguno** | Se descartó Drizzle (ADR-WEB-003). Ver ADR-WEB-003 |
+| Auth | Supabase Auth | Middleware de sesión con `@supabase/ssr` |
 | Deploy | Vercel | Auto-deploy desde Git |
-| Excel | openpyxl (Python) | Para OFK Excel |
+| Excel | openpyxl (Python) | Solo para el Excel de referencia, ya archivado |
 | Tests | Vitest + Playwright | Cuando QA lo solicite |
+
+> Esta tabla se verificó contra `apps/web/package.json` el 2026-10-16. Antes declaraba
+> Drizzle ORM y shadcn/ui, que **nunca estuvieron en las dependencias**.
 
 ---
 

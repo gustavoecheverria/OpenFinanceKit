@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/layout/page-header";
-import { deleteIngreso } from "./actions";
+import { IngresosListClient } from "@/components/ingresos/ingresos-list-client";
 
 export default async function IngresosPage() {
   const supabase = await createClient();
@@ -14,6 +14,19 @@ export default async function IngresosPage() {
     .eq("user_id", user.id)
     .order("fecha", { ascending: false })
     .limit(50);
+
+  const { data: categorias } = await supabase
+    .from("categorias")
+    .select("id, nombre")
+    .eq("user_id", user.id)
+    .eq("tipo", "Ingreso")
+    .order("nombre");
+
+  const { data: cuentas } = await supabase
+    .from("cuentas")
+    .select("id, nombre")
+    .eq("user_id", user.id)
+    .order("nombre");
 
   return (
     <>
@@ -30,44 +43,11 @@ export default async function IngresosPage() {
       />
 
       {ingresos && ingresos.length > 0 ? (
-        <ul className="space-y-2">
-          {ingresos.map((ingreso) => (
-            <li
-              key={ingreso.id}
-              className="flex items-center justify-between px-3 py-3 bg-[var(--muted)] rounded-lg"
-            >
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-[var(--success)]">
-                    +${Number(ingreso.valor).toLocaleString("es", { minimumFractionDigits: 2 })}
-                  </span>
-                  <span className="text-xs text-[var(--muted-foreground)] truncate">
-                    {ingreso.categorias?.nombre}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 mt-0.5">
-                  <span className="text-xs text-[var(--muted-foreground)]">
-                    {ingreso.fecha}
-                  </span>
-                  {ingreso.descripcion && (
-                    <span className="text-xs text-[var(--muted-foreground)] truncate">
-                      · {ingreso.descripcion}
-                    </span>
-                  )}
-                </div>
-              </div>
-              <form action={deleteIngreso.bind(null, ingreso.id)}>
-                <button
-                  type="submit"
-                  className="ml-2 text-[var(--muted-foreground)] hover:text-[var(--destructive)] text-sm"
-                  aria-label="Eliminar ingreso"
-                >
-                  ✕
-                </button>
-              </form>
-            </li>
-          ))}
-        </ul>
+        <IngresosListClient
+          ingresos={ingresos}
+          categorias={categorias || []}
+          cuentas={cuentas || []}
+        />
       ) : (
         <p className="text-sm text-[var(--muted-foreground)]">
           No hay ingresos registrados. Toca &quot;+ Nuevo&quot; para agregar uno.

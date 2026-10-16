@@ -1,198 +1,190 @@
 # OpenFinanceKit
 
 **Documento:** Roadmap
-
-**Versión:** 0.1.0
-
-**Estado:** Draft
-
-**Sprint:** Sprint 1
-
+**Versión:** 0.3.0
+**Estado:** Vigente
 **Autor:** Gustavo Echeverría
-
-**Última actualización:** 2026-08-03
+**Última actualización:** 2026-10-16
 
 ---
 
-
 ## Visión
 
-Construir un Sistema de Gestión Financiera integral e inteligente (OpenFinanceKit) que permita a individuos y pequeñas empresas gestionar sus finanzas de forma centralizada, automatizada y con asistencia de inteligencia artificial. El objetivo a largo plazo es ofrecer una plataforma que integre control de ingresos y gastos, presupuestos, reportes financieros, y recomendaciones inteligentes basadas en el comportamiento del usuario.
+Construir un sistema de gestión financiera modular que sirva a una persona para entender
+de un vistazo de dónde viene su dinero y a qué se va. La arquitectura permite que el
+mismo núcleo (el Motor y sus reglas) viva hoy en una web y mañana en un móvil, una API
+o un Excel, sin reescribir la lógica.
 
-### Objetivos Estratégicos
+---
 
-- Centralizar la gestión financiera en una sola plataforma
-- Automatizar tareas repetitivas (categorización, alertas, reportes)
-- Proveer insights financieros mediante inteligencia artificial
-- Mantener una arquitectura escalable, modular y bien documentada
-- Entregar valor incremental en cada sprint
+## Cómo se numera el tiempo
+
+La numeración de sprints es la de los SDD en `.kiro/specs/`. Es la única que importa.
+
+> La hoja de ruta original de 7 sprints (agosto 2026) estaba pensada para construir el
+> MVP en Excel. Se arquivó abajo en [Plan original](#plan-original-archivado) porque su
+> secuencia ya no describe el orden real en que se construyó el producto.
 
 ---
 
 ## Sprints
 
-### Sprint 1 — Arquitectura y Estructura del Proyecto
+### Sprint 1 — Fundamentos · agosto 2026 · ✅ Completado
 
-**Duración**: 2 semanas  
-**Fase**: Arquitectura  
-**Estado**: 🟢 En progreso
+| Entregable | Estado |
+|------------|--------|
+| Estructura del repositorio y carpetas | ✅ |
+| Documentación base: arquitectura, reglas de negocio, diccionario de datos, ADRs, roadmap | ✅ |
+| Plantillas de GitHub: issues, PR, historias | ✅ |
+| Backlog inicial y tablero de GitHub Projects | ✅ |
+| `.kiro/`: agentes especializados (architect, developer, qa, engineer) | ✅ |
+| **OFK Excel** — el archivo original de diseño | ✅ (hoy referencia histórica) |
 
-**Entregables**:
-- Estructura de directorios del proyecto (`openfinancekit/`)
-- Documentación base: README, CHANGELOG, ARCHITECTURE, BUSINESS_RULES, DATA_DICTIONARY, DECISIONS, ROADMAP
-- Directorios reservados: `product/`, `qa/`, `backlog/`, `diagrams/`
-- Configuración de GitHub: templates de issues, template de PR, directorio de workflows
-- Definición del proceso de contribución
-
-**Herramientas**: GitHub, Markdown, draw.io
-
----
-
-### Sprint 2 — Decisiones Tecnológicas y Setup de Desarrollo
-
-**Duración**: 2 semanas  
-**Fase**: Arquitectura / Desarrollo  
-**Estado**: ⬜ Planificado
-
-**Entregables**:
-- ADR: Selección de framework frontend (React, Vue, etc.)
-- ADR: Selección de framework backend (Node.js, Python, etc.)
-- ADR: Selección de base de datos (PostgreSQL, MongoDB, etc.)
-- ADR: Estrategia de autenticación
-- Configuración inicial del monorepo o estructura de código
-- Setup de linting, formateo y pre-commit hooks
-- Primer workflow de GitHub Actions (CI básico)
-- Definición de estándares de código y convenciones
-
-**Herramientas**: GitHub, GitHub Actions, Markdown
+**Resultado:** `product/excel/OpenFinanceKit.xlsx`. Se archivó como referencia cuando
+la web lo superó. Ya no se desarrolla.
 
 ---
 
-### Sprint 3 — Modelo de Datos y Backend Base
+### Sprint 2 — OFK Web MVP · agosto–septiembre 2026 · ✅ Completado
 
-**Duración**: 2 semanas  
-**Fase**: Desarrollo  
-**Estado**: ⬜ Planificado
+| Entregable | Estado |
+|------------|--------|
+| Next.js 15 + Supabase + Tailwind, estructura de la app | ✅ |
+| Autenticación: email magic link y Google OAuth | ✅ |
+| Dashboard con 6 indicadores y selector de mes | ✅ |
+| CRUD de ingresos y gastos | ✅ |
+| Configuración de categorías y cuentas | ✅ |
+| PWA instalable | ✅ |
+| Ambientes separados (producción en `main`, UAT en `develop`) | ✅ |
+| Deploy en Vercel | ✅ |
+| Tests E2E base con Playwright | ✅ |
+| Cierre de gaps de seguridad G1–G5 | ✅ |
 
-**Entregables**:
-- Implementación del modelo de datos inicial (usuarios, cuentas, transacciones)
-- API REST base con endpoints CRUD para entidades principales
-- Configuración de base de datos y migraciones
-- Seed de datos de prueba
-- Tests unitarios para la capa de datos
-- Documentación de API (OpenAPI/Swagger)
-
-**Herramientas**: GitHub, GitHub Actions, framework backend seleccionado
-
----
-
-### Sprint 4 — Autenticación y Frontend Base
-
-**Duración**: 2 semanas  
-**Fase**: Desarrollo  
-**Estado**: ⬜ Planificado
-
-**Entregables**:
-- Sistema de autenticación (registro, login, sesiones)
-- Estructura base del frontend (layout, navegación, rutas)
-- Pantalla de login y registro
-- Dashboard básico con datos placeholder
-- Integración frontend-backend (cliente HTTP, manejo de tokens)
-- Tests de integración para autenticación
-
-**Herramientas**: GitHub, GitHub Actions, Figma Free (mockups)
+**Resultado:** **v0.2.0, en producción desde el 2026-09-02.** Sigue siendo la versión
+estable.
 
 ---
 
-### Sprint 5 — QA, Testing y DevOps
+### Sprint 3 — Pagos sin asignar · cancelado
 
-**Duración**: 2 semanas  
-**Fase**: QA / DevOps  
-**Estado**: ⬜ Planificado
+**❌ CANCELADO.** El módulo iba a resolver un descuadre: la tabla `pagos` no tenía
+`cuenta_id`, y eso hacía que la suma de saldos por cuenta no cuadrara con el saldo global.
 
-**Entregables**:
-- Estrategia de testing documentada (unitarios, integración, e2e)
-- Configuración de framework de testing e2e
-- Pipeline de CI/CD completo (build, test, deploy a staging)
-- Configuración de entorno de staging
-- Plan de pruebas para funcionalidades existentes
-- Primeros casos de prueba ejecutados y documentados
-- Métricas de cobertura de código
-
-**Herramientas**: GitHub Actions, Notion (documentación QA)
+Cancelado porque la tabla `pagos` fue eliminada por completo en la migración `008`
+(dentro de v0.3.0). El problema que este sprint iba a resolver ya no existe.
 
 ---
 
-### Sprint 6 — Funcionalidades Financieras Core
+### Sprint 4 — Pagos programados y transferencias · octubre 2026 · ✅ Completado, sin liberar
 
-**Duración**: 2 semanas  
-**Fase**: Desarrollo  
-**Estado**: ⬜ Planificado
+| Entregable | Estado |
+|------------|--------|
+| Motor: cálculo de fechas de vencimiento y estados | ✅ |
+| Tabla `pagos_programados` con recurrencia y cuenta obligatoria | ✅ |
+| Estado calculado, no almacenado (sin jobs programados) | ✅ |
+| Categoría elegida por el usuario en cada pago programado | ✅ |
+| Desactivar ≠ eliminar | ✅ |
+| Tabla `transferencias` entre cuentas | ✅ |
+| "Efectivo" como cuenta real con saldo propio | ✅ |
+| Eliminación del módulo de pagos únicos | ✅ |
+| Saldos por cuenta y detalle de cuenta | ✅ |
+| Edición de ingresos y gastos | ✅ |
+| Filtros de gastos | ✅ |
+| Iconos PNG del manifiesto PWA | ✅ |
+| 64 tests unitarios + 22 tests E2E nuevos | ✅ |
 
-**Entregables**:
-- CRUD completo de transacciones (ingresos y gastos)
-- Categorización de transacciones
-- Vista de balance y resumen financiero
-- Filtros y búsqueda de transacciones
-- Validaciones de reglas de negocio financieras
-- Tests unitarios y de integración
+**Resultado:** v0.3.0, **pendiente de release**. 31 commits en `develop` sin llegar a
+`main`.
 
-**Herramientas**: GitHub, GitHub Actions
-
----
-
-### Sprint 7 — Automatización e Inteligencia
-
-**Duración**: 2 semanas
-**Fase**: Automatización
-**Estado**: ⬜ Planificado
-
-> **Nota:** En este sprint se creará la carpeta `automation/` en el repositorio. No existe antes porque no hay contenido que versionar hasta esta fase.
-
-**Entregables**:
-- Categorización automática de transacciones con IA
-- Alertas y notificaciones configurables
-- Reportes financieros automáticos (mensual, semanal)
-- Integración inicial con n8n para flujos automatizados
-- Dashboard con gráficas y métricas en tiempo real
-
-**Herramientas**: GitHub Actions, n8n, servicios de IA
+**SDD:** `.kiro/specs/feature-pagos-programados.md` (4 criterios de aceptación abiertos,
+ver `PROJECT_STATUS.md`)
 
 ---
 
-## Dependencias
+### Sprint 5 — Liberar y cerrar · pendiente · 🟡 Es lo siguiente
 
-### Mapa de Dependencias entre Sprints
+Lo mínimo para que el proyecto deje de acumular trabajo validado pero no publicado.
+
+| Entregable | Prioridad |
+|------------|--------|
+| Merge `develop → main` y tag `v0.3.0` | 🔴 |
+| Cerrar los 4 criterios de aceptación abiertos | 🟡 |
+| Pipeline de CI: lint + unitarios antes de cada merge | 🟡 |
+| Reporte de QA versionado con matriz criterio ↔ test | 🟡 |
+
+> **Sobre CI:** Sprint 5 del plan original lo tenía como entregable y nunca se hizo.
+> `.github/workflows/` sigue vacío. Hoy nadie corre la suite automáticamente antes de
+> mergear. Es la brecha de calidad más grande que tiene el proyecto.
+
+---
+
+### Sprints futuros — sin comprometer · ⚪ Backlog
+
+Nada de esto está planificado ni fechado. Sale del backlog de GitHub.
+
+| Tema | Notas |
+|------|-------|
+| Exportar datos | CSV, PDF |
+| Reportes básicos | Mensual, por categoría |
+| Múltiples usuarios | Compartir con familia. El RLS ya lo soporta; falta la UI |
+| Importación desde el Excel de referencia | El Excel archivado podría servir de plantilla |
+| ONV / modo oscuro | |
+| Notificaciones de vencimiento | Push o email. Hoy solo hay alertas dentro de la app |
+
+---
+
+## Ecosistema OFK
 
 ```
-Sprint 1 ──→ Sprint 2 ──→ Sprint 3 ──→ Sprint 4
-                │                           │
-                └──────────→ Sprint 5 ──────┘
-                                            │
-                                            ▼
-                                       Sprint 6 ──→ Sprint 7
+OpenFinanceKit
+├── OFK Excel        ← Referencia histórica (product/excel/)
+├── OFK Web          ← Activo. Next.js 15 + Supabase, app PWA
+├── OFK Mobile       ← Futuro
+├── OFK API          ← Futuro
+├── OFK Power BI     ← Futuro
+├── OFK AI Assistant ← Futuro
+├── OFK Automation   ← Futuro (n8n)
+└── OFK Empresa      ← Visión no implementada. Ver el anexo de BUSINESS_RULES.md
 ```
 
-### Detalle de Dependencias
+---
 
-| Sprint | Depende de | Razón |
-|--------|-----------|-------|
-| Sprint 2 | Sprint 1 | Necesita la estructura de documentación y repositorio establecida |
-| Sprint 3 | Sprint 2 | Requiere decisiones tecnológicas tomadas (framework, BD) |
-| Sprint 4 | Sprint 3 | Necesita el backend y modelo de datos implementados |
-| Sprint 5 | Sprint 2, Sprint 4 | Requiere código existente para probar y pipeline base |
-| Sprint 6 | Sprint 4 | Necesita autenticación y frontend base funcional |
-| Sprint 7 | Sprint 6 | Requiere funcionalidades financieras core implementadas |
+## Plan original (archivado)
 
-### Dependencias Externas
+Hoja de ruta de 7 sprints del 2026-08-03, diseñada para construir el MVP **en Excel**.
+Se conserva como registro histórico. **No describe el orden real en que se construyó
+el producto**, y varios entregables (CI, GitHub Actions) nunca se hicieron.
 
-| Dependencia | Sprints afectados | Descripción |
-|-------------|-------------------|-------------|
-| GitHub | Todos | Hosting de repositorio y colaboración |
-| GitHub Projects | Sprint 1+ | Gestión de backlog y sprints |
-| GitHub Issues | Sprint 1+ | Tracking de tareas y bugs |
-| GitHub Actions | Sprint 2+ | CI/CD y automatización |
-| Figma Free | Sprint 4+ | Diseño de interfaces |
-| draw.io | Sprint 1+ | Diagramas de arquitectura y flujos |
-| Notion | Sprint 5+ | Documentación de QA |
-| n8n | Sprint 7 | Automatización de flujos |
+| Sprint | Tema | Qué pasó en realidad |
+|--------|------|---------------------|
+| 1 | Arquitectura y estructura | ✅ Hecho |
+| 2 | Decisiones técnicas y setup | ⚠️ Parcial. Sin GitHub Actions |
+| 3 | Modelo de datos y backend base | 🔄 Reformulado. No hubo API REST; el acceso es directo a Supabase |
+| 4 | Autenticación y frontend base | ✅ Hecho, pero junto con el MVP completo |
+| 5 | QA, testing y DevOps | ⚠️ Parcial. Hay tests, no hay CI |
+| 6 | Funcionalidades financieras core | ✅ Hecho |
+| 7 | Automatización e inteligencia | ⚪ No iniciado |
+
+---
+
+## Riesgos conocidos
+
+| Riesgo | Impacto | Estado |
+|--------|---------|--------|
+| `develop` muy adelantado de `main` | Acumulación de trabajo validado y no publicado | 🔴 31 commits |
+| Sin CI | Un merge puede romper producción sin que nadie lo note | 🔴 |
+| Documentación desalineada del código | Un colaborador nuevo lee cosas falsas | 🟡 Mitigado el 2026-10-16 con el checklist de mantenimiento |
+| Release sin tag | `v0.2.0` existe pero no hay tag de git que lo señale | 🟡 Se corrige al liberar v0.3.0 |
+| Sin cobertura de código | No se sabe qué partes están realmente testeadas | 🟡 |
+| Un solo desarrollador | Sin revisión de código entre personas | 🟡 |
+
+---
+
+## Documentos relacionados
+
+| Documento | Para qué |
+|-----------|----------|
+| [Estado del proyecto](../PROJECT_STATUS.md) | Qué hay hoy, en qué ambiente, qué falta |
+| [Changelog](../changelog/CHANGELOG.md) | Qué cambió en cada versión |
+| [Reglas de negocio](../BUSINESS_RULES.md) | Las reglas del dominio |
+| [Diccionario de datos](../DATA_DICTIONARY.md) | Cada tabla y cada campo |
