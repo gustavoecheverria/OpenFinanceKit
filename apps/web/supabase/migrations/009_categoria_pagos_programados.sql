@@ -1,5 +1,5 @@
 -- OpenFinanceKit — Migración 009
--- Versión: 0.4.0
+-- Release: v0.3.0 (pendiente)
 -- Fecha: 2026-10-08
 -- Descripción: Agrega categoria_id a pagos_programados y elimina el
 --              concepto de "borrar": los pagos programados se desactivan.
@@ -9,7 +9,7 @@
 -- categoría del tipo (la de id más bajo). Para un usuario con "Gastos Hormiga"
 -- creado temprano, ESO recibía todos sus pagos recurrentes: un arriendo de
 -- $1.350.000 quedaba catalogado como "Gastos Hormiga". El usuario no tenía
--- forma de干预lo.
+-- forma de intervenirlo.
 --
 -- La solución: la categoría se elige al CREAR el pago programado y se guarda.
 -- Si el usuario no tiene ninguna categoría del tipo, el formulario obliga a

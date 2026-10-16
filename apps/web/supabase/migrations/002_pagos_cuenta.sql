@@ -1,8 +1,19 @@
 -- OpenFinanceKit — Migración 002
--- Versión: 0.3.0
--- Fecha: 2026-08-28
--- Descripción: Agrega cuenta_id a la tabla pagos para que el Motor
---              pueda descontar los pagos pagados del saldo de cada cuenta.
+-- Release: NUNCA APLICADA — superada por la migración 008
+-- Fecha de escritura: 2026-08-28
+-- Descripción: Agregaba cuenta_id a la tabla `pagos` para que el Motor
+--              descontara los pagos pagados del saldo de cada cuenta.
+--
+-- ⚠️ ESTADO: ESTA MIGRACIÓN NUNCA SE EJECUTÓ EN LA BASE REAL.
+-- Ver la migración 008, que documenta el problema: el código insertaba
+-- `pagos.cuenta_id` pero la columna no existía, así que el formulario de pagos
+-- fallaba siempre con "No se pudo guardar el pago. Intenta de nuevo."
+--
+-- Después, la tabla `pagos` completa fue eliminada por la migración 008, con lo
+-- que este archivo quedó sin objeto.
+--
+-- ESTE ARCHIVO SE CONSERVA SOLO POR TRAZABILIDAD. No lo apliques.
+-- Si necesitas una base limpia, parte de 001 y sigue con 003.
 
 -- ── Agregar columna cuenta_id (nullable para no romper registros existentes) ──
 ALTER TABLE pagos

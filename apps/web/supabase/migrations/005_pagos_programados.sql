@@ -1,5 +1,5 @@
 -- OpenFinanceKit — Migración 005
--- Versión: 0.4.0
+-- Release: v0.3.0 (pendiente)
 -- Fecha: 2026-10-06
 -- Descripción: Crea la tabla pagos_programados para plantillas de pagos recurrentes.
 --              SDD: .kiro/specs/feature-pagos-programados.md

@@ -1,4 +1,8 @@
--- Quita 'Diario' de las recurrencias permitidas en pagos_programados.
+-- OpenFinanceKit — Migración 007
+-- Release: v0.3.0 (pendiente)
+-- Fecha: 2026-10-06
+-- Descripción: Quita 'Diario' de las recurrencias permitidas en
+--              pagos_programados.
 --
 -- Razón: con un ciclo de 1 día, la ventana de alerta de 5 días no cabe dentro
 -- del ciclo. El pago caería en alerta de forma permanente, incluso recién
