@@ -33,3 +33,14 @@ secrets/
 # Supabase CLI (contiene pooler-url con la connection string del proyecto)
 **/supabase/.temp/
 
+# ── Artefactos de pruebas (se regeneran en cada run) ────────────────────────
+# El CÓDIGO de las pruebas sí se versiona, vive en apps/web/:
+#   apps/web/e2e/*.spec.ts        (Playwright)
+#   apps/web/src/**/*.test.ts    (Vitest)
+# Lo de abajo es solo la evidencia que Playwright produce al correr.
+qa/evidence/e2e/
+qa/reports/
+
+# Excepción: qa/evidence/steps/ sí se versiona. Son screenshots numerados y
+# nombrados a mano que documentan el flujo paso a paso. No son automáticos.
+
