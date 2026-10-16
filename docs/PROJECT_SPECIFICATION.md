@@ -1,16 +1,36 @@
 # OpenFinanceKit
 
-**Documento:** Project Specification — MVP
-
+**Documento:** Project Specification — MVP Excel (histórico)
 **Versión:** 0.1.0
-
-**Estado:** Sprint 1 — MVP
-
+**Estado:** **Superado** — documento histórico, no vigente
 **Sprint:** Sprint 1
-
 **Autor:** Gustavo Echeverría
-
 **Última actualización:** 2026-08-03
+
+---
+
+> ## ⚠️ Este documento está obsoleto
+>
+> Es la especificación del MVP **en Excel** de agosto de 2026. Describe hojas
+> (`tblIngresos`, `tblPagos`), un archivo `.xlsx` y una sección titled *"Instrucciones para
+> el Agente IA"* que dice "Construye el archivo `OpenFinanceKit.xlsx`".
+>
+> **Nada de eso describe OFK hoy.** El producto es una web. Las hojas se reemplazaron por
+> tablas de PostgreSQL, las referencias estructuradas por queries, y las instrucciones
+> para el agente por SDDs en `.kiro/specs/`.
+>
+> **Se conserva solo como registro histórico** del diseño original y del origen del
+> proyecto. No lo tomes como referencia para implementar nada.
+>
+> ### Para el estado real, ver
+>
+> | Quiero saber… | Ver |
+> |---------------|-----|
+> | Qué hay hoy | [`PROJECT_STATUS.md`](PROJECT_STATUS.md) |
+> | Qué cambió en cada versión | [`changelog/CHANGELOG.md`](changelog/CHANGELOG.md) |
+> | Cómo está la base de datos | [`DATA_DICTIONARY.md`](DATA_DICTIONARY.md) |
+> | Las reglas del dominio | [`BUSINESS_RULES.md`](BUSINESS_RULES.md) |
+> | Cómo se diseña una feature | `.kiro/specs/` |
 
 ---
 

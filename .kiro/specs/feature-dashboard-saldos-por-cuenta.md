@@ -14,9 +14,17 @@
 
 **Autor:** Gustavo Echeverría
 
-**Última actualización:** 2026-10-05 (confirmado en UAT)
+**Última actualización:** 2026-10-16
 
 ---
+
+> **Nota de cierre (2026-10-16).** Los checkboxes se reconciliaron contra el código.
+> Hasta esa fecha el documento decía "Completado" con 19 de 23 ítems sin marcar. Todos
+> se verificaron en el repositorio.
+>
+> ⚠️ **Este trabajo sigue solo en UAT.** Se mergeó a `develop` el 2026-10-05 y todavía
+> **no está en producción**. `calcularSaldosPorCuenta()` se extendió después con
+> transferencias (v0.3.0).
 
 ## 1. Resumen
 
@@ -36,11 +44,11 @@ Sin esta feature, el usuario tiene que ir a Configuración para ver los saldos i
 
 ## 3. Objetivos
 
-- [ ] Extender el Motor con una nueva función `calcularSaldosPorCuenta()` que devuelva el saldo actual de cada cuenta
-- [ ] Mostrar en el Dashboard una sección "Tus cuentas" debajo de los 6 indicadores globales
-- [ ] Cada cuenta se muestra con: nombre, saldo actual y un indicador visual de si está positiva, baja o crítica
-- [ ] La sección respeta el estilo visual existente (Tailwind CSS, CSS variables, mobile-first)
-- [ ] Si no hay cuentas registradas, mostrar un mensaje de guía al usuario
+- [x] Extender el Motor con una nueva función `calcularSaldosPorCuenta()` que devuelva el saldo actual de cada cuenta
+- [x] Mostrar en el Dashboard una sección "Tus cuentas" debajo de los 6 indicadores globales
+- [x] Cada cuenta se muestra con: nombre, saldo actual y un indicador visual de si está positiva, baja o crítica
+- [x] La sección respeta el estilo visual existente (Tailwind CSS, CSS variables, mobile-first)
+- [x] Si no hay cuentas registradas, mostrar un mensaje de guía al usuario
 
 ---
 
@@ -198,26 +206,26 @@ Variantes de color del saldo según umbral relativo al saldo inicial:
 
 ## 6. Criterios de aceptación
 
-- [ ] **AC-001:** La sección "Tus cuentas" aparece en el Dashboard debajo de los 6 indicadores globales
-- [ ] **AC-002:** Cada cuenta muestra nombre y saldo actual calculado (no solo el saldo inicial)
-- [ ] **AC-003:** El saldo por cuenta es consistente con el saldo global: la suma de `saldoActual` de todas las cuentas debe ser igual a `motor.saldoActual`
-- [ ] **AC-004:** El color del saldo refleja el estado: verde cuando ≥ 50% del saldo inicial, amarillo cuando entre 0% y 49%, rojo cuando es negativo
-- [ ] **AC-005:** Si el usuario no tiene cuentas registradas, se muestra un mensaje de guía con link a `/config`
-- [ ] **AC-006:** La función `calcularSaldosPorCuenta()` tiene tests unitarios en `calculations.test.ts`
-- [ ] **AC-007:** La sección es mobile-first y no rompe el layout existente (grid de 2 columnas de los indicadores)
-- [ ] **AC-008:** No hay errores de TypeScript (`npx tsc --noEmit` pasa)
-- [ ] **AC-009:** El saldo del Motor no se altera — solo se agrega información nueva, los 6 indicadores globales siguen funcionando igual
+- [x] **AC-001:** La sección "Tus cuentas" aparece en el Dashboard debajo de los 6 indicadores globales
+- [x] **AC-002:** Cada cuenta muestra nombre y saldo actual calculado (no solo el saldo inicial)
+- [x] **AC-003:** El saldo por cuenta es consistente con el saldo global: la suma de `saldoActual` de todas las cuentas debe ser igual a `motor.saldoActual`
+- [x] **AC-004:** El color del saldo refleja el estado: verde cuando ≥ 50% del saldo inicial, amarillo cuando entre 0% y 49%, rojo cuando es negativo
+- [x] **AC-005:** Si el usuario no tiene cuentas registradas, se muestra un mensaje de guía con link a `/config`
+- [x] **AC-006:** La función `calcularSaldosPorCuenta()` tiene tests unitarios en `calculations.test.ts`
+- [x] **AC-007:** La sección es mobile-first y no rompe el layout existente (grid de 2 columnas de los indicadores)
+- [x] **AC-008:** No hay errores de TypeScript (`npx tsc --noEmit` pasa)
+- [x] **AC-009:** El saldo del Motor no se altera — solo se agrega información nueva, los 6 indicadores globales siguen funcionando igual
 
 ---
 
 ## 7. Plan de tareas
 
 - [x] TAREA-001: Explorar código actual (dashboard, Motor, modelo de datos)
-- [ ] TAREA-002: Agregar tipos `SaldoCuenta`, `SaldosPorCuentaResult`, `DatosPorCuenta` en `types.ts`
-- [ ] TAREA-003: Implementar función pura `calcularSaldosPorCuenta()` en `calculations.ts` + tests en `calculations.test.ts`
-- [ ] TAREA-004: Implementar función I/O `obtenerSaldosPorCuenta()` en `index.ts` y exportarla
-- [ ] TAREA-005: Crear componente `src/components/dashboard/account-balance-list.tsx`
-- [ ] TAREA-006: Modificar `dashboard/page.tsx` para llamar a `obtenerSaldosPorCuenta()` y renderizar `AccountBalanceList`
+- [x] TAREA-002: Agregar tipos `SaldoCuenta`, `SaldosPorCuentaResult`, `DatosPorCuenta` en `types.ts`
+- [x] TAREA-003: Implementar función pura `calcularSaldosPorCuenta()` en `calculations.ts` + tests en `calculations.test.ts`
+- [x] TAREA-004: Implementar función I/O `obtenerSaldosPorCuenta()` en `index.ts` y exportarla
+- [x] TAREA-005: Crear componente `src/components/dashboard/account-balance-list.tsx`
+- [x] TAREA-006: Modificar `dashboard/page.tsx` para llamar a `obtenerSaldosPorCuenta()` y renderizar `AccountBalanceList`
 - [x] TAREA-007: QA — validar criterios de aceptación AC-001 a AC-009
 - [x] TAREA-008: Architect — revisar arquitectura y aprobar
 - [x] TAREA-009: Commit y merge a develop — completado 2026-10-05 19:00

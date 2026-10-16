@@ -1,316 +1,280 @@
 # OpenFinanceKit
 
 **Documento:** Diccionario de Datos
-
-**Versión:** 0.1.0
-
-**Estado:** Draft
-
-**Sprint:** Sprint 1
-
+**Versión:** 0.3.0
+**Estado:** Vigente
+**Release descrito:** v0.3.0 (pendiente de publicar)
 **Autor:** Gustavo Echeverría
-
-**Última actualización:** 2026-08-03
-
----
-
-
-## Entidades
-
-### Resumen de Entidades
-
-| # | Entidad | Descripción | Esquema |
-|---|---------|-------------|---------|
-| 1 | Cuenta Contable | Clasificación jerárquica del plan de cuentas | `accounting` |
-| 2 | Asiento Contable | Registro de movimientos bajo partida doble | `accounting` |
-| 3 | Línea de Asiento | Detalle individual (débito o crédito) de un asiento | `accounting` |
-| 4 | Factura | Documento comercial de compra o venta | `billing` |
-| 5 | Línea de Factura | Detalle de productos/servicios en una factura | `billing` |
-| 6 | Presupuesto | Plan de asignación de recursos financieros | `budget` |
-| 7 | Transacción | Movimiento individual de fondos | `treasury` |
-| 8 | Período Contable | Intervalo temporal para agrupación de operaciones | `accounting` |
-| 9 | Centro de Costo | Unidad organizacional para asignación de gastos | `accounting` |
-| 10 | Tercero | Cliente, proveedor o entidad externa relacionada | `common` |
+**Última actualización:** 2026-10-16
 
 ---
 
-## Atributos
-
-### 1. Cuenta Contable (`cuenta_contable`)
-
-| Atributo | Tipo | Descripción | Nullable | Restricciones |
-|----------|------|-------------|----------|---------------|
-| `id` | UUID | Identificador único interno | No | PK |
-| `codigo` | VARCHAR(20) | Código jerárquico contable (ej: 1.1.01.001) | No | UNIQUE, formato validado |
-| `nombre` | VARCHAR(150) | Nombre descriptivo de la cuenta | No | — |
-| `tipo` | ENUM | Tipo de cuenta: ACTIVO, PASIVO, PATRIMONIO, INGRESO, GASTO | No | Valores definidos |
-| `naturaleza` | ENUM | Naturaleza del saldo: DEUDORA, ACREEDORA | No | Derivada del tipo |
-| `nivel` | INTEGER | Nivel jerárquico (1=grupo, 2=subgrupo, etc.) | No | >= 1 |
-| `cuenta_padre_id` | UUID | Referencia a la cuenta padre en la jerarquía | Sí | FK → cuenta_contable.id |
-| `activa` | BOOLEAN | Indica si la cuenta acepta movimientos | No | DEFAULT true |
-| `descripcion` | TEXT | Descripción detallada del uso de la cuenta | Sí | — |
-| `created_at` | TIMESTAMP | Fecha de creación del registro | No | DEFAULT NOW() |
-| `updated_at` | TIMESTAMP | Fecha de última actualización | No | DEFAULT NOW() |
-
-### 2. Asiento Contable (`asiento_contable`)
-
-| Atributo | Tipo | Descripción | Nullable | Restricciones |
-|----------|------|-------------|----------|---------------|
-| `id` | UUID | Identificador único interno | No | PK |
-| `numero` | INTEGER | Número secuencial dentro del período | No | UNIQUE por período |
-| `fecha` | DATE | Fecha del asiento contable | No | Dentro del período activo |
-| `descripcion` | VARCHAR(500) | Descripción o glosa del asiento | No | — |
-| `periodo_id` | UUID | Período contable al que pertenece | No | FK → periodo_contable.id |
-| `estado` | ENUM | Estado: BORRADOR, VALIDADO, ANULADO | No | DEFAULT 'BORRADOR' |
-| `tipo` | ENUM | Tipo: APERTURA, OPERACION, AJUSTE, CIERRE | No | — |
-| `referencia_origen` | VARCHAR(100) | Referencia al documento origen (factura, etc.) | Sí | — |
-| `created_by` | UUID | Usuario que creó el asiento | No | FK → usuario.id |
-| `created_at` | TIMESTAMP | Fecha de creación del registro | No | DEFAULT NOW() |
-| `updated_at` | TIMESTAMP | Fecha de última actualización | No | DEFAULT NOW() |
-
-### 3. Línea de Asiento (`linea_asiento`)
-
-| Atributo | Tipo | Descripción | Nullable | Restricciones |
-|----------|------|-------------|----------|---------------|
-| `id` | UUID | Identificador único interno | No | PK |
-| `asiento_id` | UUID | Asiento contable al que pertenece | No | FK → asiento_contable.id |
-| `cuenta_id` | UUID | Cuenta contable afectada | No | FK → cuenta_contable.id |
-| `debe` | DECIMAL(18,2) | Monto en el debe (débito) | No | >= 0, DEFAULT 0 |
-| `haber` | DECIMAL(18,2) | Monto en el haber (crédito) | No | >= 0, DEFAULT 0 |
-| `descripcion` | VARCHAR(300) | Descripción de la línea | Sí | — |
-| `centro_costo_id` | UUID | Centro de costo asociado | Sí | FK → centro_costo.id |
-| `tercero_id` | UUID | Tercero relacionado | Sí | FK → tercero.id |
-| `created_at` | TIMESTAMP | Fecha de creación del registro | No | DEFAULT NOW() |
-
-### 4. Factura (`factura`)
-
-| Atributo | Tipo | Descripción | Nullable | Restricciones |
-|----------|------|-------------|----------|---------------|
-| `id` | UUID | Identificador único interno | No | PK |
-| `numero` | VARCHAR(30) | Número de factura | No | UNIQUE por serie |
-| `serie` | VARCHAR(10) | Serie de la factura | No | — |
-| `tipo` | ENUM | Tipo: EMITIDA, RECIBIDA | No | — |
-| `fecha_emision` | DATE | Fecha de emisión de la factura | No | — |
-| `fecha_vencimiento` | DATE | Fecha de vencimiento del pago | No | >= fecha_emision |
-| `tercero_id` | UUID | Cliente o proveedor de la factura | No | FK → tercero.id |
-| `subtotal` | DECIMAL(18,2) | Monto antes de impuestos | No | >= 0 |
-| `impuestos` | DECIMAL(18,2) | Monto total de impuestos | No | >= 0 |
-| `total` | DECIMAL(18,2) | Monto total de la factura | No | = subtotal + impuestos |
-| `moneda` | VARCHAR(3) | Código de moneda ISO 4217 | No | DEFAULT 'USD' |
-| `estado` | ENUM | Estado: BORRADOR, EMITIDA, PAGADA, ANULADA, VENCIDA | No | DEFAULT 'BORRADOR' |
-| `notas` | TEXT | Notas u observaciones | Sí | — |
-| `created_at` | TIMESTAMP | Fecha de creación del registro | No | DEFAULT NOW() |
-| `updated_at` | TIMESTAMP | Fecha de última actualización | No | DEFAULT NOW() |
-
-### 5. Línea de Factura (`linea_factura`)
-
-| Atributo | Tipo | Descripción | Nullable | Restricciones |
-|----------|------|-------------|----------|---------------|
-| `id` | UUID | Identificador único interno | No | PK |
-| `factura_id` | UUID | Factura a la que pertenece | No | FK → factura.id |
-| `descripcion` | VARCHAR(300) | Descripción del producto/servicio | No | — |
-| `cantidad` | DECIMAL(12,4) | Cantidad de unidades | No | > 0 |
-| `precio_unitario` | DECIMAL(18,4) | Precio por unidad | No | >= 0 |
-| `descuento` | DECIMAL(5,2) | Porcentaje de descuento | No | >= 0, <= 100 |
-| `impuesto_porcentaje` | DECIMAL(5,2) | Porcentaje de impuesto aplicable | No | >= 0 |
-| `subtotal` | DECIMAL(18,2) | Monto de la línea (cantidad × precio - descuento) | No | >= 0 |
-| `cuenta_id` | UUID | Cuenta contable asociada | Sí | FK → cuenta_contable.id |
-| `centro_costo_id` | UUID | Centro de costo asociado | Sí | FK → centro_costo.id |
-| `created_at` | TIMESTAMP | Fecha de creación del registro | No | DEFAULT NOW() |
-
-### 6. Presupuesto (`presupuesto`)
-
-| Atributo | Tipo | Descripción | Nullable | Restricciones |
-|----------|------|-------------|----------|---------------|
-| `id` | UUID | Identificador único interno | No | PK |
-| `nombre` | VARCHAR(200) | Nombre del presupuesto | No | — |
-| `periodo_id` | UUID | Período fiscal del presupuesto | No | FK → periodo_contable.id |
-| `centro_costo_id` | UUID | Centro de costo principal | No | FK → centro_costo.id |
-| `monto_total` | DECIMAL(18,2) | Monto total asignado | No | > 0 |
-| `monto_ejecutado` | DECIMAL(18,2) | Monto ejecutado acumulado | No | >= 0, DEFAULT 0 |
-| `monto_comprometido` | DECIMAL(18,2) | Monto comprometido pendiente de ejecución | No | >= 0, DEFAULT 0 |
-| `estado` | ENUM | Estado: BORRADOR, APROBADO, EN_EJECUCION, CERRADO | No | DEFAULT 'BORRADOR' |
-| `descripcion` | TEXT | Descripción del presupuesto | Sí | — |
-| `created_at` | TIMESTAMP | Fecha de creación del registro | No | DEFAULT NOW() |
-| `updated_at` | TIMESTAMP | Fecha de última actualización | No | DEFAULT NOW() |
-
-### 7. Transacción (`transaccion`)
-
-| Atributo | Tipo | Descripción | Nullable | Restricciones |
-|----------|------|-------------|----------|---------------|
-| `id` | UUID | Identificador único (UUID v4) | No | PK |
-| `fecha` | TIMESTAMP | Fecha y hora de la transacción | No | — |
-| `tipo` | ENUM | Tipo: INGRESO, EGRESO, TRANSFERENCIA | No | — |
-| `monto` | DECIMAL(18,2) | Monto de la transacción | No | > 0 |
-| `moneda` | VARCHAR(3) | Código de moneda ISO 4217 | No | DEFAULT 'USD' |
-| `descripcion` | VARCHAR(500) | Descripción de la transacción | No | — |
-| `cuenta_origen_id` | UUID | Cuenta bancaria de origen | Sí | FK → cuenta_bancaria.id |
-| `cuenta_destino_id` | UUID | Cuenta bancaria de destino | Sí | FK → cuenta_bancaria.id |
-| `periodo_id` | UUID | Período contable al que pertenece | No | FK → periodo_contable.id |
-| `tercero_id` | UUID | Tercero relacionado | Sí | FK → tercero.id |
-| `estado` | ENUM | Estado: PENDIENTE, CONCILIADA, ANULADA | No | DEFAULT 'PENDIENTE' |
-| `referencia` | VARCHAR(100) | Referencia externa (número de cheque, ref. bancaria) | Sí | — |
-| `created_at` | TIMESTAMP | Fecha de creación del registro | No | DEFAULT NOW() |
-| `updated_at` | TIMESTAMP | Fecha de última actualización | No | DEFAULT NOW() |
-
-### 8. Período Contable (`periodo_contable`)
-
-| Atributo | Tipo | Descripción | Nullable | Restricciones |
-|----------|------|-------------|----------|---------------|
-| `id` | UUID | Identificador único interno | No | PK |
-| `anio` | INTEGER | Año fiscal | No | > 2000 |
-| `mes` | INTEGER | Mes del período (1-12) | No | 1 <= mes <= 12 |
-| `nombre` | VARCHAR(50) | Nombre descriptivo (ej: "Enero 2025") | No | — |
-| `fecha_inicio` | DATE | Fecha de inicio del período | No | — |
-| `fecha_fin` | DATE | Fecha de fin del período | No | > fecha_inicio |
-| `estado` | ENUM | Estado: ABIERTO, CERRADO, EN_CIERRE | No | DEFAULT 'ABIERTO' |
-| `created_at` | TIMESTAMP | Fecha de creación del registro | No | DEFAULT NOW() |
-| `updated_at` | TIMESTAMP | Fecha de última actualización | No | DEFAULT NOW() |
-
-### 9. Centro de Costo (`centro_costo`)
-
-| Atributo | Tipo | Descripción | Nullable | Restricciones |
-|----------|------|-------------|----------|---------------|
-| `id` | UUID | Identificador único interno | No | PK |
-| `codigo` | VARCHAR(20) | Código jerárquico del centro de costo | No | UNIQUE |
-| `nombre` | VARCHAR(150) | Nombre del centro de costo | No | — |
-| `nivel` | INTEGER | Nivel jerárquico | No | >= 1 |
-| `centro_padre_id` | UUID | Centro de costo padre | Sí | FK → centro_costo.id |
-| `responsable` | VARCHAR(200) | Nombre del responsable | Sí | — |
-| `activo` | BOOLEAN | Indica si el centro está activo | No | DEFAULT true |
-| `presupuesto_anual` | DECIMAL(18,2) | Presupuesto anual asignado | Sí | >= 0 |
-| `created_at` | TIMESTAMP | Fecha de creación del registro | No | DEFAULT NOW() |
-| `updated_at` | TIMESTAMP | Fecha de última actualización | No | DEFAULT NOW() |
-
-### 10. Tercero (`tercero`)
-
-| Atributo | Tipo | Descripción | Nullable | Restricciones |
-|----------|------|-------------|----------|---------------|
-| `id` | UUID | Identificador único interno | No | PK |
-| `tipo_documento` | ENUM | Tipo de identificación: NIF, RUC, RFC, PASAPORTE, OTRO | No | — |
-| `numero_documento` | VARCHAR(30) | Número de identificación fiscal | No | UNIQUE por tipo |
-| `razon_social` | VARCHAR(300) | Nombre legal o razón social | No | — |
-| `nombre_comercial` | VARCHAR(200) | Nombre comercial (si difiere) | Sí | — |
-| `tipo` | ENUM | Tipo: CLIENTE, PROVEEDOR, AMBOS | No | — |
-| `email` | VARCHAR(254) | Correo electrónico principal | Sí | Formato email válido |
-| `telefono` | VARCHAR(20) | Teléfono principal | Sí | — |
-| `direccion` | TEXT | Dirección fiscal | Sí | — |
-| `activo` | BOOLEAN | Indica si el tercero está activo | No | DEFAULT true |
-| `created_at` | TIMESTAMP | Fecha de creación del registro | No | DEFAULT NOW() |
-| `updated_at` | TIMESTAMP | Fecha de última actualización | No | DEFAULT NOW() |
+> **Nota de revisión.** Hasta el 2026-10-16 este documento describía un ERP contable
+> (`cuenta_contable`, `asiento_contable`, `factura`, `tercero`, `presupuesto`) que
+> **nunca existió en este proyecto**. Era visión, no implementación. El contenido de
+> abajo es el esquema real de producción, verificado contra
+> `apps/web/supabase/migrations/`. La visión de ERP se conserva en el
+> [Anexo](#anexo-visión-no-implementada) al final, claramente marcada.
 
 ---
 
-## Relaciones
+## Resumen
 
-### Diagrama Entidad-Relación
+| Tabla | Qué guarda | Origen |
+|-------|-----------|--------|
+| `categorias` | Tipos de ingreso y gasto | Migración 001 |
+| `cuentas` | Cuentas con saldo inicial | Migración 001 |
+| `ingresos` | Movimientos de dinero que entran | Migración 001 |
+| `gastos` | Movimientos de dinero que salen | Migración 001 |
+| `pagos_programados` | Plantillas de pagos recurrentes | Migración 005, 007, 009 |
+| `transferencias` | Movimiento de saldo entre cuentas | Migración 003 |
+
+**Tablas eliminadas:** `pagos` (migración 008, dentro de v0.3.0).
+
+Todas las tablas:
+- tienen `user_id` con `ON DELETE CASCADE` sobre `auth.users`
+- tienen Row Level Security activo: cada usuario solo ve lo suyo
+- usan `SERIAL` para la PK, no UUID
+
+---
+
+## Diagrama entidad-relación
 
 ```mermaid
 erDiagram
-    CUENTA_CONTABLE ||--o{ CUENTA_CONTABLE : "cuenta_padre"
-    CUENTA_CONTABLE ||--o{ LINEA_ASIENTO : "tiene"
-    CUENTA_CONTABLE ||--o{ LINEA_FACTURA : "asociada"
+    CATEGORIAS ||--o{ INGRESOS : "categoriza"
+    CATEGORIAS ||--o{ GASTOS : "categoriza"
+    CATEGORIAS ||--o{ PAGOS_PROGRAMADOS : "categoriza"
 
-    ASIENTO_CONTABLE ||--|{ LINEA_ASIENTO : "contiene"
-    ASIENTO_CONTABLE }o--|| PERIODO_CONTABLE : "pertenece"
+    CUENTAS ||--o{ INGRESOS : "recibe"
+    CUENTAS ||--o{ GASTOS : "paga"
+    CUENTAS ||--o{ PAGOS_PROGRAMADOS : "origen del pago"
+    CUENTAS ||--o{ TRANSFERENCIAS : "origen"
+    CUENTAS ||--o{ TRANSFERENCIAS : "destino"
 
-    FACTURA ||--|{ LINEA_FACTURA : "contiene"
-    FACTURA }o--|| TERCERO : "emitida/recibida"
-    FACTURA ||--o{ ASIENTO_CONTABLE : "genera"
-
-    PRESUPUESTO }o--|| PERIODO_CONTABLE : "asignado"
-    PRESUPUESTO }o--|| CENTRO_COSTO : "asignado"
-
-    TRANSACCION }o--|| PERIODO_CONTABLE : "pertenece"
-    TRANSACCION }o--o| TERCERO : "relacionada"
-
-    CENTRO_COSTO ||--o{ CENTRO_COSTO : "centro_padre"
-    CENTRO_COSTO ||--o{ LINEA_ASIENTO : "asignado"
-    CENTRO_COSTO ||--o{ PRESUPUESTO : "tiene"
-
-    TERCERO ||--o{ FACTURA : "participa"
-    TERCERO ||--o{ LINEA_ASIENTO : "referenciado"
-    TERCERO ||--o{ TRANSACCION : "relacionado"
-
-    PERIODO_CONTABLE ||--o{ ASIENTO_CONTABLE : "agrupa"
-    PERIODO_CONTABLE ||--o{ TRANSACCION : "agrupa"
-    PERIODO_CONTABLE ||--o{ PRESUPUESTO : "define"
+    AUTH_USERS ||--o{ CATEGORIAS : "dueño"
+    AUTH_USERS ||--o{ CUENTAS : "dueño"
+    AUTH_USERS ||--o{ INGRESOS : "dueño"
+    AUTH_USERS ||--o{ GASTOS : "dueño"
+    AUTH_USERS ||--o{ PAGOS_PROGRAMADOS : "dueño"
+    AUTH_USERS ||--o{ TRANSFERENCIAS : "dueño"
 ```
-
-### Descripción de Relaciones
-
-| Relación | Cardinalidad | Descripción |
-|----------|--------------|-------------|
-| Cuenta Contable → Cuenta Contable | 1:N (auto-referencia) | Jerarquía del plan de cuentas; una cuenta padre puede tener múltiples cuentas hijas |
-| Asiento Contable → Línea de Asiento | 1:N (mín. 2) | Un asiento debe tener al menos dos líneas (partida doble) |
-| Asiento Contable → Período Contable | N:1 | Cada asiento pertenece a exactamente un período |
-| Factura → Línea de Factura | 1:N (mín. 1) | Una factura tiene al menos una línea de detalle |
-| Factura → Tercero | N:1 | Cada factura está asociada a un tercero (cliente o proveedor) |
-| Factura → Asiento Contable | 1:N | Una factura puede generar uno o más asientos contables |
-| Presupuesto → Período Contable | N:1 | Cada presupuesto corresponde a un período fiscal |
-| Presupuesto → Centro de Costo | N:1 | Cada presupuesto se asigna a un centro de costo |
-| Transacción → Período Contable | N:1 | Cada transacción pertenece a un período contable |
-| Transacción → Tercero | N:0..1 | Una transacción puede estar relacionada con un tercero |
-| Centro de Costo → Centro de Costo | 1:N (auto-referencia) | Jerarquía de centros de costo |
-| Línea de Asiento → Cuenta Contable | N:1 | Cada línea referencia una cuenta contable |
-| Línea de Asiento → Centro de Costo | N:0..1 | Opcionalmente asociada a un centro de costo |
-| Línea de Asiento → Tercero | N:0..1 | Opcionalmente referencia a un tercero |
 
 ---
 
-## Restricciones
+## Datos maestros
 
-### Restricciones de Integridad
+Las únicas dos fuentes de datos maestros. Nada se puede capturar sin una de las dos
+(ver RN-001 en `BUSINESS_RULES.md`).
 
-| # | Entidad | Restricción | Tipo | Descripción |
-|---|---------|-------------|------|-------------|
-| R1 | Asiento Contable | Partida doble | Negocio | La suma de débitos debe ser igual a la suma de créditos en cada asiento |
-| R2 | Asiento Contable | Mínimo de líneas | Negocio | Todo asiento debe tener al menos 2 líneas |
-| R3 | Asiento Contable | Período activo | Negocio | Solo se pueden crear asientos en períodos con estado ABIERTO |
-| R4 | Línea de Asiento | Exclusividad debe/haber | Datos | Una línea no puede tener valores > 0 simultáneamente en debe y haber |
-| R5 | Factura | Coherencia de montos | Datos | total = subtotal + impuestos |
-| R6 | Factura | Fecha de vencimiento | Datos | fecha_vencimiento >= fecha_emision |
-| R7 | Presupuesto | Control de ejecución | Negocio | monto_ejecutado + monto_comprometido <= monto_total (configurable como alerta o bloqueo) |
-| R8 | Período Contable | No solapamiento | Datos | Los períodos no pueden superponerse en fechas |
-| R9 | Período Contable | Secuencia | Negocio | No se puede abrir un período si el anterior no está cerrado |
-| R10 | Cuenta Contable | Movimientos en hojas | Negocio | Solo las cuentas de último nivel (hojas) aceptan movimientos directos |
-| R11 | Transacción | Cuentas en transferencia | Datos | Si tipo = TRANSFERENCIA, tanto cuenta_origen_id como cuenta_destino_id son obligatorios |
-| R12 | Tercero | Unicidad de documento | Datos | La combinación tipo_documento + numero_documento debe ser única |
-| R13 | Centro de Costo | Sin ciclos | Datos | La jerarquía de centros de costo no puede contener referencias circulares |
-| R14 | Cuenta Contable | Sin ciclos | Datos | La jerarquía de cuentas no puede contener referencias circulares |
+### `categorias`
 
-### Restricciones de Auditoría
+| Columna | Tipo | Null | Default | Notas |
+|---------|------|------|---------|-------|
+| `id` | SERIAL | No | — | PK |
+| `nombre` | TEXT | No | — | |
+| `tipo` | TEXT | No | — | CHECK: `'Ingreso'` \| `'Gasto'` |
+| `user_id` | UUID | No | — | FK → `auth.users(id)` CASCADE |
+| `created_at` | TIMESTAMPTZ | No | `NOW()` | |
 
-| # | Restricción | Descripción |
-|---|-------------|-------------|
-| A1 | Inmutabilidad de asientos validados | Un asiento con estado VALIDADO no puede ser modificado; solo puede ser anulado |
-| A2 | Trazabilidad de cambios | Toda modificación debe registrar el usuario y la fecha del cambio |
-| A3 | No eliminación física | Los registros financieros no se eliminan; se anulan mediante cambio de estado |
-| A4 | Secuencia de numeración | Los números de asiento y factura no pueden tener gaps dentro de un período/serie |
+Índices: `idx_categorias_user (user_id)`, `idx_categorias_tipo (user_id, tipo)`
+
+`ON DELETE RESTRICT` cuando es referenciada por `ingresos`, `gastos` o
+`pagos_programados`. Borrar una categoría con movimientos debe fallar y avisar, no
+dejar registros huérfanos.
+
+### `cuentas`
+
+| Columna | Tipo | Null | Default | Notas |
+|---------|------|------|---------|-------|
+| `id` | SERIAL | No | — | PK |
+| `nombre` | TEXT | No | — | |
+| `saldo_inicial` | DECIMAL(12,2) | No | `0` | CHECK `>= 0` |
+| `user_id` | UUID | No | — | FK → `auth.users(id)` CASCADE |
+| `created_at` | TIMESTAMPTZ | No | `NOW()` | |
+
+Índice: `idx_cuentas_user (user_id)`
+
+**"Efectivo" es una fila más de esta tabla**, con su propio saldo. No es un caso
+especial en el código. El seed la crea al configurar por primera vez; su saldo se
+alimenta con filas en `transferencias`.
+
+---
+
+## Movimientos
+
+### `ingresos`
+
+| Columna | Tipo | Null | Notas |
+|---------|------|------|-------|
+| `id` | SERIAL | No | PK |
+| `fecha` | DATE | No | |
+| `categoria_id` | INTEGER | No | FK → `categorias(id)` |
+| `cuenta_id` | INTEGER | No | FK → `cuentas(id)` |
+| `valor` | DECIMAL(12,2) | No | CHECK `> 0` |
+| `descripcion` | TEXT | **Sí** | |
+| `user_id` | UUID | No | FK → `auth.users(id)` CASCADE |
+| `created_at` | TIMESTAMPTZ | No | `NOW()` |
+
+Índices: `idx_ingresos_user (user_id)`, `idx_ingresos_fecha (user_id, fecha)`
+
+### `gastos`
+
+Estructura idéntica a `ingresos`. Comparten los mismos tipos de columna y las mismas
+restricciones.
+
+Índices: `idx_gastos_user (user_id)`, `idx_gastos_fecha (user_id, fecha)`
+
+### `transferencias`
+
+| Columna | Tipo | Null | Notas |
+|---------|------|------|-------|
+| `id` | SERIAL | No | PK |
+| `origen_id` | INTEGER | No | FK → `cuentas(id)` **ON DELETE RESTRICT** |
+| `destino_id` | INTEGER | No | FK → `cuentas(id)` **ON DELETE RESTRICT** |
+| `valor` | DECIMAL(12,2) | No | CHECK `> 0` |
+| `fecha` | DATE | No | |
+| `concepto` | TEXT | **Sí** | CHECK `char_length <= 255` |
+| `user_id` | UUID | No | FK → `auth.users(id)` CASCADE |
+| `created_at` | TIMESTAMPTZ | No | `NOW()` |
+
+Restricción de tabla: `CHECK (origen_id <> destino_id)` — transferir a la misma cuenta
+sería un bucle sin efecto.
+
+Índices: `idx_transferencias_user (user_id, fecha)`,
+`idx_transferencias_origen (user_id, origen_id)`,
+`idx_transferencias_destino (user_id, destino_id)`
+
+**Una transferencia no altera el saldo global.** Solo redistribuye: el Motor resta
+donde `origen_id` y suma donde `destino_id`, de modo que la suma de saldos por cuenta
+sigue cuadrando con el saldo global.
+
+**El saldo insuficiente no se valida en la base.** Requiere leer el saldo actual de la
+cuenta, que es un cálculo y no un dato de la fila. Se valida en la server action antes
+de insertar.
+
+---
+
+## Pagos programados
+
+### `pagos_programados`
+
+| Columna | Tipo | Null | Default | Notas |
+|---------|------|------|---------|-------|
+| `id` | SERIAL | No | — | PK |
+| `concepto` | TEXT | No | — | CHECK `char_length` entre 1 y 255 |
+| `valor` | DECIMAL(12,2) | No | — | CHECK `> 0` |
+| `recurrencia` | TEXT | No | — | CHECK: `'Mensual'` \| `'Quincenal'` \| `'Semanal'` |
+| `tipo` | TEXT | No | — | CHECK: `'Gasto'` \| `'Ingreso'` — a qué lado del historial va |
+| `cuenta_id` | INTEGER | No | — | FK → `cuentas(id)` **ON DELETE RESTRICT** |
+| `categoria_id` | INTEGER | No | — | FK → `categorias(id)` **ON DELETE RESTRICT** |
+| `fecha_inicio` | DATE | No | — | |
+| `dia_vencimiento` | INTEGER | No | — | CHECK entre 1 y 31 |
+| `activo` | BOOLEAN | No | `TRUE` | `FALSE` = desactivado, no borrado |
+| `fecha_ultimo_pago` | DATE | **Sí** | — | `NULL` = nunca se pagó |
+| `user_id` | UUID | No | — | FK → `auth.users(id)` CASCADE |
+| `created_at` | TIMESTAMPTZ | No | `NOW()` | |
+| `updated_at` | TIMESTAMPTZ | No | `NOW()` | |
+
+Índices: `idx_pagos_programados_user (user_id, activo)`,
+`idx_pagos_programados_vencimiento (user_id, dia_vencimiento)`,
+`idx_pagos_programados_categoria (categoria_id)`
+
+#### Lo que esta tabla NO tiene, y por qué
+
+**No hay columna `estado`.** El estado ("Al día", "Pendiente", "Alerta", "Vencido") **se
+calcula en cada render** a partir de `fecha_ultimo_pago`, `dia_vencimiento`,
+`recurrencia` y la fecha de hoy.
+
+Razón: es lo que permite que la plantilla se renueve sola sin un job programado. No hay
+estado que "venza", solo fechas que ya están. El cálculo vive en
+`src/lib/motor/fechas.ts` (`calcularEstadoProgramado`) y
+`src/lib/motor/programados.ts` (`hornearPagosProgramados`).
+
+**No hay columna "borrado".** Desactivar es `activo = FALSE`. No hay borrado: la
+decisión es del usuario y está documentada en la migración `009`.
+
+#### Notas de diseño
+
+- **`dia_vencimiento` va separado de `fecha_inicio`** para que el cálculo del próximo
+  vencimiento no dependa de parsear la última fecha pagada. Para el día 31 en meses
+  cortos se usa el último día del mes.
+- **"Quincenal" es por fechas de mes**, no 15 días corridos: el día configurado y ese
+  día + 15. Con 15 días corridos un arriendo se iría del 31 al 15 y cada mes se
+  movería.
+- **No existe `'Diario'`.** Con un ciclo de 1 día la ventana de alerta de 5 días no
+  cabe dentro del ciclo: el pago caería en alerta de forma permanente, incluso recién
+  pagado. Ver migración `007`.
+- **`ON DELETE RESTRICT` en `cuenta_id` y `categoria_id`:** si se borra una cuenta o
+  una categoría que tiene pagos programados, estos quedarían huérfanos. El usuario
+  tiene que desactivar el pago programado primero.
+
+---
+
+## Tablas eliminadas
+
+### `pagos` — eliminada en la migración `008`
+
+Modelaba un compromiso de pago **de una sola vez**. Nunca funcionó: el código
+intentaba insertar `pagos.cuenta_id`, pero la migración que la creaba (002) nunca se
+aplicó, así que el formulario fallaba siempre con *"No se pudo guardar el pago.
+Intenta de nuevo."*
+
+Los 5 pagos pendientes del usuario se convirtieron a mano en pagos programados antes de
+dropear la tabla. Ninguno estaba en estado "Pagado", así que ningún saldo cambió.
+
+---
+
+## Row Level Security
+
+RLS está activo en las 6 tablas. Para todas, la política es la misma:
+
+```sql
+USING (auth.uid() = user_id)              -- SELECT y UPDATE
+WITH CHECK (auth.uid() = user_id)         -- INSERT
+USING (auth.uid() = user_id)              -- DELETE
+```
+
+Migraciones: `001` (categorias, cuentas, ingresos, gastos),
+`004` (transferencias), `006` (pagos_programados).
+
+**Deben estar las 4 políticas por tabla.** Si falta la de `DELETE`, el usuario puede
+leer y modificar datos ajenos aunque no puede crearlos.
 
 ---
 
 ## Convenciones
 
-### Tipos de Datos
+| Convención | Valor |
+|------------|-------|
+| PK | `SERIAL` (no UUID) |
+| FK del propietario | `user_id UUID` → `auth.users(id)` CASCADE |
+| Nombres | `snake_case` |
+| Fechas de negocio | `DATE` (sin hora) |
+| Marcas de tiempo | `TIMESTAMPTZ` |
+| Montos | `DECIMAL(12,2)` — nunca `FLOAT` |
+| Enums | `TEXT` con `CHECK`, no tipo ENUM de Postgres |
+| Booleanos | `activo` |
+| Índices de ownership | siempre empiezan por `user_id` |
 
-| Convención | Descripción |
-|------------|-------------|
-| UUID | Identificadores únicos universales v4 para todas las PKs |
-| DECIMAL(18,2) | Montos monetarios con 2 decimales |
-| DECIMAL(18,4) | Precios unitarios con 4 decimales para mayor precisión |
-| TIMESTAMP | Fechas con zona horaria UTC |
-| ENUM | Valores fijos definidos a nivel de aplicación |
-| VARCHAR(n) | Textos con longitud máxima definida |
-| TEXT | Textos sin límite específico de longitud |
+---
 
-### Nomenclatura
+## Anexo: visión no implementada
 
-| Elemento | Convención | Ejemplo |
-|----------|------------|---------|
-| Tablas | snake_case, singular | `cuenta_contable` |
-| Columnas | snake_case | `fecha_emision` |
-| PKs | Siempre `id` | `id` |
-| FKs | nombre_entidad_id | `periodo_id` |
-| Timestamps | created_at, updated_at | — |
-| Booleanos | adjetivo o participio | `activo`, `activa` |
+La investigación de agosto de 2026 exploró un OFK empresarial con contabilidad bajo
+partida doble, facturación, presupuestos, centros de costo y terceros. **Nada de esto
+existe en el código.** Se documenta aquí solo para no perder el contexto de a dónde
+podría ir el proyecto.
+
+| Entidad | Estado |
+|-----------|--------|
+| `cuenta_contable` (plan de cuentas jerárquico) | ❌ No implementada |
+| `asiento_contable` + `linea_asiento` (partida doble) | ❌ No implementada |
+| `factura` + `linea_factura` | ❌ No implementada |
+| `presupuesto` | ❌ No implementada |
+| `periodo_contable` | ❌ No implementada |
+| `centro_costo` | ❌ No implementada |
+| `tercero` | ❌ No implementada |
+
+Si alguien retoma esa visión, es un proyecto aparte: cambia el modelo de datos entero,
+el Motor y la arquitectura. No es una evolución incremental de lo que hay.

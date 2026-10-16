@@ -1,134 +1,218 @@
-# OpenFinanceKit — Estado Actual del Proyecto
+# OpenFinanceKit — Estado del Proyecto
 
-**Última actualización:** 2026-10-05 19:15
+**Última actualización:** 2026-10-16
+**Rama del documento:** `develop`
 
-**Versión actual:** v0.2.0
-
----
-
-## 🎯 Estado por Ambiente
-
-| Ambiente | Rama | Estado | URL |
-|----------|------|--------|-----|
-| **Producción** | `main` | ✅ v0.2.0 desplegado | https://open-finance-kit.vercel.app |
-| **UAT** | `develop` | ✅ Actualizado (saldos por cuenta) | https://openfinancekit-uat.vercel.app |
-| **Local** | `feature/*` | N/A | `http://localhost:3000` |
+| | Versión | Rama | Estado |
+|---|---------|------|--------|
+| **Producción** | v0.2.0 | `main` | 🟢 Estable — desplegado el 2026-09-02 |
+| **UAT** | v0.3.0 *(pendiente)* | `develop` | 🟡 31 commits adelante de `main`, sin liberar |
 
 ---
 
-## 📋 Features Implementadas en v0.2.0
+## TL;DR para quien llega nuevo
 
-| Feature | Estado | Merge | En Producción |
-|---------|--------|-------|----------------|
-| OFK Web MVP | ✅ Completado | 2026-09-XX | ✅ Sí |
-| Autenticación (email + Google) | ✅ Completado | 2026-09-XX | ✅ Sí |
-| Dashboard 6 indicadores | ✅ Completado | 2026-09-XX | ✅ Sí |
-| Registro ingresos | ✅ Completado | 2026-09-XX | ✅ Sí |
-| Registro gastos | ✅ Completado | 2026-09-XX | ✅ Sí |
-| Registro pagos | ✅ Completado | 2026-09-XX | ✅ Sí |
-| Configuración (cuentas, categorías) | ✅ Completado | 2026-09-XX | ✅ Sí |
-| Selector de mes | ✅ Completado | 2026-09-XX | ✅ Sí |
-| Saldos por cuenta | ✅ Completado | 2026-10-05 | ❌ En UAT (antes de liberar a prod) |
-| Ambientes (local/UAT/prod) | ✅ Documentado | 2026-09-XX | ✅ Sí |
-| Deploy en Vercel | ✅ Configurado | 2026-09-XX | ✅ Sí |
-| Tests E2E (Playwright) | ✅ Completados | 2026-09-XX | ✅ Sí |
+- La app web funciona y está en producción desde el **2 de septiembre**.
+- Entre septiembre y hoy se desarrolló en `develop` un módulo grande: **pagos
+  programados** y **transferencias entre cuentas**, más saldos por cuenta, detalle de
+  cuenta y edición de ingresos/gastos.
+- **Ese trabajo todavía no está en producción.** Falta aprobar el release
+  `develop → main`.
+- El proyecto es de una sola persona con un agente de IA (Kiro) ordenando el flujo.
+- La documentación de este repo se mantuvo al día recién el 2026-10-16. Si algo de lo
+  que lees contradice el código, el código manda: ver
+  [Regla de mantenimiento](#regla-de-mantenimiento).
 
 ---
 
-## 🔄 Flujo de Ramas
+## Qué hay hoy, módulo por módulo
+
+### En producción (v0.2.0)
+
+| Módulo | Ruta | Estado |
+|--------|------|--------|
+| Login | `/login` | 🟢 Magic link + Google OAuth |
+| Dashboard — 6 indicadores | `/dashboard` | 🟢 Con selector de mes |
+| Ingresos | `/ingresos` | 🟢 Alta y listado |
+| Gastos | `/gastos` | 🟢 Alta, listado y filtros |
+| Configuración | `/config` | 🟢 Categorías y cuentas |
+| PWA | — | 🟢 Instalable, con iconos PNG |
+
+### Solo en UAT (v0.3.0 pendiente)
+
+| Módulo | Ruta | Estado |
+|--------|------|--------|
+| Pagos programados | `/pagos` | 🟡 Lista, countdown, vencimientos |
+| Crear pago programado | `/pagos/programado/nuevo` | 🟡 |
+| Detalle de cuenta | `/cuentas/[id]` | 🟡 |
+| Transferir entre cuentas | `/cuentas/transferir` | 🟡 |
+| Editar ingreso / gasto | `/ingresos/nuevo`, `/gastos/nuevo` | 🟡 Modal centrado |
+
+### Retirado
+
+| Módulo | Qué pasó |
+|--------|----------|
+| Pagos únicos (`/pagos/nuevo`) | **Eliminado.** La tabla `pagos` se dropeó en la migración `008`. Reemplazado por pagos programados |
+
+---
+
+## Ambiente
+
+| Ambiente | Rama | URL | Versión |
+|----------|------|-----|---------|
+| Producción | `main` | https://open-finance-kit.vercel.app | v0.2.0 |
+| UAT | `develop` | https://openfinancekit-uat.vercel.app | v0.3.0 (pendiente) |
+| Local | cualquiera | `http://localhost:3000` | — |
+
+Ambos despliegues salen de Vercel automáticamente en cada push. Detalle en
+[`ENVIRONMENTS.md`](ENVIRONMENTS.md).
+
+---
+
+## Calidad
+
+| Suite | Herramienta | Cantidad | Estado |
+|-------|-------------|----------|--------|
+| Unitarios | Vitest | 102 tests, 19 grupos | 🟢 Pasan |
+| E2E | Playwright | 27 tests, 6 grupos | 🟢 Pasan |
+
+- **Unitarios** cubren el Motor (`src/lib/motor/`): cálculos de saldos, fechas de
+  vencimiento y estados de pagos programados.
+- **E2E** cubren el flujo completo partiendo de un usuario vacío: configuración →
+  captura → dashboard, CRUD de configuración, pagos programados y transferencias.
+- Evidencia (videos, trazas, screenshots): `qa/evidence/`
+- Reporte HTML: `qa/reports/playwright/index.html`
+
+### Lo que NO hay
+
+- **No hay CI.** `.github/workflows/` está vacío. Ni lint ni tests corren
+  automáticamente antes de un merge. El deploy de Vercel sí es automático, pero
+  Vercel no corre la suite de Playwright.
+- **No hay cobertura de código** ni umbrales configurados.
+- **No hay reporte de QA versionado** ni matriz de trazabilidad criterio↔test.
+
+---
+
+## Qué falta
+
+### Para liberar v0.3.0
+
+| # | Tarea | Prioridad |
+|---|-------|-----------|
+| 1 | Aprobar y ejecutar el merge `develop → main` | 🔴 Alta |
+| 2 | Correr los 4 criterios de aceptación abiertos de pagos programados (ver abajo) | 🟡 Media |
+| 3 | Crear el tag `git tag v0.3.0` y la GitHub Release | 🟡 Media |
+| 4 | Actualizar `docs/ENVIRONMENTS.md` si cambiaron las URLs de Vercel | 🟢 Baja |
+
+### Criterios de aceptación abiertos de pagos programados
+
+| ID | Qué falta | Cómo se cierra |
+|----|-----------|----------------|
+| AC-013 | Desactivar un pago no lo borra | Prueba manual en UAT |
+| AC-014 | La lista no se corta en 50 | Crear más de 50 y revisar |
+| AC-017 | Countdown bien en móvil | Correr el E2E en el proyecto `mobile-chrome` |
+| AC-018 | Aislamiento entre usuarios | E2E con dos usuarios distintos |
+
+### Backlog abierto
+
+| Feature | Prioridad | Nota |
+|---------|-----------|------|
+| Exportar datos (CSV, PDF) | 🟢 Baja | Nunca evangelizado |
+| Múltiples usuarios (familia) | 🟢 Baja | El RLS ya lo soporta; falta la UI |
+| Pipeline de CI | 🟡 Media | El roadmap lo tenía en Sprint 5; nunca se hizo |
+| Reportes básicos | 🟢 Baja | |
+| Importación desde Excel | 🟢 Baja | El Excel de referencia podría servir de plantilla |
+
+> El antiguo **"pagos sin asignar"** quedó **cancelado**: la tabla `pagos` que
+> originaba el problema ya no existe.
+
+---
+
+## Ramas
 
 ```
-main (Producción v0.2.0)
-  ↑
-  └─ merge de develop cuando apruebas release
-  
-develop (UAT — actualizado hoy)
-  ↑
-  ├─ feature/dashboard-saldos-por-cuenta (MERGEADO hoy)
-  ├─ feature/google-auth (MERGEADO)
-  ├─ feature/editar-config (MERGEADO)
-  ├─ feature/ofk-web-deploy (MERGEADO)
-  ├─ feature/ofk-web-ux (MERGEADO)
-  ├─ feature/ofk-web-mvp (MERGEADO)
-  ├─ feature/ambientes (MERGEADO)
-  └─ feature/excel-mvp-final (MERGEADO, como referencia)
+main (producción, v0.2.0, 2026-09-02)
+  ↑  ← 31 commits sin liberar
+  │
+develop (UAT, v0.3.0)
+  ├─ merge feature/pagos-programados      (2026-10-07)
+  ├─ merge bugfix/iconos-pwa              (2026-10-06)
+  ├─ merge feature/editar-ingresos-gastos (2026-10-05)
+  ├─ merge feature/detalle-cuenta         (2026-10-05)
+  ├─ merge feature/saldo-actual-config    (2026-10-05)
+  └─ merge feature/filtros-gastos         (2026-10-05)
 ```
 
-**Regla:** Todas las ramas `feature/*` están mergeadas a `develop`. No hay código pendiente por revisar.
+Todas las `feature/*` están mergeadas. No hay trabajo encerrado en ramas.
+
+**Solo existe el tag `v0.1.0`.** v0.2.0 se liberó sin tag. Esto se corrige al liberar
+v0.3.0.
 
 ---
 
-## 📊 Tareas Pendientes Reales
+## Stack
 
-| Tarea | Prioridad | Descripción |
-|-------|-----------|-------------|
-| Validar saldos por cuenta en UAT | 🔥 Alta | Probar la nueva sección en https://openfinancekit-uat.vercel.app |
-| Release a Producción | 🟡 Media | Hacer merge de develop → main cuando apruebes |
-| Feature: Pagos sin asignar | 🟡 Media | Gestionar pagos sin `cuenta_id` (Phase 2) |
-| Feature: Exportar datos | 🟢 Baja | Exportar CSV, PDF (future sprint) |
-| Feature: Múltiples usuarios | 🟢 Baja | Compartir con familia (future sprint) |
+Next.js 15 (App Router) · React 19 · TypeScript 5 · Tailwind CSS 4 · Supabase
+(PostgreSQL + Auth) · Vercel · Vitest · Playwright
+
+**No usa ORM.** El acceso a datos es con `@supabase/supabase-js` directo.
+**No usa shadcn/ui.** Los componentes son propios.
 
 ---
 
-## ✅ Checklist de Estado
+## Última actividad
 
-- ✅ OFK Web MVP completo (Next.js + Supabase + PWA)
-- ✅ Autenticación segura (email magic link + Google OAuth)
-- ✅ Dashboard con 6 indicadores financieros
-- ✅ CRUD de ingresos, gastos, pagos
-- ✅ Configuración de cuentas y categorías
-- ✅ Motor financiero (cálculos exactos)
-- ✅ Selector de mes interactivo
-- ✅ Saldos por cuenta con indicador visual
-- ✅ Tests E2E con Playwright
-- ✅ Deploy automático en Vercel
-- ✅ Documentación actualizada
-- ✅ Agentes especializados configurados (Developer, QA, Architect)
-- ✅ SDDs actualizados
+| Fecha | Qué pasó |
+|-------|----------|
+| 2026-10-10 | Desactivar ≠ eliminar en pagos programados; se destraba el borrado |
+| 2026-10-09 | Los E2E pasan a correr desde un usuario vacío |
+| 2026-10-09 | Se corrigen textos de UI que mentían |
+| 2026-10-09 | Cada pago programado elige su categoría |
+| 2026-10-09 | Se elimina el módulo de pagos únicos |
+| 2026-10-07 | Se mergea `feature/pagos-programados` a `develop` |
+| 2026-10-06 | Migraciones de transferencias y pagos programados |
+| 2026-10-05 | Detalle de cuenta, saldos por cuenta, filtros de gastos, editar ingresos/gastos |
+| 2026-09-02 | **Release v0.2.0 a producción** |
 
 ---
 
-## 🚀 Próximos Pasos
+## Regla de mantenimiento
 
-### Hoy (2026-10-05)
-1. ✅ Validar saldos por cuenta en UAT
-2. ⏳ Decidir si liberar a Producción
+> Si el código y esta documentación se contradicen, **el código gana**. Y entonces
+> esta documentación está mal y hay que arreglarla.
 
-### Sprint 3 (si aplica)
-1. Implementar pagos sin asignar (reasignación de cuenta)
-2. Reportes básicos (mensual, por categoría)
-3. Importación de datos (CSV)
+Para que no vuelva a pasar, la actualización de documentación es **parte del
+trabajo**, no un extra:
 
----
+| Cambiaste… | Actualiza también… |
+|------------|--------------------|
+| Una tabla o un campo | `docs/DATA_DICTIONARY.md` + `apps/web/supabase/migrations/README.md` |
+| Una regla del dominio | `docs/BUSINESS_RULES.md` |
+| Un módulo o una ruta | Este documento + `README.md` |
+| El comportamiento de una feature | El SDD en `.kiro/specs/` |
+| Una versión | `docs/changelog/CHANGELOG.md` + `package.json` |
 
-## 📁 Documentos de Referencia
-
-| Documento | Ubicación |
-|-----------|-----------|
-| Arquitectura del sistema | `docs/architecture/ARCHITECTURE.md` |
-| Decisiones técnicas (ADRs) | `docs/decisions/DECISIONS.md` |
-| Reglas de negocio | `docs/BUSINESS_RULES.md` |
-| Guía de desarrollo | `apps/web/DEVELOPMENT.md` |
-| Guía de deploy | `apps/web/DEPLOY.md` |
-| Convenciones de código | `.kiro/skills/ofk-conventions.md` |
-| Configuración de agentes | `.kiro/steering/` |
-| Estado de SDDs | `.kiro/specs/` |
+El paso es obligatorio en el flujo de trabajo de Kiro
+(`.kiro/steering/workflow.md`).
 
 ---
 
-## 📞 Contacto
+## Documentos de referencia
 
-**Autor:** Gustavo Echeverría  
-**Repositorio:** https://github.com/gustavoecheverria/OpenFinanceKit  
-**Agente IA:** Kiro
+| Documento | Para qué |
+|-----------|----------|
+| [Changelog](changelog/CHANGELOG.md) | Qué cambió en cada versión |
+| [Reglas de negocio](BUSINESS_RULES.md) | Las reglas que el código respeta |
+| [Diccionario de datos](DATA_DICTIONARY.md) | Cada tabla y cada campo |
+| [Arquitectura](architecture/ARCHITECTURE.md) | Cómo encaja todo |
+| [Ambientes](ENVIRONMENTS.md) | URLs y configuración |
+| [Roadmap](roadmap/ROADMAP.md) | Qué se hizo y qué sigue |
+| [Decisiones (ADRs)](decisions/DECISIONS.md) | Por qué se decidió cada cosa |
+| Migraciones | `apps/web/supabase/migrations/README.md` |
+| Specs de features | `.kiro/specs/` |
+| Convenciones | `.kiro/skills/ofk-conventions.md` |
 
 ---
 
-## 🔍 Cómo Usar Este Documento
-
-- **Para ver qué está en Producción:** Revisar la tabla "Features Implementadas"
-- **Para entender el flujo de ramas:** Ver sección "Flujo de Ramas"
-- **Para saber qué falta:** Ver sección "Tareas Pendientes Reales"
-- **Para trabajar en una feature:** Crear rama desde `develop` con formato `feature/descripcion`
-- **Para subir a UAT:** Hacer push a `develop` (auto-deploy en Vercel)
-- **Para liberar a Producción:** Hacer merge `develop → main` (auto-deploy en Vercel)
+**Autor:** Gustavo Echeverría · **Agente IA:** Kiro
+**Repositorio:** https://github.com/gustavoecheverria/OpenFinanceKit

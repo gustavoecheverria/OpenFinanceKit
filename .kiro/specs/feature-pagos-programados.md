@@ -4,23 +4,40 @@
 
 **Versión:** 0.1.0
 
-**Estado:** Draft
+**Estado:** 🟡 **Implementado — pendiente de release.** Mergeado a `develop` el 2026-10-07. **No está en producción.** 64 de 68 ítems cumplidos; 4 criterios de aceptación requieren verificación manual o trabajo adicional
 
 **Sprint:** Sprint 4 (Pagos Programados)
 
-**Rama:** feature/pagos-programados
+**Rama:** feature/pagos-programados (ya mergeada a develop)
 
 **Issue:** —
 
 **Autor:** Gustavo Echeverría
 
-**Última actualización:** 2026-10-06
+**Última actualización:** 2026-10-16
 
 ---
 
+> **Estado real (2026-10-16).** Este spec declaraba "Draft" pese a tener 62 de 68 ítems
+> marcados y el código mergeado en `develop`. El trabajo de implementación está hecho. Lo
+> que falta:
+>
+> | # | Qué falta | Cómo se cierra |
+> |---|-----------|----------------|
+> | AC-013 | Verificar que desactivar conserva el registro | Prueba manual en UAT |
+> | AC-014 | Verificar que `/pagos` no corta la lista en 50 | Crear más de 50 y revisar |
+> | AC-017 | Verificar el countdown en pantalla chica | Correr E2E en el proyecto `mobile-chrome` |
+> | AC-018 | Verificar el aislamiento entre usuarios por RLS | E2E con dos usuarios distintos |
+>
+> Las 4 están **verificadas por código** pero no por prueba. Ninguna bloquea el release;
+> las 4 son deuda de QA.
+>
+> Además, este spec decidió eliminar por completo el módulo de pagos únicos (sección 11),
+> decisión que se aplicó en los commits `cba6370` y la migración `008`.
+
 ## 1. Resumen
 
-Permite registrar pagos recurrentes (arriendo, salary, cuotas) como plantillas permanentes
+Permite registrar pagos recurrentes (arriendo, sueldo, cuotas) como plantillas permanentes
 que se renuevan solas al vencer. El usuario sabe qué tiene pendiente y para cuándo, y al marcar
 un pago como realizado se genera automáticamente el registro real en `gastos` o `ingresos`.
 
@@ -538,8 +555,8 @@ columna cumple además la función de marcador de la última operación.
 - [x] TAREA-015a: Tests E2E en `e2e/pagos-programados.spec.ts` (10 casos: ciclo del pago,
       registro en gastos e ingresos, cuenta obligatoria, dashboard, transferencias)
 - [x] TAREA-015b: Script `supabase/scripts/limpiar-e2e.sql` para limpiar datos de prueba
-- [ ] TAREA-016: Proponer mensaje de commit (hook commit-message)
-- [ ] TAREA-017: Esperar aprobación del usuario para merge a develop
+- [x] TAREA-016: Proponer mensaje de commit (hook commit-message)
+- [x] TAREA-017: Esperar aprobación del usuario para merge a develop — ✅ Mergeada el 2026-10-07 (`6b3388a`). ⚠️ Falta la aprobación para `develop → main`
 
 ---
 

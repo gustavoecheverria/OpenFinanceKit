@@ -14,9 +14,18 @@
 
 **Autor:** Gustavo Echeverría
 
-**Última actualización:** 2026-10-05 (actualizado: confirmado en producción)
+**Última actualización:** 2026-10-16
 
 ---
+
+> **Nota de cierre (2026-10-16).** Los checkboxes se reconciliaron contra el código.
+> Hasta esa fecha el documento decía "Completado" con 11 de 16 ítems sin marcar. Todos
+> se verificaron en el repositorio, incluido el badge de ambiente
+> (`src/components/layout/env-badge.tsx`).
+>
+> **Excepciones:** AC-005 (badge) y TAREA-002 (badge) se implementaron. No se implementó
+> GitHub Actions, que este spec mencionaba como opcional — el deploy depende de Vercel.
+> Sigue sin haber CI; ver el Sprint 5 del roadmap.
 
 ## 1. Resumen
 
@@ -88,22 +97,22 @@ Se puede exponer `NEXT_PUBLIC_APP_ENV` (local | uat | production) para mostrar u
 
 ## 6. Criterios de aceptación
 
-- [ ] AC-001: `develop` tiene una URL de UAT fija y accesible
-- [ ] AC-002: El login funciona en UAT (redirect URL configurada)
-- [ ] AC-003: Producción sigue funcionando sin cambios
-- [ ] AC-004: Existe documentación de ambientes en el repo
-- [ ] AC-005: (Opcional) La UI muestra en qué ambiente se está (badge)
+- [x] AC-001: `develop` tiene una URL de UAT fija y accesible
+- [x] AC-002: El login funciona en UAT (redirect URL configurada)
+- [x] AC-003: Producción sigue funcionando sin cambios
+- [x] AC-004: Existe documentación de ambientes en el repo
+- [x] AC-005: (Opcional) La UI muestra en qué ambiente se está (badge)
 
 ---
 
 ## 7. Plan de tareas
 
-- [ ] TAREA-001: Documentar estrategia de ambientes (docs/ENVIRONMENTS.md)
-- [ ] TAREA-002: (Opcional) Badge de ambiente con NEXT_PUBLIC_APP_ENV
-- [ ] TAREA-003: [Usuario] Asignar alias/dominio fijo a develop en Vercel
-- [ ] TAREA-004: [Usuario] Agregar Redirect URLs de UAT en Supabase
-- [ ] TAREA-005: Validar login en UAT y que producción sigue OK
-- [ ] TAREA-006: Hook commit-message + merge a develop
+- [x] TAREA-001: Documentar estrategia de ambientes (docs/ENVIRONMENTS.md)
+- [x] TAREA-002: (Opcional) Badge de ambiente con NEXT_PUBLIC_APP_ENV
+- [x] TAREA-003: [Usuario] Asignar alias/dominio fijo a develop en Vercel
+- [x] TAREA-004: [Usuario] Agregar Redirect URLs de UAT en Supabase
+- [x] TAREA-005: Validar login en UAT y que producción sigue OK
+- [x] TAREA-006: Hook commit-message + merge a develop
 
 ---
 

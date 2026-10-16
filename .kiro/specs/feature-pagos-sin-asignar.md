@@ -4,17 +4,44 @@
 
 **Versión:** 0.1.0
 
-**Estado:** En Desarrollo
+**Estado:** ❌ **CANCELADO** — no implementado, no se implementará
 
-**Sprint:** Sprint 3 (Deuda Técnica)
+**Sprint:** Sprint 3 (cancelado)
 
-**Rama:** feature/pagos-sin-asignar
+**Rama:** — (nunca se creó)
 
 **Issue:** —
 
 **Autor:** Gustavo Echeverría
 
-**Última actualización:** 2026-10-05
+**Última actualización:** 2026-10-16
+
+---
+
+## ⛔ Cancelación
+
+**Este SDD está muerto. No lo implementes.**
+
+**Razón:** la tabla `pagos` fue **eliminada por completo** en la migración `008`
+(`008_eliminar_pagos_unicos.sql`), dentro de la v0.3.0. El módulo de pagos únicos fue
+retirado y reemplazado por `pagos_programados`.
+
+**Consecuencia:** el problema que este SDD resolvía —pagos con `cuenta_id = NULL` que
+hacían cuadrar mal la suma de saldos por cuenta— ya no puede existir. No hay tabla `pagos`
+de la cual queden registros huérfanos. Todo pago programado exige `cuenta_id` con
+`NOT NULL`.
+
+**Histórico:** además, la migración `002` (que agregaba `pagos.cuenta_id`) nunca llegó a
+aplicarse en la base real. El formulario de pagos fallaba siempre con *"No se pudo
+guardar el pago. Intenta de nuevo."*. No había pagos sin asignar porque no había pagos
+que se pudieran guardar.
+
+**Lo que queda en su lugar:** los pagos recurrentes se modelan con `pagos_programados`,
+diseñados en [`.kiro/specs/feature-pagos-programados.md`](./feature-pagos-programados.md).
+
+> El contenido de abajo se conserva sin modificar como registro de lo que se iba a
+> hacer y por qué. **Ninguna tarea ni criterio de aceptación de este documento está
+> vigente.**
 
 ---
 

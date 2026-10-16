@@ -1,28 +1,62 @@
 # OpenFinanceKit (OFK)
 
-**Versión:** 0.2.0 · **Estado:** Activo · **Autor:** Gustavo Echeverría
+**Versión en desarrollo:** 0.3.0 (pendiente de release) · **En producción:** 0.2.0
+**Estado:** Activo · **Autor:** Gustavo Echeverría · **Última actualización:** 2026-10-16
 
-Sistema de gestión financiera personal. Registra ingresos, gastos y pagos. Visualiza tu estado financiero en un dashboard. Accesible desde cualquier dispositivo como Progressive Web App (PWA).
+Sistema de gestión financiera personal. Registra ingresos, gastos, pagos programados y
+transferencias entre cuentas. Visualiza tu estado financiero en un dashboard.
+Accesible desde cualquier dispositivo como Progressive Web App (PWA).
+
+> **¿Quieres saber qué hay hoy?** Empieza por
+> [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md). Está al día y es el único punto
+> de entrada al estado real del proyecto.
 
 ---
 
 ## ¿Qué es esto?
 
-OpenFinanceKit comenzó como un archivo Excel y evolucionó a una aplicación web completa. Hoy tienes dos productos funcionando:
+OpenFinanceKit comenzó como un archivo Excel y evolucionó a una aplicación web completa.
 
 | Producto | Estado | Descripción |
 |---------|--------|-------------|
 | **OFK Web** | ✅ Activo | App web + PWA instalable en celular |
-| **OFK Excel** | ✅ Referencia | Archivo original de diseño (`product/excel/`) |
+| **OFK Excel** | 📦 Referencia | Archivo original de diseño (`product/excel/`), ya no se desarrolla |
+
+---
+
+## Estado actual
+
+### En producción (v0.2.0, rama `main`)
+
+- Autenticación: email magic link + Google OAuth
+- Dashboard con 6 indicadores y selector de mes
+- Registro y listado de ingresos y gastos
+- Configuración de categorías y cuentas
+- PWA instalable
+
+### En UAT (v0.3.0 pendiente, rama `develop`)
+
+Todo lo anterior, más:
+
+- **Pagos programados** — plantillas recurrentes (mensual/quincenal/semanal) que se
+  renuevan solas. Al marcar "pagado" generan el registro real en gastos o ingresos.
+- **Transferencias entre cuentas** — con "Efectivo" como una cuenta más de la lista
+- **Saldos por cuenta** y **detalle de cuenta**
+- **Edición de ingresos y gastos**
+
+`develop` está **31 commits adelante** de `main`. El release está pendiente de aprobación.
 
 ---
 
 ## La app en vivo
 
-| Ambiente | URL | Rama | Propósito |
-|----------|-----|------|-----------|
-| **Producción** | URL de Vercel (main) | `main` | Versión estable |
-| **UAT** | URL de Vercel (develop) | `develop` | Versión de pruebas y mejoras |
+| Ambiente | Rama | Propósito |
+|----------|------|-----------|
+| **Producción** | `main` | Versión estable (v0.2.0) |
+| **UAT** | `develop` | Lo que se está construyendo (v0.3.0) |
+| **Local** | `feature/*` | `npm run dev` |
+
+URLs y detalles: [`docs/ENVIRONMENTS.md`](docs/ENVIRONMENTS.md)
 
 ---
 
@@ -32,13 +66,17 @@ OpenFinanceKit comenzó como un archivo Excel y evolucionó a una aplicación we
 |------|-----------|---------|
 | Framework | Next.js 15 (App Router) | Full-stack, SSR, Server Actions |
 | Lenguaje | TypeScript 5 | Tipos estrictos, menos bugs |
-| Estilos | Tailwind CSS 4 + shadcn/ui | Mobile-first, componentes accesibles |
-| Base de datos | Supabase (PostgreSQL) | DB + Auth + API en un servicio gratuito |
-| ORM | Drizzle ORM | Queries type-safe |
+| Estilos | Tailwind CSS 4 | Mobile-first |
+| Base de datos | Supabase (PostgreSQL) | DB + Auth en un solo servicio |
+| Acceso a datos | `@supabase/supabase-js` + `@supabase/ssr` | Queries directas, sin ORM |
 | Autenticación | Supabase Auth | Email magic link + Google OAuth |
-| Deploy | Vercel | CI/CD automático desde Git |
-| Tests unitarios | Vitest | Para lógica del Motor financiero |
-| Tests E2E | Playwright | Para flujos de usuario completos |
+| Despliegue | Vercel | Deploy automático desde Git |
+| Tests unitarios | Vitest | Lógica del Motor |
+| Tests E2E | Playwright | Flujos de usuario completos |
+
+> **Nota:** este proyecto **no usa Drizzle ORM ni shadcn/ui**. Ambos aparecen en
+> versiones anteriores de este README y nunca estuvieron en `package.json`. Los
+> componentes son propios, en `src/components/`.
 
 ---
 
@@ -47,35 +85,33 @@ OpenFinanceKit comenzó como un archivo Excel y evolucionó a una aplicación we
 ```
 OpenFinanceKit/
 ├── apps/
-│   └── web/                    ← La app web (Next.js)
+│   └── web/                       ← La app web (Next.js)
 │       ├── src/
-│       │   ├── app/            ← Páginas y rutas (App Router)
-│       │   │   ├── (app)/      ← Páginas protegidas (requieren login)
-│       │   │   │   ├── dashboard/  ← Los 6 indicadores financieros
-│       │   │   │   ├── ingresos/   ← Registro y lista de ingresos
-│       │   │   │   ├── gastos/     ← Registro y lista de gastos
-│       │   │   │   ├── pagos/      ← Pagos programados
-│       │   │   │   └── config/     ← Categorías y cuentas
-│       │   │   ├── auth/       ← Callback de autenticación
-│       │   │   └── login/      ← Pantalla de login
-│       │   ├── components/     ← Componentes reutilizables
+│       │   ├── app/
+│       │   │   ├── (app)/         ← Páginas protegidas (requieren login)
+│       │   │   │   ├── dashboard/     ← Los 6 indicadores financieros
+│       │   │   │   ├── ingresos/      ← Listado y alta de ingresos
+│       │   │   │   ├── gastos/        ← Listado y alta de gastos
+│       │   │   │   ├── pagos/         ← Pagos programados y vencimientos
+│       │   │   │   ├── cuentas/       ← Detalle de cuenta y transferencias
+│       │   │   │   └── config/        ← Categorías y cuentas
+│       │   │   ├── auth/callback/     ← Callback de autenticación
+│       │   │   └── login/             ← Pantalla de login
+│       │   ├── components/        ← Componentes por módulo
 │       │   └── lib/
-│       │       ├── motor/      ← Lógica de cálculos financieros
-│       │       └── supabase/   ← Cliente de base de datos
-│       ├── e2e/                ← Tests E2E (Playwright)
-│       ├── supabase/           ← Migraciones de base de datos
-│       ├── DEPLOY.md           ← Guía de deploy a Vercel
-│       └── DEVELOPMENT.md      ← Setup en dispositivo nuevo
-├── docs/                       ← Documentación técnica
-│   ├── architecture/           ← Arquitectura del sistema
-│   ├── decisions/              ← Decisiones técnicas (ADRs)
-│   └── qa/istqb/               ← Estándar de pruebas ISTQB
-├── qa/                         ← Evidencia de pruebas
-│   ├── evidence/               ← Screenshots y videos (generado)
-│   └── reports/                ← Reportes HTML de Playwright (generado)
-├── product/excel/              ← OFK Excel original (referencia)
-└── .kiro/                      ← Configuración del agente IA
-    └── steering/               ← Instrucciones de los agentes
+│       │       ├── motor/         ← Cálculos financieros (con tests)
+│       │       └── supabase/      ← Clientes y middleware de Supabase
+│       ├── e2e/                   ← Tests E2E (Playwright)
+│       ├── supabase/
+│       │   ├── migrations/        ← SQL de la base de datos
+│       │   └── scripts/           ← Respaldo y limpieza de datos de prueba
+│       ├── DEPLOY.md              ← Guía de deploy a Vercel
+│       └── DEVELOPMENT.md         ← Setup en dispositivo nuevo
+├── docs/                          ← Documentación técnica (empieza por PROJECT_STATUS.md)
+├── qa/                            ← Evidencia y reportes de pruebas
+├── product/excel/                 ← OFK Excel original (referencia histórica)
+├── scripts/                       ← Automatización en Python
+└── .kiro/                         ← Configuración de los agentes IA
 ```
 
 ---
@@ -86,22 +122,15 @@ OpenFinanceKit/
 
 - Node.js 20+
 - Git
-- Cuenta en Supabase (gratuita)
+- Una instancia de Supabase (el plan gratuito sirve)
 
 ### Pasos
 
 ```bash
-# 1. Clonar el repositorio
 git clone git@github.com:gustavoecheverria/OpenFinanceKit.git
-cd OpenFinanceKit
+cd OpenFinanceKit/apps/web
 
-# 2. Ir a la app web
-cd apps/web
-
-# 3. Instalar dependencias
 npm install
-
-# 4. Copiar el archivo de variables de entorno
 cp .env.local.example .env.local
 ```
 
@@ -113,12 +142,15 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=tu-anon-key
 NEXT_PUBLIC_APP_ENV=local
 ```
 
+Aplica las migraciones de la base de datos siguiendo
+[`apps/web/supabase/migrations/README.md`](apps/web/supabase/migrations/README.md),
+y luego:
+
 ```bash
-# 5. Levantar el servidor de desarrollo
 npm run dev
 ```
 
-La app queda disponible en `http://localhost:3000`.
+La app queda en `http://localhost:3000`.
 
 > Guía completa de setup: `apps/web/DEVELOPMENT.md`
 
@@ -133,7 +165,7 @@ npm run dev          # Servidor de desarrollo
 npm run build        # Build de producción
 npm run start        # Servir el build de producción
 npm run lint         # Verificar calidad de código
-npm run test         # Tests unitarios (Motor financiero)
+npm run test         # Tests unitarios del Motor
 npm run test:e2e     # Tests E2E con Playwright
 ```
 
@@ -141,64 +173,43 @@ npm run test:e2e     # Tests E2E con Playwright
 
 ## Cómo funciona la app
 
-El flujo de datos sigue esta arquitectura:
-
 ```
 Configuración (categorías, cuentas)
         ↓
-Ingresos / Gastos / Pagos  ← el usuario registra aquí
+Ingresos / Gastos / Pagos programados / Transferencias   ← el usuario registra aquí
         ↓
-Motor (calculations.ts)    ← todos los cálculos viven aquí
+Motor (src/lib/motor/)              ← todos los cálculos viven aquí
         ↓
-Dashboard                  ← solo visualiza, no calcula
+Dashboard                              ← solo visualiza, no calcula
 ```
 
 **Reglas que no se rompen nunca:**
+
 - Solo el Motor calcula — las páginas de captura solo guardan datos
 - Solo Configuración es fuente de datos maestros (categorías, cuentas)
 - El Dashboard nunca almacena información propia
 
+Detalle: [`docs/BUSINESS_RULES.md`](docs/BUSINESS_RULES.md)
+
 ---
 
-## Cómo hacer cambios sin IA
+## Base de datos
 
-### Agregar una nueva pantalla
+| Tabla | Contenido |
+|-------|-----------|
+| `categorias` | Tipos de ingreso/gasto del usuario |
+| `cuentas` | Cuentas con saldo inicial |
+| `ingresos` | Movimientos de ingreso |
+| `gastos` | Movimientos de gasto |
+| `pagos_programados` | Plantillas de pagos recurrentes |
+| `transferencias` | Movimientos de saldo entre cuentas |
 
-1. Crear la carpeta en `src/app/(app)/mi-pantalla/`
-2. Crear `page.tsx` como Server Component
-3. Si necesita formulario, crear `actions.ts` con `"use server"` al inicio
-4. Agregar el link de navegación en `src/components/layout/bottom-nav.tsx`
+Todas tienen **Row Level Security** activo: cada usuario solo ve sus propios datos.
 
-### Agregar un campo nuevo a una tabla
+> La tabla `pagos` (pagos únicos) existió entre v0.2.0 y v0.3.0 y fue eliminada.
+> Ver la migración `008_eliminar_pagos_unicos.sql`.
 
-1. Crear un archivo en `supabase/migrations/` con el SQL del `ALTER TABLE`
-2. Ejecutar la migración en Supabase Dashboard → SQL Editor
-3. Actualizar el schema TypeScript en `src/db/schema.ts` si existe
-4. Actualizar el formulario y la action correspondiente
-
-### Modificar un cálculo del Motor
-
-El Motor vive en `src/lib/motor/calculations.ts`. Cada función tiene tests en `calculations.test.ts`. Al modificar:
-
-1. Editar la función en `calculations.ts`
-2. Ejecutar `npm run test` para verificar que no se rompió nada
-3. Si el resultado cambia, actualizar el test correspondiente
-
-### Correr los tests E2E y ver evidencia
-
-```bash
-# Correr en modo visual (ves el navegador)
-npx playwright test --headed --project=chromium
-
-# Ver la interfaz completa de Playwright
-npx playwright test --ui
-
-# Ver el reporte HTML tras correr los tests
-# Abrir: qa/reports/playwright/index.html
-
-# Ver screenshots paso a paso
-# Carpeta: qa/evidence/steps/
-```
+Diccionario completo: [`docs/DATA_DICTIONARY.md`](docs/DATA_DICTIONARY.md)
 
 ---
 
@@ -210,62 +221,41 @@ main       ← Producción. Solo recibe merges aprobados.
         └── feature/nombre ← Una rama por cada cambio.
 ```
 
-### Flujo para un cambio
-
 ```bash
-# 1. Partir siempre desde develop
-git checkout develop
-git pull origin develop
-
-# 2. Crear tu rama
+git checkout develop && git pull origin develop
 git checkout -b feature/mi-cambio
 
-# 3. Hacer los cambios, commitear
+# ... hacer los cambios ...
+
 git add archivo.ts
 git commit -m "feat(modulo): descripción del cambio"
-
-# 4. Subir la rama
 git push -u origin feature/mi-cambio
 
-# 5. Cuando esté listo, merge a develop
 git checkout develop
 git merge feature/mi-cambio --no-ff
 git push origin develop
 ```
 
-### Formato de commits
+### Commits
 
 ```
 tipo(módulo): descripción en español
 
-Tipos: feat | fix | docs | test | chore | refactor
+Tipos:  feat | fix | docs | test | chore | refactor
+Alcance: web | pagos | motor | auth | config | qa | docs | steering | spec | migrations
 ```
 
 Ejemplos:
 ```
-feat(gastos): agregar campo de etiquetas
+feat(web): agregar filtro por categoría en gastos
 fix(motor): corregir cálculo de % gastado
-docs(readme): actualizar guía de comandos
-test(e2e): agregar test de flujo de pagos
+docs(spec): agregar SDD feature-dashboard-v2
 ```
 
----
-
-## Base de datos
-
-La DB vive en Supabase. Las tablas son:
-
-| Tabla | Contenido |
-|-------|-----------|
-| `categorias` | Tipos de ingreso/gasto del usuario |
-| `cuentas` | Cuentas con saldo inicial |
-| `ingresos` | Registros de ingresos |
-| `gastos` | Registros de gastos |
-| `pagos` | Pagos programados con estado |
-
-Todas las tablas tienen **Row Level Security (RLS)** activo: cada usuario solo ve sus propios datos.
-
-El schema completo está en `apps/web/supabase/migrations/001_initial_schema.sql`.
+**Regla del proyecto:** la documentación se actualiza **en el mismo commit** que el
+código que la cambia. Si agregas una tabla, actualiza el diccionario de datos; si
+cambias un módulo, actualiza `PROJECT_STATUS.md`. Ver
+[`.kiro/steering/workflow.md`](.kiro/steering/workflow.md).
 
 ---
 
@@ -273,22 +263,39 @@ El schema completo está en `apps/web/supabase/migrations/001_initial_schema.sql
 
 - Cada `git push` a `develop` → deploy automático a **UAT** en Vercel
 - Cada `git push` a `main` → deploy automático a **Producción** en Vercel
-- No hay que hacer nada manual — Vercel lo hace solo
+- No hay pasos manuales. Vercel lo hace solo
+- **No hay CI con tests.** `.github/workflows/` está vacío: hoy nadie corre la suite
+  automáticamente antes de un merge
 
 > Guía detallada: `apps/web/DEPLOY.md`
 
 ---
 
-## Documentación técnica
+## Documentación
 
-| Documento | Dónde |
-|-----------|-------|
-| Arquitectura del sistema | `docs/architecture/ARCHITECTURE.md` |
-| Reglas de negocio | `docs/BUSINESS_RULES.md` |
-| Decisiones técnicas (ADRs) | `docs/decisions/DECISIONS.md` |
+| Documento | Qué te dice |
+|-----------|-------------|
+| [Estado del proyecto](docs/PROJECT_STATUS.md) | **Empieza aquí.** Qué hay, en qué ambiente, qué falta |
+| [Changelog](docs/changelog/CHANGELOG.md) | Qué cambió en cada versión |
+| [Reglas de negocio](docs/BUSINESS_RULES.md) | Las reglas del dominio que el código respeta |
+| [Diccionario de datos](docs/DATA_DICTIONARY.md) | Cada tabla y cada campo |
+| [Arquitectura](docs/architecture/ARCHITECTURE.md) | Cómo encaja todo |
+| [Ambientes](docs/ENVIRONMENTS.md) | URLs y configuración por ambiente |
+| [Roadmap](docs/roadmap/ROADMAP.md) | Qué se hizo y qué sigue |
+| [Decisiones (ADRs)](docs/decisions/DECISIONS.md) | Por qué se decidió lo que se decidió |
 | Setup en dispositivo nuevo | `apps/web/DEVELOPMENT.md` |
 | Guía de deploy | `apps/web/DEPLOY.md` |
-| Roadmap | `docs/roadmap/ROADMAP.md` |
+| Specs de features (SDD) | `.kiro/specs/` — diseño de cada feature |
+
+---
+
+## Cómo colaborar
+
+1. Lee [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md) para saber dónde está el proyecto.
+2. Lee [`CONTRIBUTING.md`](CONTRIBUTING.md).
+3. Todo cambio de código arranca en una rama `feature/*` desde `develop`.
+4. Los cambios de datos van en una migración nueva en `apps/web/supabase/migrations/`.
+5. La documentación se actualiza en el mismo commit.
 
 ---
 
