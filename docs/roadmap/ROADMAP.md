@@ -75,7 +75,7 @@ Cancelado porque la tabla `pagos` fue eliminada por completo en la migración `0
 
 ---
 
-### Sprint 4 — Pagos programados y transferencias · octubre 2026 · ✅ Completado, sin liberar
+### Sprint 4 — Pagos programados y transferencias · octubre 2026 · ✅ Completado y liberado (v0.3.0, 2026-10-17)
 
 | Entregable | Estado |
 |------------|--------|
@@ -93,11 +93,11 @@ Cancelado porque la tabla `pagos` fue eliminada por completo en la migración `0
 | Iconos PNG del manifiesto PWA | ✅ |
 | 64 tests unitarios + 22 tests E2E nuevos | ✅ |
 
-**Resultado:** v0.3.0, **pendiente de release**. 31 commits en `develop` sin llegar a
-`main`.
+**Resultado:** v0.3.0, liberado a `main` y producción el 2026-10-17 (36 commits, tag
+`v0.3.0`).
 
-**SDD:** `.kiro/specs/feature-pagos-programados.md` (4 criterios de aceptación abiertos,
-ver `PROJECT_STATUS.md`)
+**SDD:** `.kiro/specs/feature-pagos-programados.md` (queda 1 criterio de aceptación
+abierto, AC-018, ver `PROJECT_STATUS.md`)
 
 ---
 
@@ -171,10 +171,10 @@ el producto**, y varios entregables (CI, GitHub Actions) nunca se hicieron.
 
 | Riesgo | Impacto | Estado |
 |--------|---------|--------|
-| `develop` muy adelantado de `main` | Acumulación de trabajo validado y no publicado | 🔴 31 commits |
+| `develop` muy adelantado de `main` | Acumulación de trabajo validado y no publicado | 🟢 Resuelto con v0.3.0 (2026-10-17) |
 | Sin CI | Un merge puede romper producción sin que nadie lo note | 🔴 |
 | Documentación desalineada del código | Un colaborador nuevo lee cosas falsas | 🟡 Mitigado el 2026-10-16 con el checklist de mantenimiento |
-| Release sin tag | `v0.2.0` existe pero no hay tag de git que lo señale | 🟡 Se corrige al liberar v0.3.0 |
+| Release sin tag | `v0.2.0` existe pero no hay tag de git que lo señale | 🟢 Resuelto: tags `v0.2.0` y `v0.3.0` |
 | Sin cobertura de código | No se sabe qué partes están realmente testeadas | 🟡 |
 | Un solo desarrollador | Sin revisión de código entre personas | 🟡 |
 

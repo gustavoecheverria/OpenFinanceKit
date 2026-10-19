@@ -1,5 +1,5 @@
 -- OpenFinanceKit — Migración 007
--- Release: v0.3.0 (pendiente)
+-- Release: v0.3.0
 -- Fecha: 2026-10-06
 -- Descripción: Quita 'Diario' de las recurrencias permitidas en
 --              pagos_programados.

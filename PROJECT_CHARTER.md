@@ -71,8 +71,8 @@ Todos los módulos comparten las mismas **reglas de negocio** documentadas en
 | Elemento | Descripción |
 |----------|-------------|
 | Módulo activo | **OFK Web** |
-| Producto en producción | v0.2.0 (rama `main`) |
-| Producto en desarrollo | v0.3.0 (rama `develop`, pendiente de release) |
+| Producto en producción | v0.3.0 (rama `main`) |
+| Producto en desarrollo | v0.3.x (rama `develop`) |
 | Stack | Next.js 15 + TypeScript 5 + Tailwind 4 + Supabase + Vercel |
 | Usuario objetivo | Persona individual que quiere entender sus finanzas |
 | Repositorio | https://github.com/gustavoecheverria/OpenFinanceKit |

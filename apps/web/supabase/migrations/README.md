@@ -75,7 +75,8 @@ Detalle campo por campo: `docs/DATA_DICTIONARY.md`.
 ## Al agregar una migración nueva
 
 1. Nombre: `0NN_descripcion_corta.sql` (tres dígitos).
-2. Encabezado en español con `Release: vX.Y.Z (pendiente)`, `Fecha` y `Descripción`.
+2. Encabezado en español con `Release: vX.Y.Z`, `Fecha` y `Descripción`. Si el release
+   todavía no está publicado, se le agrega `(pendiente)` y se quita al liberarlo.
 3. **Solo** `IF NOT EXISTS` / `IF EXISTS`. La app ya está desplegada en UAT y
    producción; una migración que falle a mitad de camino deja la base rota.
 4. Si la migración elimina datos, documenta en el encabezado **cómo recuperarlos**.

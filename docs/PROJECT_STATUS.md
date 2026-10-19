@@ -1,23 +1,22 @@
 # OpenFinanceKit — Estado del Proyecto
 
-**Última actualización:** 2026-10-16
-**Rama del documento:** `develop`
+**Última actualización:** 2026-10-19
+**Rama del documento:** `main`
 
 | | Versión | Rama | Estado |
 |---|---------|------|--------|
-| **Producción** | v0.2.0 | `main` | 🟢 Estable — desplegado el 2026-09-02 |
-| **UAT** | v0.3.0 *(pendiente)* | `develop` | 🟡 31 commits adelante de `main`, sin liberar |
+| **Producción** | v0.3.0 | `main` | 🟢 Estable — desplegado el 2026-10-17 |
+| **UAT** | v0.3.0 | `develop` | 🟢 Al día con producción |
 
 ---
 
 ## TL;DR para quien llega nuevo
 
 - La app web funciona y está en producción desde el **2 de septiembre**.
-- Entre septiembre y hoy se desarrolló en `develop` un módulo grande: **pagos
-  programados** y **transferencias entre cuentas**, más saldos por cuenta, detalle de
-  cuenta y edición de ingresos/gastos.
-- **Ese trabajo todavía no está en producción.** Falta aprobar el release
-  `develop → main`.
+- El **17 de octubre** se liberó **v0.3.0**: pagos programados, transferencias entre
+  cuentas, saldos por cuenta, detalle de cuenta y edición de ingresos/gastos.
+- Queda **un solo criterio de aceptación abierto**, AC-018 (aislamiento RLS con dos
+  usuarios). No bloquea el release.
 - El proyecto es de una sola persona con un agente de IA (Kiro) ordenando el flujo.
 - La documentación de este repo se mantuvo al día recién el 2026-10-16. Si algo de lo
   que lees contradice el código, el código manda: ver
@@ -27,7 +26,7 @@
 
 ## Qué hay hoy, módulo por módulo
 
-### En producción (v0.2.0)
+### En producción (v0.3.0)
 
 | Módulo | Ruta | Estado |
 |--------|------|--------|
@@ -36,17 +35,12 @@
 | Ingresos | `/ingresos` | 🟢 Alta y listado |
 | Gastos | `/gastos` | 🟢 Alta, listado y filtros |
 | Configuración | `/config` | 🟢 Categorías y cuentas |
+| Pagos programados | `/pagos` | 🟢 Lista, countdown, vencimientos |
+| Crear pago programado | `/pagos/programado/nuevo` | 🟢 |
+| Detalle de cuenta | `/cuentas/[id]` | 🟢 |
+| Transferir entre cuentas | `/cuentas/transferir` | 🟢 |
+| Editar ingreso / gasto | `/ingresos/nuevo`, `/gastos/nuevo` | 🟢 Modal centrado |
 | PWA | — | 🟢 Instalable, con iconos PNG |
-
-### Solo en UAT (v0.3.0 pendiente)
-
-| Módulo | Ruta | Estado |
-|--------|------|--------|
-| Pagos programados | `/pagos` | 🟡 Lista, countdown, vencimientos |
-| Crear pago programado | `/pagos/programado/nuevo` | 🟡 |
-| Detalle de cuenta | `/cuentas/[id]` | 🟡 |
-| Transferir entre cuentas | `/cuentas/transferir` | 🟡 |
-| Editar ingreso / gasto | `/ingresos/nuevo`, `/gastos/nuevo` | 🟡 Modal centrado |
 
 ### Retirado
 
@@ -60,8 +54,8 @@
 
 | Ambiente | Rama | URL | Versión |
 |----------|------|-----|---------|
-| Producción | `main` | https://open-finance-kit.vercel.app | v0.2.0 |
-| UAT | `develop` | https://openfinancekit-uat.vercel.app | v0.3.0 (pendiente) |
+| Producción | `main` | https://open-finance-kit.vercel.app | v0.3.0 |
+| UAT | `develop` | https://openfinancekit-uat.vercel.app | v0.3.0 |
 | Local | cualquiera | `http://localhost:3000` | — |
 
 Ambos despliegues salen de Vercel automáticamente en cada push. Detalle en
@@ -74,7 +68,7 @@ Ambos despliegues salen de Vercel automáticamente en cada push. Detalle en
 | Suite | Herramienta | Cantidad | Estado |
 |-------|-------------|----------|--------|
 | Unitarios | Vitest | 102 tests, 19 grupos | 🟢 Pasan |
-| E2E | Playwright | 27 tests, 6 grupos | 🟢 Pasan |
+| E2E | Playwright | 24 tests, 2 proyectos (48 ejecuciones) | 🟢 Pasan |
 
 - **Unitarios** cubren el Motor (`src/lib/motor/`): cálculos de saldos, fechas de
   vencimiento y estados de pagos programados.
@@ -95,23 +89,23 @@ Ambos despliegues salen de Vercel automáticamente en cada push. Detalle en
 
 ## Qué falta
 
-### Para liberar v0.3.0
+### Después de v0.3.0
 
 | # | Tarea | Prioridad |
 |---|-------|-----------|
-| 1 | Aprobar y ejecutar el merge `develop → main` | 🔴 Alta |
-| 2 | Correr los 4 criterios de aceptación abiertos de pagos programados (ver abajo) | 🟡 Media |
-| 3 | Crear el tag `git tag v0.3.0` y la GitHub Release | 🟡 Media |
-| 4 | Actualizar `docs/ENVIRONMENTS.md` si cambiaron las URLs de Vercel | 🟢 Baja |
+| 1 | Cerrar AC-018: aislamiento RLS con dos usuarios | 🟡 Media |
+| 2 | Montar CI (lint + tests + E2E) — Sprint 5 | 🟡 Media |
+| 3 | Actualizar capturas de pagos programados y transferencias | 🟢 Baja |
+| 4 | Revisar `docs/ENVIRONMENTS.md` si cambian las URLs de Vercel | 🟢 Baja |
 
-### Criterios de aceptación abiertos de pagos programados
+### Criterios de aceptación de pagos programados
 
-| ID | Qué falta | Cómo se cierra |
-|----|-----------|----------------|
-| AC-013 | Desactivar un pago no lo borra | Prueba manual en UAT |
-| AC-014 | La lista no se corta en 50 | Crear más de 50 y revisar |
-| AC-017 | Countdown bien en móvil | Correr el E2E en el proyecto `mobile-chrome` |
-| AC-018 | Aislamiento entre usuarios | E2E con dos usuarios distintos |
+| ID | Estado | Evidencia |
+|----|--------|-----------|
+| AC-013 | ✅ Cerrado | E2E: la fila sigue en la DB con `activo = false` |
+| AC-014 | ✅ Cerrado | E2E: se siembran 51 pagos y se listan los 51 |
+| AC-017 | ✅ Cerrado | E2E en `mobile-chrome`: sin scroll horizontal y botón en viewport |
+| AC-018 | ⏳ Abierto | Falta E2E con dos usuarios y un segundo `storageState` |
 
 ### Backlog abierto
 
@@ -131,10 +125,10 @@ Ambos despliegues salen de Vercel automáticamente en cada push. Detalle en
 ## Ramas
 
 ```
-main (producción, v0.2.0, 2026-09-02)
-  ↑  ← 31 commits sin liberar
+main (producción, v0.3.0, 2026-10-17)
+  ↑  ← release v0.3.0
   │
-develop (UAT, v0.3.0)
+develop (UAT)
   ├─ merge feature/pagos-programados      (2026-10-07)
   ├─ merge bugfix/iconos-pwa              (2026-10-06)
   ├─ merge feature/editar-ingresos-gastos (2026-10-05)
@@ -145,8 +139,7 @@ develop (UAT, v0.3.0)
 
 Todas las `feature/*` están mergeadas. No hay trabajo encerrado en ramas.
 
-**Solo existe el tag `v0.1.0`.** v0.2.0 se liberó sin tag. Esto se corrige al liberar
-v0.3.0.
+**Tags existentes:** `v0.1.0`, `v0.2.0` (recuperado) y `v0.3.0` (2026-10-17).
 
 ---
 

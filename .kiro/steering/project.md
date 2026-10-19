@@ -8,8 +8,8 @@ inclusion: always
 
 - **Nombre:** OpenFinanceKit
 - **Acrónimo:** OFK
-- **Versión publicada:** v0.2.0 (en `main`)
-- **Versión en desarrollo:** v0.3.0 (en `develop`, pendiente de release)
+- **Versión publicada:** v0.3.0 (en `main`)
+- **Versión en desarrollo:** v0.3.x (en `develop`, sin release abierto)
 - **Rama activa:** develop (integración)
 - **Repositorio:** https://github.com/gustavoecheverria/OpenFinanceKit
 - **Rama estable:** `main`
@@ -37,14 +37,14 @@ OpenFinanceKit
 └── OFK Automation   ← Futuro
 ```
 
-## Estado actual (2026-10-16)
+## Estado actual (2026-10-19)
 
 | | Versión | Rama | Estado |
 |---|---------|------|--------|
-| Producción | v0.2.0 | `main` | 🟢 Estable desde 2026-09-02 |
-| UAT | v0.3.0 | `develop` | 🟡 31 commits adelante, sin liberar |
+| Producción | v0.3.0 | `main` | 🟢 Estable desde 2026-10-17 |
+| UAT | v0.3.0 | `develop` | 🟢 Al día con producción |
 
-**Siguiente paso del proyecto:** aprobar el release `develop → main` de v0.3.0.
+**Siguiente paso del proyecto:** cerrar AC-018 (aislamiento RLS con dos usuarios) y montar CI.
 
 Fuente de verdad para el estado: **`docs/PROJECT_STATUS.md`**. Si este archivo de
 steering discrepa de ese documento, manda `PROJECT_STATUS.md`.

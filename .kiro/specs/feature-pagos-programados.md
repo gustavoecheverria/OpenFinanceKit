@@ -4,7 +4,7 @@
 
 **Versión:** 0.1.0
 
-**Estado:** 🟡 **Implementado — pendiente de release.** Mergeado a `develop` el 2026-10-07. **No está en producción.** 64 de 68 ítems cumplidos; 4 criterios de aceptación requieren verificación manual o trabajo adicional
+**Estado:** 🟡 **Implementado — 67 de 68 ítems cumplidos.** Mergeado a `develop` el 2026-10-07 y liberado a producción en v0.3.0 el 2026-10-17. Queda 1 criterio de aceptación abierto (AC-018: aislamiento RLS con dos usuarios)
 
 **Sprint:** Sprint 4 (Pagos Programados)
 
@@ -14,23 +14,21 @@
 
 **Autor:** Gustavo Echeverría
 
-**Última actualización:** 2026-10-16
+**Última actualización:** 2026-10-19
 
 ---
 
-> **Estado real (2026-10-16).** Este spec declaraba "Draft" pese a tener 62 de 68 ítems
-> marcados y el código mergeado en `develop`. El trabajo de implementación está hecho. Lo
-> que falta:
+> **Estado real (2026-10-19).** El trabajo de implementación está hecho y en producción
+> desde v0.3.0. De los 4 criterios que quedaban abiertos, 3 se cerraron con tests E2E:
 >
-> | # | Qué falta | Cómo se cierra |
-> |---|-----------|----------------|
-> | AC-013 | Verificar que desactivar conserva el registro | Prueba manual en UAT |
-> | AC-014 | Verificar que `/pagos` no corta la lista en 50 | Crear más de 50 y revisar |
-> | AC-017 | Verificar el countdown en pantalla chica | Correr E2E en el proyecto `mobile-chrome` |
-> | AC-018 | Verificar el aislamiento entre usuarios por RLS | E2E con dos usuarios distintos |
+> | # | Estado | Evidencia |
+> |---|--------|-----------|
+> | AC-013 | ✅ Cerrado | `pagos-programados.spec.ts`: verifica que la fila sigue en la DB con `activo = false` |
+> | AC-014 | ✅ Cerrado | `pagos-programados.spec.ts`: siembra 51 pagos y verifica que se listan los 51 |
+> | AC-017 | ✅ Cerrado | `pagos-programados.spec.ts` (proyecto `mobile-chrome`): sin scroll horizontal y botón dentro del viewport |
+> | AC-018 | ⏳ Abierto | Falta E2E con dos usuarios y un segundo `storageState` |
 >
-> Las 4 están **verificadas por código** pero no por prueba. Ninguna bloquea el release;
-> las 4 son deuda de QA.
+> AC-018 es el único criterio pendiente. No bloquea el release: v0.3.0 ya está en producción.
 >
 > Además, este spec decidió eliminar por completo el módulo de pagos únicos (sección 11),
 > decisión que se aplicó en los commits `cba6370` y la migración `008`.
@@ -494,14 +492,14 @@ columna cumple además la función de marcador de la última operación.
       empieza a contar hacia el próximo vencimiento
 - [x] **AC-011f:** Al entrar en la ventana de 5 días, el pago pasa a "Alerta"
 - [x] **AC-012:** El dashboard muestra los pagos que vencen en los próximos 5 días con su cuenta
-- [ ] **AC-013:** Un pago programado desactivado no aparece pero se conserva en la DB
-      _(pendiente: requiere prueba manual)_
-- [ ] **AC-014:** La lista `/pagos` no tiene límite de 50 registros para los programados
-      _(verificado por código: `obtenerPagosProgramados()` no aplica `.limit()`; falta prueba con >50)_
+- [x] **AC-013:** Un pago programado desactivado no aparece pero se conserva en la DB
+      _(E2E: `pagos-programados.spec.ts` verifica la fila con `activo = false`)_
+- [x] **AC-014:** La lista `/pagos` no tiene límite de 50 registros para los programados
+      _(E2E: siembra 51 pagos por `service_role` y verifica que aparecen los 51)_
 - [x] **AC-015:** `npm run test` pasa con los casos de `calcularProximaVencimiento` incluidos
 - [x] **AC-016:** `npx tsc --noEmit` sin errores
-- [ ] **AC-017:** Mobile-first: el countdown y los botones se leen bien en pantalla chica
-      _(pendiente: requiere prueba en viewport móvil)_
+- [x] **AC-017:** Mobile-first: el countdown y los botones se leen bien en pantalla chica
+      _(E2E en `mobile-chrome`: sin scroll horizontal y botón dentro del viewport)_
 - [ ] **AC-018:** Un usuario no puede ver ni modificar pagos programados de otro usuario (RLS).
       **Vigente solo en esta versión.** Ver sección 9 para el modelo de datos compartido futuro
       _(políticas RLS verificadas en la base: 8 políticas activas. Falta test E2E con 2 usuarios)_

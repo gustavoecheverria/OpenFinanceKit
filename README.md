@@ -1,7 +1,7 @@
 # OpenFinanceKit (OFK)
 
-**Versión en desarrollo:** 0.3.0 (pendiente de release) · **En producción:** 0.2.0
-**Estado:** Activo · **Autor:** Gustavo Echeverría · **Última actualización:** 2026-10-16
+**Versión en desarrollo:** 0.3.x · **En producción:** 0.3.0
+**Estado:** Activo · **Autor:** Gustavo Echeverría · **Última actualización:** 2026-10-19
 
 Sistema de gestión financiera personal. Registra ingresos, gastos, pagos programados y
 transferencias entre cuentas. Visualiza tu estado financiero en un dashboard.
@@ -26,25 +26,17 @@ OpenFinanceKit comenzó como un archivo Excel y evolucionó a una aplicación we
 
 ## Estado actual
 
-### En producción (v0.2.0, rama `main`)
+### En producción (v0.3.0, rama `main`)
 
 - Autenticación: email magic link + Google OAuth
 - Dashboard con 6 indicadores y selector de mes
-- Registro y listado de ingresos y gastos
+- Registro y listado de ingresos y gastos, con edición
 - Configuración de categorías y cuentas
-- PWA instalable
-
-### En UAT (v0.3.0 pendiente, rama `develop`)
-
-Todo lo anterior, más:
-
 - **Pagos programados** — plantillas recurrentes (mensual/quincenal/semanal) que se
   renuevan solas. Al marcar "pagado" generan el registro real en gastos o ingresos.
 - **Transferencias entre cuentas** — con "Efectivo" como una cuenta más de la lista
 - **Saldos por cuenta** y **detalle de cuenta**
-- **Edición de ingresos y gastos**
-
-`develop` está **31 commits adelante** de `main`. El release está pendiente de aprobación.
+- PWA instalable
 
 ---
 
@@ -52,8 +44,8 @@ Todo lo anterior, más:
 
 | Ambiente | Rama | Propósito |
 |----------|------|-----------|
-| **Producción** | `main` | Versión estable (v0.2.0) |
-| **UAT** | `develop` | Lo que se está construyendo (v0.3.0) |
+| **Producción** | `main` | Versión estable (v0.3.0) |
+| **UAT** | `develop` | Próximo release (v0.3.x) |
 | **Local** | `feature/*` | `npm run dev` |
 
 URLs y detalles: [`docs/ENVIRONMENTS.md`](docs/ENVIRONMENTS.md)

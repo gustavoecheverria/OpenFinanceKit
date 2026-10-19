@@ -8,7 +8,7 @@
 
 **Autor:** Gustavo Echeverría
 
-**Última actualización:** 2026-10-16
+**Última actualización:** 2026-10-19
 
 ---
 
@@ -25,20 +25,29 @@ y este proyecto sigue [Semantic Versioning](https://semver.org/lang/es/).
 | `develop` | Lo que se está construyendo. Puede estar por delante de varios releases. |
 | Migración SQL | El campo `Release:` indica **en qué versión se publica**, no que ya se haya publicado. |
 
-Por eso las migraciones de `develop` dicen `Release: v0.3.0 (pendiente)`: describen
-cambios que todavía no están en producción.
+Por eso las migraciones de `develop` llevaban `Release: v0.3.0 (pendiente)`: describían
+cambios que todavía no estaban en producción. Publicado v0.3.0 (2026-10-17), ese sufijo
+ya no se usa.
 
 ---
 
 ## [Unreleased]
 
-Nada todavía.
+### Added
+
+- Helper E2E `e2e/helpers/db.ts` para verificar y sembrar datos con `service_role`
+
+### Changed
+
+- Cierre de 3 criterios de aceptación de pagos programados con tests E2E: AC-013
+  (desactivar conserva el registro), AC-014 (la lista no corta en 50) y AC-017 (layout
+  móvil sin desborde). Queda AC-018 (aislamiento RLS con dos usuarios)
 
 ---
 
-## [v0.3.0] — PENDIENTE DE RELEASE
+## [v0.3.0] — 2026-10-17
 
-**Estado:** en `develop`. **No está en producción.** 31 commits adelante de `main`.
+**Estado:** en producción (`main`).
 
 ### Added
 

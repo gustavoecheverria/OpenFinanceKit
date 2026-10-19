@@ -1,4 +1,10 @@
 import { test, expect } from "@playwright/test";
+import {
+  clienteAdmin,
+  idPorNombre,
+  idUsuarioPrueba,
+  sembrarPagosProgramados,
+} from "./helpers/db";
 
 /**
  * Tests E2E de pagos programados y transferencias entre cuentas.
@@ -537,6 +543,97 @@ test.describe("Pagos programados", () => {
     await expect(page.locator("li").filter({ hasText: concepto })).toHaveCount(0, {
       timeout: 20_000,
     });
+
+    // AC-013: el registro sigue en la base con activo = false.
+    const admin = clienteAdmin();
+    const userId = await idUsuarioPrueba(admin);
+    const { data: fila, error } = await admin
+      .from("pagos_programados")
+      .select("id, activo")
+      .eq("user_id", userId)
+      .eq("concepto", concepto)
+      .maybeSingle();
+
+    expect(error).toBeNull();
+    expect(fila).not.toBeNull();
+    expect(fila?.activo).toBe(false);
+  });
+
+  test("la lista no se corta en 50 pagos programados", async ({ page }) => {
+    // AC-014: el listado no tiene límite de 50 registros.
+    await vaciarUsuario(page);
+    await prepararUsuarioNuevo(page);
+
+    const admin = clienteAdmin();
+    const userId = await idUsuarioPrueba(admin);
+    const categoriaId = await idPorNombre(
+      admin,
+      "categorias",
+      userId,
+      "Alimentación"
+    );
+    const cuentaId = await idPorNombre(admin, "cuentas", userId, "Banco");
+    const prefijo = `Volumen-${run}-`;
+
+    await sembrarPagosProgramados(admin, {
+      userId,
+      cantidad: 51,
+      categoriaId,
+      cuentaId,
+      prefijo,
+    });
+
+    await page.goto("/pagos");
+    await expect(page.getByText(/51 activos/)).toBeVisible({
+      timeout: 20_000,
+    });
+    await expect(page.locator("li").filter({ hasText: prefijo })).toHaveCount(
+      51,
+      { timeout: 20_000 }
+    );
+  });
+
+  test("en móvil el countdown y los botones no desbordan la pantalla", async ({
+    page,
+  }) => {
+    // AC-017: en pantalla chica el countdown y las acciones quedan legibles y
+    // dentro del viewport.
+    test.skip(
+      test.info().project.name !== "mobile-chrome",
+      "Solo aplica al viewport móvil"
+    );
+
+    await vaciarUsuario(page);
+    await prepararUsuarioNuevo(page);
+    const concepto = `Movil-${run}`;
+    await crearPagoProgramado(page, {
+      valor: "45000",
+      concepto,
+      categoria: "Alimentación",
+    });
+
+    const tarjeta = page.locator("li").filter({ hasText: concepto });
+    await expect(tarjeta).toBeVisible();
+    await expect(tarjeta).toContainText(/vence (hoy|mañana|en \d+ días)/);
+
+    const desborde = await page.evaluate(
+      () =>
+        document.documentElement.scrollWidth -
+        document.documentElement.clientWidth
+    );
+    expect(desborde).toBeLessThanOrEqual(1);
+
+    const boton = tarjeta.getByRole("button", { name: "Marcar pagado" });
+    await expect(boton).toBeVisible();
+    const caja = await boton.boundingBox();
+    const viewport = page.viewportSize();
+
+    expect(caja).not.toBeNull();
+    expect(viewport).not.toBeNull();
+    expect(caja!.x).toBeGreaterThanOrEqual(0);
+    expect(caja!.x + caja!.width).toBeLessThanOrEqual(viewport!.width + 1);
+    expect(caja!.y).toBeGreaterThanOrEqual(0);
+    expect(caja!.y + caja!.height).toBeLessThanOrEqual(viewport!.height + 1);
   });
 });
 

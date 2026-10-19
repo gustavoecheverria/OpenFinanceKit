@@ -1,5 +1,5 @@
 -- OpenFinanceKit — Migración 009
--- Release: v0.3.0 (pendiente)
+-- Release: v0.3.0
 -- Fecha: 2026-10-08
 -- Descripción: Agrega categoria_id a pagos_programados y elimina el
 --              concepto de "borrar": los pagos programados se desactivan.

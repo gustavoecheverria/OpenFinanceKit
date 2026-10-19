@@ -107,11 +107,11 @@ v MAJOR . MINOR . PATCH
 
 | | Versión | Rama |
 |---|---------|------|
-| Última publicada | `v0.2.0` | `main` |
-| En desarrollo | `v0.3.0` | `develop` |
-| Tags existentes | `v0.1.0` | — |
+| Última publicada | `v0.3.0` | `main` |
+| En desarrollo | `v0.3.x` | `develop` |
+| Tags existentes | `v0.1.0`, `v0.2.0`, `v0.3.0` | — |
 
-> v0.2.0 se liberó sin tag. Al liberar v0.3.0 hay que crear el tag y backtaguear v0.2.0.
+> `v0.2.0` se había liberado sin tag; se recuperó al liberar v0.3.0 el 2026-10-17.
 
 ### Regla de las cabeceras de migración
 
@@ -119,8 +119,8 @@ El campo `Release:` de una migración dice **en qué versión se publica**, no q
 haya publicado:
 
 ```sql
--- Release: v0.3.0 (pendiente)    ← está en develop, no en producción
--- Release: v0.2.0 (publicada)    ← ya está en main
+-- Release: v0.4.0 (pendiente)    ← está en develop, no en producción
+-- Release: v0.3.0                ← ya está en main
 ```
 
 Nunca se inventa un número de versión. Si no se sabe en qué release va un cambio, se

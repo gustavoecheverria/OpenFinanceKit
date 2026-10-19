@@ -1,5 +1,5 @@
 -- OpenFinanceKit — Migración 008
--- Release: v0.3.0 (pendiente)
+-- Release: v0.3.0
 -- Fecha: 2026-10-07
 -- Descripción: Elimina la tabla `pagos` (pagos únicos). El módulo quedó
 --              obsoleto con la llegada de los pagos programados.

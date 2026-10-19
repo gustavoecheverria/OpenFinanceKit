@@ -22,9 +22,8 @@
 > Hasta esa fecha el documento decía "Completado" con 19 de 23 ítems sin marcar. Todos
 > se verificaron en el repositorio.
 >
-> ⚠️ **Este trabajo sigue solo en UAT.** Se mergeó a `develop` el 2026-10-05 y todavía
-> **no está en producción**. `calcularSaldosPorCuenta()` se extendió después con
-> transferencias (v0.3.0).
+> ✅ **En producción desde v0.3.0 (2026-10-17).** Se mergeó a `develop` el 2026-10-05 y
+> `calcularSaldosPorCuenta()` se extendió después con transferencias (v0.3.0).
 
 ## 1. Resumen
 

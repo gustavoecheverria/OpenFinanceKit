@@ -1,5 +1,5 @@
 -- OpenFinanceKit — Migración 004
--- Release: v0.3.0 (pendiente)
+-- Release: v0.3.0
 -- Fecha: 2026-10-06
 -- Descripción: Row Level Security para la tabla transferencias.
 --              Sigue el mismo patrón que la tabla pagos (001) y pagos.cuenta_id (002).
